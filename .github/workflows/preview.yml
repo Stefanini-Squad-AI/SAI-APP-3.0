@@ -2,7 +2,7 @@ name: PR Preview
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [ready_for_review, synchronize, closed]
     branches:
       - main
 
