@@ -1,0 +1,12 @@
+{
+  "name": "tucreditoonline-backend-tests",
+  "version": "1.0.0",
+  "description": "Test reporting for TuCreditoOnline Backend",
+  "scripts": {
+    "test:report": "node generate-test-report.js"
+  },
+  "dependencies": {
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {}
+}

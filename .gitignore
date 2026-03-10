@@ -1,0 +1,45 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backend (.NET)
+backend/bin/
+backend/obj/
+backend/**/*.user
+backend/**/*.suo
+backend/**/*.cache
+backend/.vs/
+backend/TestResults/
+backend/**/TestResults/
+backend/coverage/
+backend/**/coverage/
+*.trx
+
+# Frontend (React)
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/.coverage/
+frontend/test-results/
+frontend/npm-debug.log*
+
+# Docker
+docker-logs/
+*.tar
+
+# Logs
+*.log
+*.tmp
+*.temp

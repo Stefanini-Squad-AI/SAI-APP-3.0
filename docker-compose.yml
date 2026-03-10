@@ -1,0 +1,70 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: tco-mongodb
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-admin123}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-tucreditoonline}
+    volumes:
+      - mongodb_data:/data/db
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - tco-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tco-backend
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-5000}:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__MongoDB=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-admin123}@mongodb:27017/${MONGO_DATABASE:-tucreditoonline}?authSource=admin
+      - JwtSettings__Secret=${JWT_SECRET:-TuCreditoOnline-SecretKey-32chars-minimum-security-local-dev}
+      - JwtSettings__Issuer=TuCreditoOnline
+      - JwtSettings__Audience=TuCreditoOnline.Client
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - tco-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: tco-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:${API_PORT:-5000}/api
+    depends_on:
+      - backend
+    networks:
+      - tco-network
+    volumes:
+      - ./frontend:/app:cached
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+
+networks:
+  tco-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
