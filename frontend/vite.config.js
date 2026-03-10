@@ -4,8 +4,7 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  // Custom domain (tucreditoonline.app) is served from root, so base is always /
-  base: '/',
+  base: '/SAI-APP-3.0/',
   server: {
     host: '0.0.0.0',
     port: 3000,
