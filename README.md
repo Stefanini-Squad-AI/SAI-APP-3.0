@@ -2,6 +2,8 @@
 
 Full-stack online credit application platform.
 
+**Live demo (GitHub Pages):** https://stefanini-squad-ai.github.io/SAI-APP-3.0/
+
 | Layer | Technology |
 |---|---|
 | Frontend | React 18 + Vite + Tailwind CSS |
@@ -18,8 +20,8 @@ The UI supports **English**, **Latin American Spanish**, and **Brazilian Portugu
 **Prerequisites:** Docker Desktop running.
 
 ```bash
-# 1. Copy the environment file
-cp .env.example .env
+# 1. The .env file is included with safe defaults for local development.
+#    Edit it if you need to change ports or credentials.
 
 # 2. Build and start all services
 docker compose up --build
@@ -74,7 +76,7 @@ The database initializes empty. Create the first admin user via the Swagger UI:
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and adjust as needed.
+A `.env` file with safe local defaults is included. Edit it as needed.
 
 | Variable | Default | Description |
 |---|---|---|
@@ -89,12 +91,11 @@ Copy `.env.example` to `.env` and adjust as needed.
 ## Project Structure
 
 ```
-CLEAN/
 ├── backend/          .NET 8 Web API (clean architecture)
 │   └── src/
-│       ├── TuCreditoOnline.API/          Controllers, middleware, Program.cs
-│       ├── TuCreditoOnline.Application/  DTOs, interfaces
-│       ├── TuCreditoOnline.Domain/       Entities, domain models
+│       ├── TuCreditoOnline.API/            Controllers, middleware, Program.cs
+│       ├── TuCreditoOnline.Application/    DTOs, interfaces
+│       ├── TuCreditoOnline.Domain/         Entities, domain models
 │       └── TuCreditoOnline.Infrastructure/ MongoDB repos, services, security
 ├── database/
 │   └── init/init-db.js   MongoDB initialization script
@@ -105,9 +106,9 @@ CLEAN/
 │       ├── hooks/        useApi, useCreditCalculator
 │       ├── i18n/         en.json, es.json, pt.json
 │       ├── pages/        Public pages + admin panel
-│       ├── services/     Axios API clients
+│       ├── services/     Axios API clients (with demo fallbacks)
 │       └── utils/        JWT decoder, secure storage, input sanitizer
-├── .env.example
+├── .env
 ├── .gitignore
 └── docker-compose.yml
 ```
