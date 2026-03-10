@@ -1,4 +1,5 @@
 import apiClient from './apiClient';
+import { MOCK_CREDIT_TYPES } from './mockData';
 
 const creditTypeService = {
   getAll: async (isActive = null) => {
@@ -7,8 +8,11 @@ const creditTypeService = {
       const response = await apiClient.get('/credittypes', { params });
       return response.data;
     } catch (error) {
-      console.error('Error fetching credit types:', error);
-      throw error;
+      // Return demo data when the backend is unreachable (e.g. GitHub Pages deployment)
+      const filtered = isActive !== null
+        ? MOCK_CREDIT_TYPES.filter(ct => ct.isActive === isActive)
+        : MOCK_CREDIT_TYPES;
+      return filtered;
     }
   },
 

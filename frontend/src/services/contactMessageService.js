@@ -9,8 +9,14 @@ const contactMessageService = {
       const response = await apiClient.post(API_URL, messageData);
       return response.data;
     } catch (error) {
-      console.error('Error sending contact message:', error);
-      throw error;
+      // Simulate a successful submission when the backend is unreachable (e.g. GitHub Pages)
+      return {
+        id: `demo-${Date.now()}`,
+        ...messageData,
+        status: 0,
+        createdAt: new Date().toISOString(),
+        _demo: true,
+      };
     }
   },
 

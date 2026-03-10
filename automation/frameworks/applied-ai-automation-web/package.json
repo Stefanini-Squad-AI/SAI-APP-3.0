@@ -1,0 +1,34 @@
+{
+  "name": "applied-ai-automation",
+  "version": "1.0.0",
+  "description": "AI-powered web automation framework using Stagehand for TuCreditoOnline",
+  "main": "dist/LoginAutomation.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/cli.ts",
+    "test": "tsx src/cli.ts",
+    "test:all": "tsx src/cli.ts --all",
+    "test:list": "tsx src/cli.ts --list",
+    "test:tag": "tsx src/cli.ts --tag @demo-sai3",
+    "dev": "tsx watch src/cli.ts"
+  },
+  "keywords": [
+    "automation",
+    "stagehand",
+    "browser-automation",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@browserbasehq/stagehand": "^3.0.0",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
+
