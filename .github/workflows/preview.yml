@@ -10,6 +10,9 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy-preview:
     if: github.event.action != 'closed'
@@ -33,6 +36,7 @@ jobs:
         run: npm run build
         working-directory: frontend
         env:
+          # No VITE_BASE_PATH — Surge serves from root so base stays /
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Deploy preview to Surge

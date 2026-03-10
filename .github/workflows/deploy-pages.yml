@@ -15,6 +15,9 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -37,8 +40,9 @@ jobs:
         run: npm run build
         working-directory: frontend
         env:
-          # Set VITE_API_URL in your repository secrets once the backend is deployed.
-          # Go to Settings → Secrets and variables → Actions → New repository secret.
+          # Subpath required because GitHub Pages serves the repo under /SAI-APP-3.0/
+          VITE_BASE_PATH: /SAI-APP-3.0/
+          # Set VITE_API_URL in repository secrets once the backend is deployed.
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Copy index.html to 404.html for SPA routing

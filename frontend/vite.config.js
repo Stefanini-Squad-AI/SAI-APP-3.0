@@ -4,7 +4,8 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/SAI-APP-3.0/',
+  // /SAI-APP-3.0/ for GitHub Pages (set via VITE_BASE_PATH in the workflow), / everywhere else
+  base: process.env.VITE_BASE_PATH || '/',
   server: {
     host: '0.0.0.0',
     port: 3000,
