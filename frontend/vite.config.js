@@ -4,8 +4,8 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  // Base path for GitHub Pages: must match the repository name
-  base: process.env.GITHUB_PAGES === 'true' ? '/SAI-APP-3.0/' : '/',
+  // Custom domain (tucreditoonline.app) is served from root, so base is always /
+  base: '/',
   server: {
     host: '0.0.0.0',
     port: 3000,
