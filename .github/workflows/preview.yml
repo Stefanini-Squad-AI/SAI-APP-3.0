@@ -10,6 +10,9 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy-preview:
     if: github.event.action != 'closed'
@@ -33,7 +36,6 @@ jobs:
         run: npm run build
         working-directory: frontend
         env:
-          # No VITE_BASE_PATH — Surge serves from root so base stays /
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Deploy preview to Surge
@@ -47,7 +49,7 @@ jobs:
         with:
           script: |
             const url = `https://pr-${{ github.event.number }}-tucreditoonline.surge.sh`;
-            const body = `### Preview deployment ready\n\n🔗 ${url}\n\n_Updated on push to this PR. Torn down when PR is closed._\n\nComment \`/cleanup\` to close this PR and delete the branch.`;
+            const body = `### Preview deployment ready\n\n🔗 ${url}\n\n_Updated on push to this PR. Torn down when PR is closed._`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
