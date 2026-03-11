@@ -168,7 +168,7 @@ function generateHtmlReport(stats, testSuites) {
       margin-bottom: 5px;
     }
     
-    .stat-card.total .value { color: #3b82f6; }
+    .stat-card.total .value { color: #dc2626; }
     .stat-card.passed .value { color: ${STATUS_COLORS.passed}; }
     .stat-card.failed .value { color: ${STATUS_COLORS.failed}; }
     .stat-card.rate .value { color: #8b5cf6; }
@@ -240,7 +240,7 @@ function generateHtmlReport(stats, testSuites) {
     
     .badge.passed { background: #d1fae5; color: #065f46; }
     .badge.failed { background: #fee2e2; color: #991b1b; }
-    .badge.total { background: #dbeafe; color: #1e40af; }
+    .badge.total { background: #fee2e2; color: #991b1b; }
     
     .suite-body {
       display: none;
