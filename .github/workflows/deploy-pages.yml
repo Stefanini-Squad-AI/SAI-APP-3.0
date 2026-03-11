@@ -18,14 +18,12 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
           node-version: 20
           cache: npm
@@ -39,28 +37,24 @@ jobs:
         run: npm run build
         working-directory: frontend
         env:
-          # Subpath required because GitHub Pages serves the repo under /SAI-APP-3.0/
           VITE_BASE_PATH: /SAI-APP-3.0/
-          # Set VITE_API_URL in repository secrets once the backend is deployed.
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Copy index.html to 404.html for SPA routing
         run: cp frontend/dist/index.html frontend/dist/404.html
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v3.0.1
         with:
           path: frontend/dist
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4.0.5
