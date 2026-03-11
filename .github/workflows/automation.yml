@@ -1,0 +1,90 @@
+name: Functional Tests (AURA)
+
+on:
+  # Run automatically after every successful GitHub Pages deployment
+  workflow_run:
+    workflows: ["Deploy to GitHub Pages"]
+    types: [completed]
+  # Allow manual trigger (e.g. to test a PR preview URL)
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "App URL to test (default: GitHub Pages)"
+        required: false
+        default: "https://stefanini-squad-ai.github.io/SAI-APP-3.0"
+      language:
+        description: "Feature language to run: en | es | pt"
+        required: false
+        default: "en"
+      tags:
+        description: "Cucumber tags filter (e.g. @smoke, @ci, @demo-sai3)"
+        required: false
+        default: "@ci"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  aura-tests:
+    # Only run after deploy succeeds (skip on failure/cancelled)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: automation
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: automation/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run AURA functional tests
+        run: |
+          LANG="${{ github.event.inputs.language || 'en' }}"
+          TAGS="${{ github.event.inputs.tags || '@ci' }}"
+          npx cucumber-js \
+            --profile "$LANG" \
+            --tags "$TAGS"
+        env:
+          BASE_URL:                  ${{ github.event.inputs.base_url || 'https://stefanini-squad-ai.github.io/SAI-APP-3.0' }}
+          MODEL_PROVIDER:            ${{ vars.MODEL_PROVIDER || 'perplexity' }}
+          PERPLEXITY_API_KEY:        ${{ secrets.PERPLEXITY_API_KEY }}
+          PERPLEXITY_MODEL:          ${{ vars.PERPLEXITY_MODEL || 'sonar' }}
+          GEMINI_API_KEY:            ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY:            ${{ secrets.OPENAI_API_KEY }}
+          AURA_BROWSER:              chromium
+          AURA_HEADLESS:             true
+          AURA_TIMEOUT:              30000
+          AURA_COGNITIVE_ENABLED:    ${{ vars.AURA_COGNITIVE_ENABLED || 'false' }}
+          AURA_COGNITIVE_CACHE:      true
+          AURA_COGNITIVE_CACHE_TTL:  3600
+          AURA_REPORT_LANGUAGE:      ${{ github.event.inputs.language || 'en' }}
+          AURA_REPORT_TITLE:         TuCreditoOnline Test Report
+          AURA_RECORD_VIDEO:         true
+          AURA_TESTER_NAME:          GitHub Actions
+
+      - name: Upload AURA test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-reports-${{ github.run_number }}
+          path: |
+            automation/reports/
+          retention-days: 30

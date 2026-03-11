@@ -1,0 +1,48 @@
+# K6 Performance Framework - .gitignore
+
+# Reportes y resultados
+reports/**/*.html
+reports/**/*.json
+jsons/**/*.json
+
+# Mantener estructura de carpetas pero ignorar contenido
+!reports/.gitkeep
+!jsons/.gitkeep
+
+# Node modules (si se usan dependencias)
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+logs/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Archivos temporales
+*.tmp
+*.temp
+.cache/
+
+# Configuración local
+.env
+.env.local
+config.local.js
+
+# Build outputs
+dist/
+build/
+
+# K6 outputs temporales
+summary.json
+result.json
