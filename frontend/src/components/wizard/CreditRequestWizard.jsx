@@ -100,7 +100,7 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
           <p>You will receive a response at: <strong>${result.data.email}</strong></p>
         `,
         confirmButtonText: 'Got it',
-        confirmButtonColor: '#2563eb'
+        confirmButtonColor: '#dc2626'
       });
       onClose();
     } else {

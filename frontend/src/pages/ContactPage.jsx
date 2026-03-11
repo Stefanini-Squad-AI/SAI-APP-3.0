@@ -32,7 +32,7 @@ const ContactPage = () => {
         icon: 'success',
         title: t('loginPage.messageSent'),
         text: t('loginPage.thanksContact'),
-        confirmButtonColor: '#2563eb'
+        confirmButtonColor: '#dc2626'
       });
 
       setFormData({
