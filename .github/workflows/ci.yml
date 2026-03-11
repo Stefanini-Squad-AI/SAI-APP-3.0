@@ -1,0 +1,391 @@
+name: CI Pipeline
+
+# ============================================================================
+# TRIGGERS
+# Push to main   → full pipeline: tests → deploy → functional tests → ZAP scan
+# PR to main     → tests → preview deploy → functional tests against preview
+# PR closed      → tear down Surge.sh preview
+# workflow_dispatch → manual run of the full pipeline
+# ============================================================================
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**/*.md']
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review, closed]
+    paths-ignore: ['**/*.md']
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: '20'
+  DOTNET_VERSION: '8.0.x'
+
+# ============================================================================
+# PHASE 0 — UNIT TESTS (parallel)
+# ============================================================================
+jobs:
+
+  frontend-unit-tests:
+    name: 🧪 Frontend Unit Tests
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Run Jest tests
+        run: npm test -- --ci --coverage --passWithNoTests
+        working-directory: frontend
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-${{ github.run_number }}
+          path: frontend/coverage/
+          retention-days: 30
+
+  backend-unit-tests:
+    name: 🧪 Backend Unit Tests (.NET)
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore TuCreditoOnline.sln
+        working-directory: backend
+
+      - name: Run tests
+        run: >
+          dotnet test TuCreditoOnline.sln
+          --configuration Release
+          --no-restore
+          --logger "trx;LogFileName=results.trx"
+          --collect:"XPlat Code Coverage"
+          || true
+        working-directory: backend
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results-${{ github.run_number }}
+          path: backend/**/*.trx
+          retention-days: 30
+
+  # ============================================================================
+  # PHASE 1A — DEPLOY TO GITHUB PAGES (push to main only)
+  # ============================================================================
+
+  deploy:
+    name: 🚀 Deploy → GitHub Pages
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: [frontend-unit-tests, backend-unit-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: frontend
+        env:
+          VITE_BASE_PATH: /SAI-APP-3.0/
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Copy index.html → 404.html for SPA routing
+        run: cp frontend/dist/index.html frontend/dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3.0.1
+        with:
+          path: frontend/dist
+
+      - name: Deploy
+        id: deploy
+        uses: actions/deploy-pages@v4.0.5
+
+  # ============================================================================
+  # PHASE 1B — PR PREVIEW DEPLOY (PR events, not draft, not closed)
+  # ============================================================================
+
+  deploy-pr-preview:
+    name: 🔍 Deploy → PR Preview (Surge.sh)
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.action != 'closed' &&
+      !github.event.pull_request.draft
+    needs: [frontend-unit-tests, backend-unit-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Deploy to Surge.sh
+        run: npx surge --project frontend/dist --domain pr-${{ github.event.number }}-tucreditoonline.surge.sh
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Post / update PR comment
+        uses: actions/github-script@v7.0.1
+        with:
+          script: |
+            const url  = `https://pr-${{ github.event.number }}-tucreditoonline.surge.sh`;
+            const body = `### 🔍 Preview deployment ready\n\n🔗 ${url}\n\n_Updated on every push. Torn down when the PR is closed._`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(
+              c => c.user.login === 'github-actions[bot]' && c.body.includes('Preview deployment ready')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existing.id, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number, body,
+              });
+            }
+
+  # ============================================================================
+  # PHASE 1C — PR TEARDOWN (PR closed)
+  # ============================================================================
+
+  teardown-pr-preview:
+    name: 🧹 Tear Down PR Preview
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Tear down Surge.sh preview
+        run: npx surge teardown pr-${{ github.event.number }}-tucreditoonline.surge.sh
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Update PR comment
+        uses: actions/github-script@v7.0.1
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(
+              c => c.user.login === 'github-actions[bot]' && c.body.includes('Preview deployment ready')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existing.id,
+                body: `### 🔍 Preview deployment\n\n~~Torn down after PR was closed.~~`,
+              });
+            }
+
+  # ============================================================================
+  # PHASE 2 — AURA FUNCTIONAL TESTS
+  # Runs against GitHub Pages (push) or the Surge preview (PR).
+  # Depends on whichever deploy just ran — skips if both were skipped.
+  # ============================================================================
+
+  aura-tests:
+    name: 🤖 AURA Functional Tests
+    if: >
+      always() && !cancelled() &&
+      (needs.deploy.result == 'success' || needs.deploy-pr-preview.result == 'success')
+    needs: [deploy, deploy-pr-preview]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: automation
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: automation/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run @ci tests
+        run: npx cucumber-js --profile en --tags @ci
+        env:
+          BASE_URL: >-
+            ${{
+              github.event_name == 'pull_request'
+              && format('https://pr-{0}-tucreditoonline.surge.sh', github.event.number)
+              || 'https://stefanini-squad-ai.github.io/SAI-APP-3.0'
+            }}
+          MODEL_PROVIDER:            ${{ vars.MODEL_PROVIDER || 'perplexity' }}
+          PERPLEXITY_API_KEY:        ${{ secrets.PERPLEXITY_API_KEY }}
+          PERPLEXITY_MODEL:          ${{ vars.PERPLEXITY_MODEL || 'sonar' }}
+          GEMINI_API_KEY:            ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY:            ${{ secrets.OPENAI_API_KEY }}
+          AURA_BROWSER:              chromium
+          AURA_HEADLESS:             true
+          AURA_TIMEOUT:              30000
+          AURA_COGNITIVE_ENABLED:    false
+          AURA_REPORT_LANGUAGE:      en
+          AURA_REPORT_TITLE:         TuCreditoOnline CI Report
+          AURA_RECORD_VIDEO:         true
+          AURA_TESTER_NAME:          GitHub Actions
+
+      - name: Upload AURA reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-reports-${{ github.run_number }}
+          path: automation/reports/
+          retention-days: 30
+
+  # ============================================================================
+  # PHASE 3 — OWASP ZAP SECURITY SCAN (push to main only)
+  # ============================================================================
+
+  security-scan:
+    name: 🔒 ZAP Security Scan
+    if: always() && !cancelled() && needs.deploy.result == 'success'
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: https://stefanini-squad-ai.github.io/SAI-APP-3.0
+          rules_file_name: .zap/rules.tsv
+          cmd_options: -a -j -T 5
+          fail_action: false
+          allow_issue_writing: false
+
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report-${{ github.run_number }}
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md
+          retention-days: 90
+
+  # ============================================================================
+  # PHASE 4 — PIPELINE SUMMARY
+  # ============================================================================
+
+  pipeline-summary:
+    name: 📋 Pipeline Summary
+    if: always()
+    needs:
+      - frontend-unit-tests
+      - backend-unit-tests
+      - deploy
+      - deploy-pr-preview
+      - aura-tests
+      - security-scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Write summary
+        uses: actions/github-script@v7.0.1
+        with:
+          script: |
+            const jobs = {
+              '🧪 Frontend Tests':  '${{ needs.frontend-unit-tests.result }}',
+              '🧪 Backend Tests':   '${{ needs.backend-unit-tests.result }}',
+              '🚀 Deploy (Pages)':  '${{ needs.deploy.result }}',
+              '🔍 PR Preview':      '${{ needs.deploy-pr-preview.result }}',
+              '🤖 AURA Tests':      '${{ needs.aura-tests.result }}',
+              '🔒 ZAP Scan':        '${{ needs.security-scan.result }}',
+            };
+
+            const icon = r =>
+              r === 'success'  ? '✅' :
+              r === 'failure'  ? '❌' :
+              r === 'skipped'  ? '⏭️' : '⚠️';
+
+            const rows = Object.entries(jobs)
+              .map(([name, result]) => `| ${name} | ${icon(result)} ${result} |`)
+              .join('\n');
+
+            await core.summary
+              .addHeading('CI Pipeline Results')
+              .addTable([
+                [{ data: 'Phase', header: true }, { data: 'Result', header: true }],
+                ...Object.entries(jobs).map(([name, result]) => [name, `${icon(result)} ${result}`])
+              ])
+              .write();
