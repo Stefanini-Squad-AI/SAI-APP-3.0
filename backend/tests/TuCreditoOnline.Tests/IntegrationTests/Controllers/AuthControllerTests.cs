@@ -26,8 +26,7 @@ public class AuthControllerTests : IClassFixture<TestWebApplicationFactory>
         {
             Email = _faker.Internet.Email(),
             Password = "Test123!@#",
-            FullName = _faker.Name.FullName(),
-            Role = "User"
+            FullName = _faker.Name.FullName()
         };
 
         // Act
@@ -57,8 +56,7 @@ public class AuthControllerTests : IClassFixture<TestWebApplicationFactory>
         {
             Email = email,
             Password = "Test123!@#",
-            FullName = _faker.Name.FullName(),
-            Role = "User"
+            FullName = _faker.Name.FullName()
         };
 
         // First registration
@@ -83,8 +81,7 @@ public class AuthControllerTests : IClassFixture<TestWebApplicationFactory>
         {
             Email = email,
             Password = password,
-            FullName = fullName,
-            Role = "User"
+            FullName = fullName
         };
 
         // Act
@@ -105,8 +102,7 @@ public class AuthControllerTests : IClassFixture<TestWebApplicationFactory>
         {
             Email = email,
             Password = password,
-            FullName = _faker.Name.FullName(),
-            Role = "User"
+            FullName = _faker.Name.FullName()
         };
 
         // Register first
@@ -171,8 +167,7 @@ public class AuthControllerTests : IClassFixture<TestWebApplicationFactory>
         {
             Email = email,
             Password = correctPassword,
-            FullName = _faker.Name.FullName(),
-            Role = "User"
+            FullName = _faker.Name.FullName()
         };
 
         var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerDto);
@@ -235,8 +230,7 @@ public class AuthControllerTests : IClassFixture<TestWebApplicationFactory>
         {
             Email = email,
             Password = password,
-            FullName = fullName,
-            Role = "User"
+            FullName = fullName
         };
 
         // Act - Register
