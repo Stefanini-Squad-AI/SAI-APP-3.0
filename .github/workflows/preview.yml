@@ -5,6 +5,8 @@ on:
     types: [ready_for_review, synchronize, closed]
     branches:
       - main
+    paths-ignore:
+      - '**/*.md'
 
 permissions:
   contents: read
