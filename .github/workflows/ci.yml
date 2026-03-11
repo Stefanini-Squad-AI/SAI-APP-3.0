@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
   NODE_VERSION: '20'
   DOTNET_VERSION: '8.0.x'
 
@@ -35,6 +35,9 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          # For pull_request events, github.sha is the PR merge commit (PR + main).
+          ref: ${{ github.sha }}
 
       - uses: actions/setup-node@v4.4.0
         with:
@@ -66,6 +69,9 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          # For pull_request events, github.sha is the PR merge commit (PR + main).
+          ref: ${{ github.sha }}
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -82,11 +88,10 @@ jobs:
           --no-restore
           --logger "trx;LogFileName=results.trx"
           --collect:"XPlat Code Coverage"
-          || true
         working-directory: backend
 
       - name: Upload test results
-        if: always()
+        if: always() && hashFiles('backend/**/*.trx') != ''
         uses: actions/upload-artifact@v4
         with:
           name: backend-test-results-${{ github.run_number }}
@@ -152,7 +157,9 @@ jobs:
     if: >
       github.event_name == 'pull_request' &&
       github.event.action != 'closed' &&
-      !github.event.pull_request.draft
+      !github.event.pull_request.draft &&
+      secrets.SURGE_LOGIN != '' &&
+      secrets.SURGE_TOKEN != ''
     needs: [frontend-unit-tests, backend-unit-tests]
     runs-on: ubuntu-latest
     permissions:
@@ -214,7 +221,11 @@ jobs:
 
   teardown-pr-preview:
     name: 🧹 Tear Down PR Preview
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      secrets.SURGE_LOGIN != '' &&
+      secrets.SURGE_TOKEN != ''
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -254,7 +265,8 @@ jobs:
     name: 🤖 AURA Functional Tests
     if: >
       always() && !cancelled() &&
-      (needs.deploy.result == 'success' || needs.deploy-pr-preview.result == 'success')
+      (needs.deploy.result == 'success' || needs.deploy-pr-preview.result == 'success') &&
+      (secrets.PERPLEXITY_API_KEY != '' || secrets.GEMINI_API_KEY != '' || secrets.OPENAI_API_KEY != '')
     needs: [deploy, deploy-pr-preview]
     runs-on: ubuntu-latest
     permissions:

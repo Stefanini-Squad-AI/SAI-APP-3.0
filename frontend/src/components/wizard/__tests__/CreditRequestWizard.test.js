@@ -2,7 +2,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CreditRequestWizard from '../CreditRequestWizard';
 
-// Mock del servicio creditRequestService
+// Mock creditRequestService
 const mockCreateCreditRequest = jest.fn();
 jest.mock('../../../services/creditRequestService', () => ({
   __esModule: true,
@@ -11,7 +11,7 @@ jest.mock('../../../services/creditRequestService', () => ({
   }
 }));
 
-// Mock de SweetAlert2
+// Mock SweetAlert2
 const mockSwalFire = jest.fn().mockResolvedValue({ isConfirmed: true });
 jest.mock('sweetalert2', () => ({
   __esModule: true,
@@ -50,8 +50,8 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    expect(screen.getByText(/Solicitud de Crédito/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/Juan Pérez/i)).toBeInTheDocument();
+    expect(screen.getByText(/Credit Application/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/John Doe/i)).toBeInTheDocument();
   });
 
   it('should show error when fullName is empty', async () => {
@@ -63,13 +63,13 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    const nextButton = screen.getByRole('button', { name: /Siguiente/i });
-    
-    // Intentar avanzar sin llenar el nombre
+    const nextButton = screen.getByRole('button', { name: /Next/i });
+
+    // Try to proceed without filling the name
     fireEvent.click(nextButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/El nombre completo es requerido/i)).toBeInTheDocument();
+      expect(screen.getByText(/Full name is required/i)).toBeInTheDocument();
     });
   });
 
@@ -84,15 +84,15 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    // Llenar nombre pero no email
-    const nameInput = screen.getByPlaceholderText(/Juan Pérez/i);
-    await user.type(nameInput, 'Juan Pérez');
+    // Fill name but not email
+    const nameInput = screen.getByPlaceholderText(/John Doe/i);
+    await user.type(nameInput, 'John Doe');
 
-    const nextButton = screen.getByRole('button', { name: /Siguiente/i });
+    const nextButton = screen.getByRole('button', { name: /Next/i });
     fireEvent.click(nextButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/El email es requerido/i)).toBeInTheDocument();
+      expect(screen.getByText(/Email is required/i)).toBeInTheDocument();
     });
   });
 
@@ -107,17 +107,17 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    const nameInput = screen.getByPlaceholderText(/Juan Pérez/i);
-    const emailInput = screen.getByPlaceholderText(/correo@ejemplo.com/i);
+    const nameInput = screen.getByPlaceholderText(/John Doe/i);
+    const emailInput = screen.getByPlaceholderText(/you@example.com/i);
     
-    await user.type(nameInput, 'Juan Pérez');
-    await user.type(emailInput, 'correo-invalido'); // Email sin formato correcto
+    await user.type(nameInput, 'John Doe');
+    await user.type(emailInput, 'invalid-email'); // Invalid email format
 
-    const nextButton = screen.getByRole('button', { name: /Siguiente/i });
+    const nextButton = screen.getByRole('button', { name: /Next/i });
     fireEvent.click(nextButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/El email no es válido/i)).toBeInTheDocument();
+      expect(screen.getByText(/Invalid email address/i)).toBeInTheDocument();
     });
   });
 
@@ -132,19 +132,19 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    const nameInput = screen.getByPlaceholderText(/Juan Pérez/i);
-    const idInput = screen.getByPlaceholderText(/PEGJ850315/i);
-    const emailInput = screen.getByPlaceholderText(/correo@ejemplo.com/i);
+    const nameInput = screen.getByPlaceholderText(/John Doe/i);
+    const idInput = screen.getByPlaceholderText(/National ID \/ Passport/i);
+    const emailInput = screen.getByPlaceholderText(/you@example.com/i);
     
-    await user.type(nameInput, 'Juan Pérez');
+    await user.type(nameInput, 'John Doe');
     await user.type(idInput, '1234567890');
     await user.type(emailInput, 'juan@example.com');
 
-    const nextButton = screen.getByRole('button', { name: /Siguiente/i });
+    const nextButton = screen.getByRole('button', { name: /Next/i });
     fireEvent.click(nextButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/El teléfono es requerido/i)).toBeInTheDocument();
+      expect(screen.getByText(/Phone number is required/i)).toBeInTheDocument();
     });
   });
 
@@ -159,24 +159,24 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    // Llenar todos los campos requeridos del paso 1
-    const nameInput = screen.getByPlaceholderText(/Juan Pérez/i);
-    const idInput = screen.getByPlaceholderText(/PEGJ850315/i);
-    const emailInput = screen.getByPlaceholderText(/correo@ejemplo.com/i);
-    const phoneInput = screen.getByPlaceholderText(/55 1234/i);
-    const addressInput = screen.getByPlaceholderText(/Calle, Número/i);
+    // Fill all required fields in step 1
+    const nameInput = screen.getByPlaceholderText(/John Doe/i);
+    const idInput = screen.getByPlaceholderText(/National ID \/ Passport/i);
+    const emailInput = screen.getByPlaceholderText(/you@example.com/i);
+    const phoneInput = screen.getByPlaceholderText(/\+1 555 0100/i);
+    const addressInput = screen.getByPlaceholderText(/Street, Number, City, State, ZIP/i);
     
-    await user.type(nameInput, 'Juan Pérez');
+    await user.type(nameInput, 'John Doe');
     await user.type(idInput, '1234567890');
     await user.type(emailInput, 'juan@example.com');
     await user.type(phoneInput, '5551234567');
-    await user.type(addressInput, 'Calle Principal 123');
+    await user.type(addressInput, '123 Main St');
 
-    const nextButton = screen.getByRole('button', { name: /Siguiente/i });
+    const nextButton = screen.getByRole('button', { name: /Next/i });
     fireEvent.click(nextButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Información Financiera/i)).toBeInTheDocument();
+      expect(screen.getByText(/Financial Information/i)).toBeInTheDocument();
     });
   });
 
@@ -191,17 +191,17 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    // Completar paso 1
-    await user.type(screen.getByPlaceholderText(/Juan Pérez/i), 'Juan Pérez');
-    await user.type(screen.getByPlaceholderText(/PEGJ850315/i), '1234567890');
-    await user.type(screen.getByPlaceholderText(/correo@ejemplo.com/i), 'juan@example.com');
-    await user.type(screen.getByPlaceholderText(/55 1234/i), '5551234567');
-    await user.type(screen.getByPlaceholderText(/Calle, Número/i), 'Calle Principal 123');
+    // Complete step 1
+    await user.type(screen.getByPlaceholderText(/John Doe/i), 'John Doe');
+    await user.type(screen.getByPlaceholderText(/National ID \/ Passport/i), '1234567890');
+    await user.type(screen.getByPlaceholderText(/you@example.com/i), 'juan@example.com');
+    await user.type(screen.getByPlaceholderText(/\+1 555 0100/i), '5551234567');
+    await user.type(screen.getByPlaceholderText(/Street, Number, City, State, ZIP/i), '123 Main St');
     
-    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Información Financiera/i)).toBeInTheDocument();
+      expect(screen.getByText(/Financial Information/i)).toBeInTheDocument();
     });
 
     // Ingresar salario negativo o cero
@@ -211,11 +211,11 @@ describe('CreditRequestWizard - Form Validations', () => {
     await user.clear(salaryInput);
     await user.type(salaryInput, '0');
 
-    const nextButton = screen.getByRole('button', { name: /Siguiente/i });
+    const nextButton = screen.getByRole('button', { name: /Next/i });
     fireEvent.click(nextButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/El salario mensual debe ser mayor a 0/i)).toBeInTheDocument();
+      expect(screen.getByText(/Monthly salary must be greater than 0/i)).toBeInTheDocument();
     });
   });
 
@@ -230,7 +230,7 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    const cancelButton = screen.getByRole('button', { name: /Cancelar/i });
+    const cancelButton = screen.getByRole('button', { name: /Cancel/i });
     fireEvent.click(cancelButton);
 
     await waitFor(() => {
@@ -249,7 +249,7 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    const cancelButton = screen.getByRole('button', { name: /Cancelar/i });
+    const cancelButton = screen.getByRole('button', { name: /Cancel/i });
     fireEvent.click(cancelButton);
 
     await waitFor(() => {
@@ -270,25 +270,25 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    // Completar paso 1 y avanzar
-    await user.type(screen.getByPlaceholderText(/Juan Pérez/i), 'Juan Pérez');
-    await user.type(screen.getByPlaceholderText(/PEGJ850315/i), '1234567890');
-    await user.type(screen.getByPlaceholderText(/correo@ejemplo.com/i), 'juan@example.com');
-    await user.type(screen.getByPlaceholderText(/55 1234/i), '5551234567');
-    await user.type(screen.getByPlaceholderText(/Calle, Número/i), 'Calle Principal 123');
+    // Complete step 1 and proceed
+    await user.type(screen.getByPlaceholderText(/John Doe/i), 'John Doe');
+    await user.type(screen.getByPlaceholderText(/National ID \/ Passport/i), '1234567890');
+    await user.type(screen.getByPlaceholderText(/you@example.com/i), 'juan@example.com');
+    await user.type(screen.getByPlaceholderText(/\+1 555 0100/i), '5551234567');
+    await user.type(screen.getByPlaceholderText(/Street, Number, City, State, ZIP/i), '123 Main St');
     
-    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Información Financiera/i)).toBeInTheDocument();
+      expect(screen.getByText(/Financial Information/i)).toBeInTheDocument();
     });
 
-    // Volver al paso 1
-    const backButton = screen.getByRole('button', { name: /Anterior/i });
+    // Go back to step 1
+    const backButton = screen.getByRole('button', { name: /Back/i });
     fireEvent.click(backButton);
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/Juan Pérez/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/John Doe/i)).toBeInTheDocument();
     });
   });
 
@@ -308,26 +308,26 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    // Completar paso 1
-    await user.type(screen.getByPlaceholderText(/Juan Pérez/i), 'Juan Pérez');
-    await user.type(screen.getByPlaceholderText(/PEGJ850315/i), '1234567890');
-    await user.type(screen.getByPlaceholderText(/correo@ejemplo.com/i), 'juan@example.com');
-    await user.type(screen.getByPlaceholderText(/55 1234/i), '5551234567');
-    await user.type(screen.getByPlaceholderText(/Calle, Número/i), 'Calle Principal 123');
-    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
+    // Complete step 1
+    await user.type(screen.getByPlaceholderText(/John Doe/i), 'John Doe');
+    await user.type(screen.getByPlaceholderText(/National ID \/ Passport/i), '1234567890');
+    await user.type(screen.getByPlaceholderText(/you@example.com/i), 'juan@example.com');
+    await user.type(screen.getByPlaceholderText(/\+1 555 0100/i), '5551234567');
+    await user.type(screen.getByPlaceholderText(/Street, Number, City, State, ZIP/i), '123 Main St');
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Información Financiera/i)).toBeInTheDocument();
+      expect(screen.getByText(/Financial Information/i)).toBeInTheDocument();
     });
 
-    // Completar paso 2 (ya tiene valores por defecto del calculatorData)
-    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
+    // Complete step 2 (defaults from calculatorData)
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Confirmación de Solicitud/i)).toBeInTheDocument();
+      expect(screen.getByText(/Review & Confirm/i)).toBeInTheDocument();
     });
 
-    const submitButton = screen.getByRole('button', { name: /Confirmar y Enviar/i });
+    const submitButton = screen.getByRole('button', { name: /Confirm & Submit/i });
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -357,25 +357,25 @@ describe('CreditRequestWizard - Form Validations', () => {
       />
     );
 
-    // Completar todos los pasos
-    await user.type(screen.getByPlaceholderText(/Juan Pérez/i), 'Juan Pérez');
-    await user.type(screen.getByPlaceholderText(/PEGJ850315/i), '1234567890');
-    await user.type(screen.getByPlaceholderText(/correo@ejemplo.com/i), 'juan@example.com');
-    await user.type(screen.getByPlaceholderText(/55 1234/i), '5551234567');
-    await user.type(screen.getByPlaceholderText(/Calle, Número/i), 'Calle Principal 123');
-    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
+    // Complete all steps
+    await user.type(screen.getByPlaceholderText(/John Doe/i), 'John Doe');
+    await user.type(screen.getByPlaceholderText(/National ID \/ Passport/i), '1234567890');
+    await user.type(screen.getByPlaceholderText(/you@example.com/i), 'juan@example.com');
+    await user.type(screen.getByPlaceholderText(/\+1 555 0100/i), '5551234567');
+    await user.type(screen.getByPlaceholderText(/Street, Number, City, State, ZIP/i), '123 Main St');
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Información Financiera/i)).toBeInTheDocument();
+      expect(screen.getByText(/Financial Information/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/Confirmación de Solicitud/i)).toBeInTheDocument();
+      expect(screen.getByText(/Review & Confirm/i)).toBeInTheDocument();
     });
 
-    const submitButton = screen.getByRole('button', { name: /Confirmar y Enviar/i });
+    const submitButton = screen.getByRole('button', { name: /Confirm & Submit/i });
     fireEvent.click(submitButton);
 
     await waitFor(() => {
