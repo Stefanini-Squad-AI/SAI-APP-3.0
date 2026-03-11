@@ -35,15 +35,24 @@ builder.Services.AddSwaggerGen(options =>
     }
 });
 
-// Add CORS - Restrictive configuration
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() 
+// Add CORS
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? new[] { "http://localhost:3000", "http://frontend:3000" };
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(origin =>
+              {
+                  // Explicitly configured origins (e.g. from appsettings or env)
+                  if (allowedOrigins.Contains(origin)) return true;
+                  // GitHub Pages deployments
+                  if (origin.Contains(".github.io")) return true;
+                  // Surge.sh PR preview deployments
+                  if (origin.EndsWith(".surge.sh")) return true;
+                  return false;
+              })
               .WithHeaders("Content-Type", "Authorization", "Accept")
               .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
               .AllowCredentials()
@@ -55,11 +64,17 @@ builder.Services.AddCors(options =>
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["Secret"];
 
-// Fall back to a safe default if the secret is missing or too short
 if (string.IsNullOrEmpty(secretKey) || secretKey.Length < 32)
 {
-    secretKey = "TuCreditoOnline-SecretKey-32chars-minimum-security-2026-production";
-    Console.WriteLine("Warning: Using default JWT secret. Configure JwtSettings:Secret in production.");
+    if (builder.Environment.IsProduction())
+        throw new InvalidOperationException(
+            "JwtSettings:Secret must be set to a string of 32+ characters in production. " +
+            "Set it via the JWT_SECRET environment variable or appsettings.");
+
+    // Development only: generate a random secret so the app starts without configuration.
+    // Tokens will be invalidated on every restart — acceptable for local dev.
+    secretKey = $"{Guid.NewGuid():N}{Guid.NewGuid():N}";
+    Console.WriteLine("Warning: JwtSettings:Secret not configured. Using a random secret for this session.");
 }
 
 builder.Services.AddAuthentication(options =>

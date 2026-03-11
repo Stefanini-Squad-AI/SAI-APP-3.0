@@ -21,6 +21,8 @@ public class CreditRequest : BaseEntity
     public string UseOfMoney { get; set; } = string.Empty;
     public decimal RequestedAmount { get; set; }
     public int TermYears { get; set; }
+    // Convenience property for comparing against CreditType.MaxTermMonths / MinTermMonths
+    public int TermMonths => TermYears * 12;
     public decimal InterestRate { get; set; }
     public decimal MonthlyPayment { get; set; }
     public decimal TotalPayment { get; set; }

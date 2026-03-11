@@ -31,6 +31,7 @@ public class CreditTypeService
                 Name = ct.Name,
                 Description = ct.Description,
                 BaseInterestRate = ct.BaseInterestRate,
+                MinAmount = ct.MinAmount,
                 MaxAmount = ct.MaxAmount,
                 MaxTermMonths = ct.MaxTermMonths,
                 MinTermMonths = ct.MinTermMonths,
@@ -42,7 +43,7 @@ public class CreditTypeService
         }
         catch (Exception ex)
         {
-            return Result.Failure<List<CreditTypeResponseDto>>($"Error al obtener tipos de crédito: {ex.Message}");
+            return Result.Failure<List<CreditTypeResponseDto>>($"Error fetching credit types: {ex.Message}");
         }
     }
 
@@ -62,6 +63,7 @@ public class CreditTypeService
                 Name = creditType.Name,
                 Description = creditType.Description,
                 BaseInterestRate = creditType.BaseInterestRate,
+                MinAmount = creditType.MinAmount,
                 MaxAmount = creditType.MaxAmount,
                 MaxTermMonths = creditType.MaxTermMonths,
                 MinTermMonths = creditType.MinTermMonths,
@@ -73,7 +75,7 @@ public class CreditTypeService
         }
         catch (Exception ex)
         {
-            return Result.Failure<CreditTypeResponseDto>($"Error al obtener tipo de crédito: {ex.Message}");
+            return Result.Failure<CreditTypeResponseDto>($"Error fetching credit type: {ex.Message}");
         }
     }
 
@@ -86,6 +88,7 @@ public class CreditTypeService
                 Name = dto.Name,
                 Description = dto.Description,
                 BaseInterestRate = dto.BaseInterestRate,
+                MinAmount = dto.MinAmount,
                 MaxAmount = dto.MaxAmount,
                 MaxTermMonths = dto.MaxTermMonths,
                 MinTermMonths = dto.MinTermMonths,
@@ -102,6 +105,7 @@ public class CreditTypeService
                 Name = creditType.Name,
                 Description = creditType.Description,
                 BaseInterestRate = creditType.BaseInterestRate,
+                MinAmount = creditType.MinAmount,
                 MaxAmount = creditType.MaxAmount,
                 MaxTermMonths = creditType.MaxTermMonths,
                 MinTermMonths = creditType.MinTermMonths,
@@ -113,7 +117,7 @@ public class CreditTypeService
         }
         catch (Exception ex)
         {
-            return Result.Failure<CreditTypeResponseDto>($"Error al crear tipo de crédito: {ex.Message}");
+            return Result.Failure<CreditTypeResponseDto>($"Error creating credit type: {ex.Message}");
         }
     }
 
@@ -130,6 +134,7 @@ public class CreditTypeService
             creditType.Name = dto.Name;
             creditType.Description = dto.Description;
             creditType.BaseInterestRate = dto.BaseInterestRate;
+            creditType.MinAmount = dto.MinAmount;
             creditType.MaxAmount = dto.MaxAmount;
             creditType.MaxTermMonths = dto.MaxTermMonths;
             creditType.MinTermMonths = dto.MinTermMonths;
@@ -144,6 +149,7 @@ public class CreditTypeService
                 Name = creditType.Name,
                 Description = creditType.Description,
                 BaseInterestRate = creditType.BaseInterestRate,
+                MinAmount = creditType.MinAmount,
                 MaxAmount = creditType.MaxAmount,
                 MaxTermMonths = creditType.MaxTermMonths,
                 MinTermMonths = creditType.MinTermMonths,
@@ -155,7 +161,7 @@ public class CreditTypeService
         }
         catch (Exception ex)
         {
-            return Result.Failure<CreditTypeResponseDto>($"Error al actualizar tipo de crédito: {ex.Message}");
+            return Result.Failure<CreditTypeResponseDto>($"Error updating credit type: {ex.Message}");
         }
     }
 
@@ -174,7 +180,7 @@ public class CreditTypeService
         }
         catch (Exception ex)
         {
-            return Result.Failure<bool>($"Error al eliminar tipo de crédito: {ex.Message}");
+            return Result.Failure<bool>($"Error deleting credit type: {ex.Message}");
         }
     }
 }

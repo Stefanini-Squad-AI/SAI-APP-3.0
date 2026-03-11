@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import AdminLayout from './components/layout/AdminLayout';
@@ -8,6 +8,8 @@ import ContactPage from './pages/ContactPage';
 import ServicesPage from './pages/ServicesPage';
 import FAQPage from './pages/FAQPage';
 import CalculatorPage from './pages/CalculatorPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import LoginPage from './pages/admin/LoginPage';
 import DashboardPage from './pages/admin/DashboardPage';
@@ -33,6 +35,8 @@ function App() {
             <Route path="faq" element={<FAQPage />} />
             <Route path="contact" element={<ContactPage />} />
             <Route path="calculator" element={<CalculatorPage />} />
+            <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="terms" element={<TermsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
 
@@ -42,6 +46,7 @@ function App() {
           {/* Protected Admin Routes */}
           <Route path="/admin" element={<ProtectedRoute />}>
             <Route element={<AdminLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="credit-requests" element={<CreditRequestsPage />} />
               <Route path="messages" element={<MessagesPage />} />

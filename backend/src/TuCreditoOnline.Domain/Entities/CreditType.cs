@@ -7,6 +7,7 @@ public class CreditType : BaseEntity
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public decimal BaseInterestRate { get; set; }
+    public decimal MinAmount { get; set; }
     public decimal MaxAmount { get; set; }
     public int MaxTermMonths { get; set; }
     public int MinTermMonths { get; set; } = 1;

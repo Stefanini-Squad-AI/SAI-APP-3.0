@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TuCreditoOnline.Application.DTOs;
 using TuCreditoOnline.Infrastructure.Services;
@@ -9,11 +10,16 @@ namespace TuCreditoOnline.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
+    private readonly UserManagementService _userManagementService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(AuthService authService, ILogger<AuthController> logger)
+    public AuthController(
+        AuthService authService,
+        UserManagementService userManagementService,
+        ILogger<AuthController> logger)
     {
         _authService = authService;
+        _userManagementService = userManagementService;
         _logger = logger;
     }
 
@@ -34,10 +40,31 @@ public class AuthController : ControllerBase
         return Ok(result.Data);
     }
 
+    /// <summary>
+    /// Creates a new user account.
+    /// Open only when no users exist yet (first-time setup).
+    /// Once users exist, requires Admin or SuperAdmin role.
+    /// </summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
         _logger.LogInformation("Registration attempt for {Email}", request.Email);
+
+        // Allow unauthenticated registration only for first-time setup (no users in DB)
+        var usersResult = await _userManagementService.GetAllUsersAsync(1, 1, null);
+        bool hasUsers = usersResult.IsSuccess && (usersResult.Data?.TotalCount ?? 0) > 0;
+
+        if (hasUsers)
+        {
+            if (!User.Identity?.IsAuthenticated ?? true)
+            {
+                return Unauthorized(new { error = "Authentication required to register new users" });
+            }
+            if (!User.IsInRole("Admin") && !User.IsInRole("SuperAdmin"))
+            {
+                return Forbid();
+            }
+        }
 
         var result = await _authService.RegisterAsync(request);
 
