@@ -9,12 +9,23 @@ import type { AuraReportData, AuraStepData, AuraLogEntry } from './AuraReportCol
 export function renderAuraHtml(data: AuraReportData): string {
   const j = JSON.stringify(data).replace(/<\/script/g, '<\\/script');
   const d = data;
+  const summaryByLang = {
+    en: d.executiveSummaryByLang?.en ?? d.executiveSummary ?? '',
+    es: d.executiveSummaryByLang?.es ?? d.executiveSummary ?? '',
+    pt: d.executiveSummaryByLang?.pt ?? d.executiveSummary ?? '',
+  };
+  const summaryHtmlByLang = {
+    en: summaryByLang.en ? mdHtml(summaryByLang.en) : '',
+    es: summaryByLang.es ? mdHtml(summaryByLang.es) : '',
+    pt: summaryByLang.pt ? mdHtml(summaryByLang.pt) : '',
+  };
+  const summaryHtmlJson = JSON.stringify(summaryHtmlByLang).replace(/<\/script/g, '<\\/script');
   const fastest = d.steps.length ? Math.min(...d.steps.map(s => s.durationMs)) : 0;
   const slowest = d.steps.length ? Math.max(...d.steps.map(s => s.durationMs)) : 0;
   const avg = d.steps.length ? Math.round(d.durationMs / d.steps.length) : 0;
 
   return `<!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${e(d.testName)}</title>
@@ -34,9 +45,23 @@ export function renderAuraHtml(data: AuraReportData): string {
 .acc-chevron{transition:transform .2s}.acc-chevron.open{transform:rotate(90deg)}
 .search-input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:.5rem;padding:.5rem .75rem;color:#e5e7eb;font-size:.75rem;width:100%}
 .search-input:focus{outline:none;border-color:#6366f1}
+/* Force light mode */
+body{background:#f8fafc!important;color:#0f172a!important}
+.bg-gray-950{background:#f8fafc!important}
+.bg-gray-900,.bg-gray-900\\/50,.bg-gray-800\\/50,.bg-gray-800\\/30,.bg-gray-800\\/20,.bg-gray-800{background:#ffffff!important}
+.border-gray-800,.border-gray-700,.border-gray-700\\/50,.divide-gray-800\\/50>*{border-color:#e2e8f0!important}
+.text-gray-200,.text-gray-300,.text-gray-400,.text-gray-500{color:#475569!important}
+.text-white{color:#0f172a!important}
+.log-row:nth-child(even){background:#f8fafc!important}
+.search-input{background:#fff!important;border:1px solid #cbd5e1!important;color:#0f172a!important}
+.tab-btn.active{border-color:#3b82f6!important;color:#1d4ed8!important;background:#dbeafe!important}
+.tab-btn{color:#475569!important}
+.tab-btn:hover{color:#0f172a!important}
+.prose,.prose p,.prose li{color:#334155!important}
+.prose strong{color:#0f172a!important}
 </style>
 </head>
-<body class="bg-gray-950 text-gray-200 min-h-screen font-sans">
+<body class="bg-gray-50 text-slate-900 min-h-screen font-sans">
 
 <!-- ═══ HEADER ═══ -->
 <header class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
@@ -79,8 +104,8 @@ export function renderAuraHtml(data: AuraReportData): string {
     <div class="w-10 h-10 rounded-lg bg-aura-600/20 flex items-center justify-center"><i class="bi bi-stars text-aura-400 text-xl"></i></div>
     <div><h2 class="text-xl font-bold text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2><p class="text-xs text-gray-400" data-i18n="executiveSubtitle">Generado con Inteligencia Artificial</p></div>
   </div>
-  <div class="prose prose-invert max-w-none text-gray-300 leading-relaxed">
-    ${d.executiveSummary ? mdHtml(d.executiveSummary) : '<p class="text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible.</p>'}
+  <div id="executive-summary-content" class="prose max-w-none text-slate-700 leading-relaxed">
+    ${summaryHtmlByLang.es || '<p class="text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible.</p>'}
   </div>
 </div>
 </section>
@@ -280,7 +305,7 @@ export function renderAuraHtml(data: AuraReportData): string {
 <section id="tab-video" class="tab-panel">
 <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
   ${d.videoRelPath
-    ? `<video controls class="w-full max-w-4xl mx-auto rounded-lg border border-gray-700 bg-black" preload="metadata" style="aspect-ratio:16/9;height:auto;object-fit:contain"><source src="${e(d.videoRelPath)}" type="video/webm"></video>`
+    ? `<video controls class="w-full max-w-4xl mx-auto rounded-lg border border-gray-700 bg-black" preload="metadata" style="width:100%;height:auto;max-height:70vh;object-fit:contain;display:block"><source src="${e(d.videoRelPath)}" type="video/webm"></video>`
     : `<div class="text-center py-16"><i class="bi bi-camera-video-off text-5xl text-gray-700 mb-4 block"></i><p class="text-gray-500" data-i18n="noVideo">No se grabó video para esta ejecución.</p><p class="text-xs text-gray-600 mt-2" data-i18n="noVideoHint">Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.</p></div>`}
 </div>
 </section>
@@ -301,6 +326,7 @@ export function renderAuraHtml(data: AuraReportData): string {
 <!-- ═══ SCRIPTS ═══ -->
 <script>
 const R=${j};
+const SUMMARY_HTML=${summaryHtmlJson};
 
 // Tabs
 document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active')})});
@@ -330,7 +356,25 @@ es:{reportTitle:'Reporte de Pruebas SAI',footerMadeBy:'Hecho por Applied AI Team
 en:{reportTitle:'SAI Test Report',footerMadeBy:'Made by Applied AI Team',tabExecutive:'Executive Summary',tabOverall:'Overall Results',tabResults:'Test Results',tabSteps:'Steps Details',tabSuccess:'Success Logs',tabErrors:'Error Logs',tabVideo:'Video',executiveTitle:'Executive Summary',executiveSubtitle:'AI-Generated Analysis',noSummary:'Executive summary not available.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Success Rate',kpiDuration:'Duration',chartResults:'Results',chartDuration:'Duration per Step (ms)',lgPassing:'Passing',lgFailed:'Failed',lgPending:'Pending',lgSkipped:'Skipped',lgIgnored:'Ignored',lgAborted:'Aborted',lgBroken:'Broken',lgCompromised:'Compromised',keyStats:'Key Statistics',ksScenarios:'Scenarios',ksTestCases:'Test Cases',ksStarted:'Tests Started',ksFinished:'Tests Finished',ksTotalDuration:'Total Duration',ksFastest:'Fastest Test',ksSlowest:'Slowest Test',ksAverage:'Average Execution Time',covOverview:'Functional Coverage Overview',covDetails:'Functional Coverage Details',covFeature:'Feature',covScenarios:'Scenarios',covTestCases:'Test Cases',covPassRate:'% Pass',covResult:'Result',covCoverage:'Coverage',failOverview:'Test Failure Overview',failFrequent:'Most Frequent Failures',failUnstable:'Most Unstable Features',noFailures:'No failures recorded.',noUnstable:'No unstable features.',infoScenario:'Scenario',infoEnvironment:'Environment',infoTester:'Tester',envBrowser:'Browser',colStep:'#',colDescription:'Description',colStatus:'Status',colDuration:'Duration',stepsLabel:'steps passed',screenshot:'Screenshot',stepLogs:'Step Logs',successEmpty:'No success logs recorded.',errorEmpty:'No errors recorded. Excellent!',noVideo:'No video recorded for this execution.',noVideoHint:'Set AURA_RECORD_VIDEO=true in .env to enable recording.',generatedAt:'Generated',colTimestamp:'Time',colElement:'Element',colAction:'Action',colMessage:'Message',colDetails:'Details',logTotal:'Total',logLogs:'logs',searchLogs:'Search logs...',successCount:'Success Logs',errorCount:'Error Logs'},
 pt:{reportTitle:'Relatório de Testes SAI',footerMadeBy:'Feito por Applied AI Team',tabExecutive:'Resumo Executivo',tabOverall:'Resultados Gerais',tabResults:'Resultados dos Testes',tabSteps:'Detalhes dos Passos',tabSuccess:'Logs de Sucesso',tabErrors:'Logs de Erro',tabVideo:'Vídeo',executiveTitle:'Resumo Executivo',executiveSubtitle:'Gerado com Inteligência Artificial',noSummary:'Resumo executivo não disponível.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiDuration:'Duração',chartResults:'Resultados',chartDuration:'Duração por Passo (ms)',lgPassing:'Aprovados',lgFailed:'Falhos',lgPending:'Pendentes',lgSkipped:'Omitidos',lgIgnored:'Ignorados',lgAborted:'Abortados',lgBroken:'Quebrados',lgCompromised:'Comprometidos',keyStats:'Estatísticas Principais',ksScenarios:'Cenários',ksTestCases:'Casos de Teste',ksStarted:'Início dos Testes',ksFinished:'Fim dos Testes',ksTotalDuration:'Duração Total',ksFastest:'Teste Mais Rápido',ksSlowest:'Teste Mais Lento',ksAverage:'Tempo Médio de Execução',covOverview:'Visão Geral de Cobertura Funcional',covDetails:'Detalhes de Cobertura Funcional',covFeature:'Feature',covScenarios:'Cenários',covTestCases:'Casos',covPassRate:'% Sucesso',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Visão Geral de Falhas',failFrequent:'Falhas Mais Frequentes',failUnstable:'Features Mais Instáveis',noFailures:'Nenhuma falha registrada.',noUnstable:'Nenhuma feature instável.',infoScenario:'Cenário',infoEnvironment:'Ambiente',infoTester:'Executor',envBrowser:'Navegador',colStep:'#',colDescription:'Descrição',colStatus:'Status',colDuration:'Duração',stepsLabel:'passos aprovados',screenshot:'Captura de Tela',stepLogs:'Logs do Passo',successEmpty:'Nenhum log de sucesso registrado.',errorEmpty:'Nenhum erro registrado. Excelente!',noVideo:'Nenhum vídeo gravado para esta execução.',noVideoHint:'Configure AURA_RECORD_VIDEO=true em .env para habilitar gravação.',generatedAt:'Gerado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Ação',colMessage:'Mensagem',colDetails:'Detalhes',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Sucesso',errorCount:'Logs de Erro'}
 };
-function switchLang(l){const t=i18n[l]||i18n.es;document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(t[k])el.textContent=t[k]});document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{const k=el.getAttribute('data-i18n-placeholder');if(t[k])el.placeholder=t[k]});document.documentElement.lang=l}
+function renderExecutiveSummary(lang){
+  const container=document.getElementById('executive-summary-content');
+  if(!container) return;
+  const html = SUMMARY_HTML[lang] || SUMMARY_HTML.en || '';
+  if(html && html.trim()){
+    container.innerHTML = html;
+  }else{
+    const t=i18n[lang]||i18n.es;
+    container.innerHTML = '<p class="text-gray-500 italic">'+(t.noSummary||'Summary unavailable')+'</p>';
+  }
+}
+function switchLang(l){
+  const t=i18n[l]||i18n.es;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(t[k])el.textContent=t[k]});
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{const k=el.getAttribute('data-i18n-placeholder');if(t[k])el.placeholder=t[k]});
+  document.documentElement.lang=l;
+  renderExecutiveSummary(l);
+}
+switchLang(document.getElementById('lang-select')?.value || 'es');
 <\/script>
 </body></html>`;
 }

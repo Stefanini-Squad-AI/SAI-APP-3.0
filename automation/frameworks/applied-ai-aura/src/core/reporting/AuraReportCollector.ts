@@ -62,6 +62,11 @@ export interface AuraReportData {
   browserInfo: { name: string; headless: boolean; viewport: string };
   tester: { name: string; email: string };
   executiveSummary?: string;
+  executiveSummaryByLang?: {
+    en: string;
+    es: string;
+    pt: string;
+  };
   videoRelPath?: string;
   reportVersion: string;
 }
@@ -280,7 +285,9 @@ export class AuraReportCollector {
       reportVersion: process.env['AURA_REPORT_VERSION'] ?? '1.0.0',
     };
 
-    data.executiveSummary = await this.generateExecutiveSummary(data);
+    const executiveSummaries = await this.generateExecutiveSummaries(data);
+    data.executiveSummaryByLang = executiveSummaries;
+    data.executiveSummary = executiveSummaries.en || '';
 
     const jsonPath = path.join(this.reportDir, 'aura-report.json');
     fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2));
@@ -299,16 +306,23 @@ export class AuraReportCollector {
 
   // ─── AI Executive Summary ───────────────────────────────────────────────────
 
-  private async generateExecutiveSummary(data: AuraReportData): Promise<string> {
+  private async generateExecutiveSummaries(
+    data: AuraReportData,
+  ): Promise<{ en: string; es: string; pt: string }> {
     try {
       const adapter: AIAdapter = createLLMAdapter();
 
       const systemPrompt = `You are a senior QA manager writing executive test summaries for stakeholders.
-Write a CONCISE executive summary (3-5 paragraphs) in English.
-The summary must be NON-TECHNICAL, focused on business impact.
+Write concise executive summaries (3-5 short paragraphs each), non-technical and business-oriented.
 Include: overall result, key findings, risk assessment, and recommendation.
-DO NOT include code, selectors, or technical details.
-Use professional but clear language suitable for C-level executives.`;
+Do NOT include code, selectors, stack traces, or low-level technical details.
+Return ONLY valid JSON with this exact schema:
+{"en":"...","es":"...","pt":"..."}
+Where:
+- "en" is English
+- "es" is Spanish
+- "pt" is Portuguese
+Do not add markdown code fences or extra keys.`;
 
       const userPrompt = `Analyze these test results and generate an executive summary:
 
@@ -326,19 +340,29 @@ ${data.steps.map(s => `  ${s.stepNumber}. [${s.status.toUpperCase()}] ${s.keywor
 
 ${data.errorLogs.length > 0 ? 'Errors found:\n' + data.errorLogs.map(l => `  - ${l.message}`).join('\n') : 'No errors found.'}`;
 
-      console.info('[AURA/Report] Generating executive summary with AI...');
+      console.info('[AURA/Report] Generating multilingual executive summaries with AI...');
       const response = await adapter.complete({
         system: systemPrompt,
         user: userPrompt,
         temperature: 0.4,
-        maxTokens: 1024,
+        maxTokens: 1800,
       });
 
-      console.info(`[AURA/Report] ✓ Executive summary generated (${response.tokensUsed} tokens, ${response.latencyMs}ms)`);
-      return response.content;
+      const parsed = parseSummaryJson(response.content);
+      if (parsed) {
+        console.info(`[AURA/Report] ✓ Multilingual executive summaries generated (${response.tokensUsed} tokens, ${response.latencyMs}ms)`);
+        return parsed;
+      }
+
+      console.warn('[AURA/Report] ⚠ AI summary JSON was invalid. Falling back to English-only summary.');
+      return {
+        en: response.content.trim(),
+        es: response.content.trim(),
+        pt: response.content.trim(),
+      };
     } catch (err) {
-      console.warn('[AURA/Report] ⚠ Could not generate AI executive summary:', err instanceof Error ? err.message : err);
-      return '';
+      console.warn('[AURA/Report] ⚠ Could not generate AI executive summaries:', err instanceof Error ? err.message : err);
+      return { en: '', es: '', pt: '' };
     }
   }
 
@@ -370,4 +394,32 @@ function sanitize(name: string): string {
     .replace(/[^a-z0-9]+/gi, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
+}
+
+function parseSummaryJson(raw: string): { en: string; es: string; pt: string } | null {
+  const direct = tryParseJson(raw);
+  if (direct) return direct;
+
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (!fenced?.[1]) return null;
+  return tryParseJson(fenced[1]);
+}
+
+function tryParseJson(value: string): { en: string; es: string; pt: string } | null {
+  try {
+    const parsed = JSON.parse(value.trim()) as Partial<Record<'en' | 'es' | 'pt', unknown>>;
+    const en = typeof parsed.en === 'string' ? parsed.en.trim() : '';
+    const es = typeof parsed.es === 'string' ? parsed.es.trim() : '';
+    const pt = typeof parsed.pt === 'string' ? parsed.pt.trim() : '';
+
+    if (!en && !es && !pt) return null;
+
+    return {
+      en: en || es || pt || '',
+      es: es || en || pt || '',
+      pt: pt || en || es || '',
+    };
+  } catch {
+    return null;
+  }
 }

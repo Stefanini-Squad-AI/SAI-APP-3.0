@@ -19,6 +19,10 @@ env:
   PREVIEW_URL: https://pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   AURA_REPORT_DOMAIN: aura-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   AURA_REPORT_URL: https://aura-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/aura-report.html
+  BACKEND_REPORT_DOMAIN: backend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  BACKEND_REPORT_URL: https://backend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/test-report.html
+  FRONTEND_REPORT_DOMAIN: frontend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  FRONTEND_REPORT_URL: https://frontend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/test-report.html
 
 jobs:
   sonarqube-backend:
@@ -53,7 +57,7 @@ jobs:
           AUTH_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-auth.json -w "%{http_code}" "${SONAR_HOST_URL}/api/authentication/validate")
           AUTH_VALID=$(jq -r '.valid // false' /tmp/sonar-auth.json 2>/dev/null || echo "false")
 
-          PROJ_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-proj.json -w "%{http_code}" "${SONAR_HOST_URL}/api/projects/search?projects=sai-app-3-0-backend")
+          PROJ_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-proj.json -w "%{http_code}" "${SONAR_HOST_URL}/api/projects/search?projects=applied-ai-team-sai3-backend")
           PROJ_COUNT=$(jq -r '.paging.total // 0' /tmp/sonar-proj.json 2>/dev/null || echo "0")
 
           if [ "$AUTH_HTTP" = "200" ] && [ "$AUTH_VALID" = "true" ] && [ "$PROJ_HTTP" = "200" ] && [ "$PROJ_COUNT" -ge 1 ]; then
@@ -88,7 +92,7 @@ jobs:
         run: |
           cd backend
           ${{ runner.temp }}/scanner/dotnet-sonarscanner begin \
-            /k:"sai-app-3-0-backend" \
+            /k:"applied-ai-team-sai3-backend" \
             /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.host.url="$SONAR_HOST_URL" \
             /d:sonar.exclusions="**/*.json,**/*.csproj,**/obj/**,**/bin/**" \
@@ -129,7 +133,7 @@ jobs:
           AUTH_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-auth.json -w "%{http_code}" "${SONAR_HOST_URL}/api/authentication/validate")
           AUTH_VALID=$(jq -r '.valid // false' /tmp/sonar-auth.json 2>/dev/null || echo "false")
 
-          PROJ_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-proj.json -w "%{http_code}" "${SONAR_HOST_URL}/api/projects/search?projects=sai-app-3-0-frontend")
+          PROJ_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-proj.json -w "%{http_code}" "${SONAR_HOST_URL}/api/projects/search?projects=applied-ai-team-sai3-frontend")
           PROJ_COUNT=$(jq -r '.paging.total // 0' /tmp/sonar-proj.json 2>/dev/null || echo "0")
 
           if [ "$AUTH_HTTP" = "200" ] && [ "$AUTH_VALID" = "true" ] && [ "$PROJ_HTTP" = "200" ] && [ "$PROJ_COUNT" -ge 1 ]; then
@@ -146,8 +150,8 @@ jobs:
         with:
           projectBaseDir: frontend
           args: >
-            -Dsonar.projectKey=sai-app-3-0-frontend
-            -Dsonar.projectName=sai-app-3-0-frontend
+            -Dsonar.projectKey=applied-ai-team-sai3-frontend
+            -Dsonar.projectName=applied-ai-team-sai3-frontend
             -Dsonar.sources=src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**,**/*.min.js,**/*.css,**/locales/**,**/*.gitkeep,**/test-results/**
             -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx,**/*.spec.js,**/*.spec.jsx,**/__tests__/**
@@ -167,6 +171,8 @@ jobs:
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     continue-on-error: true
+    outputs:
+      backend_report_url: ${{ steps.publish-backend-report.outputs.backend_report_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -230,6 +236,19 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
+      - name: Publish backend unit report to Surge
+        if: always()
+        id: publish-backend-report
+        working-directory: ./backend
+        run: |
+          if [ -f "TestResults/test-report.html" ]; then
+            npx surge --project TestResults --domain ${{ env.BACKEND_REPORT_DOMAIN }}
+            echo "backend_report_url=${{ env.BACKEND_REPORT_URL }}" >> $GITHUB_OUTPUT
+          fi
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
       - name: Backend summary
         if: always()
         working-directory: ./backend
@@ -237,12 +256,18 @@ jobs:
           if [ -f "TestResults/test-report.md" ]; then
             cat TestResults/test-report.md >> $GITHUB_STEP_SUMMARY
           fi
+          if [ -n "${{ steps.publish-backend-report.outputs.backend_report_url }}" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- Backend HTML Report: [Open report](${{ steps.publish-backend-report.outputs.backend_report_url }})" >> $GITHUB_STEP_SUMMARY
+          fi
 
   frontend-unit-tests:
     name: Frontend Unit Tests (Jest)
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     continue-on-error: true
+    outputs:
+      frontend_report_url: ${{ steps.publish-frontend-report.outputs.frontend_report_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -278,12 +303,29 @@ jobs:
             frontend/test-results/jest/test-report.md
           retention-days: 90
 
+      - name: Publish frontend unit report to Surge
+        if: always()
+        id: publish-frontend-report
+        working-directory: ./frontend
+        run: |
+          if [ -f "test-results/jest/test-report.html" ]; then
+            npx surge --project test-results/jest --domain ${{ env.FRONTEND_REPORT_DOMAIN }}
+            echo "frontend_report_url=${{ env.FRONTEND_REPORT_URL }}" >> $GITHUB_OUTPUT
+          fi
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
       - name: Frontend summary
         if: always()
         working-directory: ./frontend
         run: |
           if [ -f "test-results/jest/test-report.md" ]; then
             cat test-results/jest/test-report.md >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -n "${{ steps.publish-frontend-report.outputs.frontend_report_url }}" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- Frontend HTML Report: [Open report](${{ steps.publish-frontend-report.outputs.frontend_report_url }})" >> $GITHUB_STEP_SUMMARY
           fi
 
   build-and-quality-tests:
@@ -572,6 +614,60 @@ jobs:
           echo "## Quick Links" >> $GITHUB_STEP_SUMMARY
           echo "- Preview App: [Open preview](${{ needs.deploy-preview.outputs.preview_url }})" >> $GITHUB_STEP_SUMMARY
           echo "- AURA HTML Report: [Open report](${{ env.AURA_REPORT_URL }})" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}" ]; then
+            echo "- Sonar Backend: [Open project](${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}/dashboard?id=applied-ai-team-sai3-backend)" >> $GITHUB_STEP_SUMMARY
+            echo "- Sonar Frontend: [Open project](${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}/dashboard?id=applied-ai-team-sai3-frontend)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Sonar Backend: SONAR_HOST_URL_APPLIED_AI_TEAM secret not configured" >> $GITHUB_STEP_SUMMARY
+            echo "- Sonar Frontend: SONAR_HOST_URL_APPLIED_AI_TEAM secret not configured" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -n "${{ needs.backend-unit-tests.outputs.backend_report_url }}" ]; then
+            echo "- Backend Unit Report: [Open report](${{ needs.backend-unit-tests.outputs.backend_report_url }})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Backend Unit Report: not published" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -n "${{ needs.frontend-unit-tests.outputs.frontend_report_url }}" ]; then
+            echo "- Frontend Unit Report: [Open report](${{ needs.frontend-unit-tests.outputs.frontend_report_url }})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Frontend Unit Report: not published" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment unit test report URLs on PR
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const backendUrl = `${{ needs.backend-unit-tests.outputs.backend_report_url }}`;
+            const frontendUrl = `${{ needs.frontend-unit-tests.outputs.frontend_report_url }}`;
+            const backendLine = backendUrl ? `[Open backend unit report](${backendUrl})` : 'Backend unit report not published';
+            const frontendLine = frontendUrl ? `[Open frontend unit report](${frontendUrl})` : 'Frontend unit report not published';
+            const body = `### Unit test reports ready\n\n- ${backendLine}\n- ${frontendLine}\n\n_Updated on push to this PR. Torn down when PR is closed._`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c =>
+              c.user.login === 'github-actions[bot]' && c.body.includes('Unit test reports ready')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
 
   teardown-preview:
     if: always() && github.event.action == 'closed'
@@ -586,6 +682,18 @@ jobs:
 
       - name: Tear down AURA report preview
         run: npx surge teardown ${{ env.AURA_REPORT_DOMAIN }} || true
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Tear down backend unit report preview
+        run: npx surge teardown ${{ env.BACKEND_REPORT_DOMAIN }} || true
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Tear down frontend unit report preview
+        run: npx surge teardown ${{ env.FRONTEND_REPORT_DOMAIN }} || true
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
