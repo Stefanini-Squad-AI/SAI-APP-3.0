@@ -35,7 +35,35 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Validate SonarQube backend access
+        id: sonar-backend-access
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_BACKEND }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then
+            echo "can_scan=false" >> "$GITHUB_OUTPUT"
+            echo "reason=Missing SONAR_TOKEN_APPLIED_AI_TEAM_BACKEND or SONAR_HOST_URL_APPLIED_AI_TEAM secret." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          AUTH_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-auth.json -w "%{http_code}" "${SONAR_HOST_URL}/api/authentication/validate")
+          AUTH_VALID=$(jq -r '.valid // false' /tmp/sonar-auth.json 2>/dev/null || echo "false")
+
+          PROJ_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-proj.json -w "%{http_code}" "${SONAR_HOST_URL}/api/projects/search?projects=sai-app-3-0-backend")
+          PROJ_COUNT=$(jq -r '.paging.total // 0' /tmp/sonar-proj.json 2>/dev/null || echo "0")
+
+          if [ "$AUTH_HTTP" = "200" ] && [ "$AUTH_VALID" = "true" ] && [ "$PROJ_HTTP" = "200" ] && [ "$PROJ_COUNT" -ge 1 ]; then
+            echo "can_scan=true" >> "$GITHUB_OUTPUT"
+            echo "reason=Access validated." >> "$GITHUB_OUTPUT"
+          else
+            echo "can_scan=false" >> "$GITHUB_OUTPUT"
+            echo "reason=Token is invalid, project key is missing, or token lacks Analyze/Create Project permissions." >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Cache SonarQube scanner
+        if: steps.sonar-backend-access.outputs.can_scan == 'true'
         id: cache-sonar-scanner
         uses: actions/cache@v4
         with:
@@ -44,12 +72,13 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar-scanner
 
       - name: Install SonarQube scanner
-        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        if: steps.sonar-backend-access.outputs.can_scan == 'true' && steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         run: |
           mkdir -p ${{ runner.temp }}/scanner
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}/scanner
 
       - name: Build and analyze backend
+        if: steps.sonar-backend-access.outputs.can_scan == 'true'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_BACKEND }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
@@ -65,6 +94,12 @@ jobs:
           dotnet build TuCreditoOnline.sln --configuration Release
           ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
+      - name: SonarQube backend skipped summary
+        if: steps.sonar-backend-access.outputs.can_scan != 'true'
+        run: |
+          echo "## SonarQube Backend (.NET)" >> $GITHUB_STEP_SUMMARY
+          echo "Skipped Sonar backend scan: ${{ steps.sonar-backend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+
   sonarqube-frontend:
     name: SonarQube Frontend (React/Vite)
     if: github.event.action != 'closed'
@@ -76,7 +111,35 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate SonarQube frontend access
+        id: sonar-frontend-access
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_FRONTEND }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then
+            echo "can_scan=false" >> "$GITHUB_OUTPUT"
+            echo "reason=Missing SONAR_TOKEN_APPLIED_AI_TEAM_FRONTEND or SONAR_HOST_URL_APPLIED_AI_TEAM secret." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          AUTH_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-auth.json -w "%{http_code}" "${SONAR_HOST_URL}/api/authentication/validate")
+          AUTH_VALID=$(jq -r '.valid // false' /tmp/sonar-auth.json 2>/dev/null || echo "false")
+
+          PROJ_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-proj.json -w "%{http_code}" "${SONAR_HOST_URL}/api/projects/search?projects=sai-app-3-0-frontend")
+          PROJ_COUNT=$(jq -r '.paging.total // 0' /tmp/sonar-proj.json 2>/dev/null || echo "0")
+
+          if [ "$AUTH_HTTP" = "200" ] && [ "$AUTH_VALID" = "true" ] && [ "$PROJ_HTTP" = "200" ] && [ "$PROJ_COUNT" -ge 1 ]; then
+            echo "can_scan=true" >> "$GITHUB_OUTPUT"
+            echo "reason=Access validated." >> "$GITHUB_OUTPUT"
+          else
+            echo "can_scan=false" >> "$GITHUB_OUTPUT"
+            echo "reason=Token is invalid, project key is missing, or token lacks Analyze/Create Project permissions." >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run SonarQube scan
+        if: steps.sonar-frontend-access.outputs.can_scan == 'true'
         uses: SonarSource/sonarqube-scan-action@v6
         with:
           projectBaseDir: frontend
@@ -90,6 +153,12 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_FRONTEND }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+
+      - name: SonarQube frontend skipped summary
+        if: steps.sonar-frontend-access.outputs.can_scan != 'true'
+        run: |
+          echo "## SonarQube Frontend (React/Vite)" >> $GITHUB_STEP_SUMMARY
+          echo "Skipped Sonar frontend scan: ${{ steps.sonar-frontend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
 
   backend-unit-tests:
     name: Backend Unit Tests (.NET)
