@@ -111,11 +111,15 @@ jobs:
           dotnet build TuCreditoOnline.sln --configuration Release
           ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
-      - name: SonarQube backend skipped summary
-        if: steps.sonar-backend-access.outputs.can_scan != 'true'
+      - name: SonarQube backend summary
+        if: always()
         run: |
           echo "## SonarQube Backend (.NET)" >> $GITHUB_STEP_SUMMARY
-          echo "Skipped Sonar backend scan: ${{ steps.sonar-backend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.sonar-backend-access.outputs.can_scan }}" = "true" ]; then
+            echo "Sonar backend scan was executed. ${{ steps.sonar-backend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Skipped Sonar backend scan: ${{ steps.sonar-backend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          fi
 
   sonarqube-frontend:
     name: SonarQube Frontend (React/Vite)
@@ -179,11 +183,15 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_FRONTEND }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
 
-      - name: SonarQube frontend skipped summary
-        if: steps.sonar-frontend-access.outputs.can_scan != 'true'
+      - name: SonarQube frontend summary
+        if: always()
         run: |
           echo "## SonarQube Frontend (React/Vite)" >> $GITHUB_STEP_SUMMARY
-          echo "Skipped Sonar frontend scan: ${{ steps.sonar-frontend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.sonar-frontend-access.outputs.can_scan }}" = "true" ]; then
+            echo "Sonar frontend scan was executed. ${{ steps.sonar-frontend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Skipped Sonar frontend scan: ${{ steps.sonar-frontend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          fi
 
   backend-unit-tests:
     name: Backend Unit Tests (.NET)
