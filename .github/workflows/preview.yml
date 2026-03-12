@@ -21,7 +21,7 @@ env:
 jobs:
   sonarqube-backend:
     name: SonarQube Backend (.NET)
-    if: github.event.action != 'closed' && secrets.SONAR_TOKEN_APPLIED_AI_TEAM_BACKEND != '' && secrets.SONAR_HOST_URL_APPLIED_AI_TEAM != ''
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -67,7 +67,7 @@ jobs:
 
   sonarqube-frontend:
     name: SonarQube Frontend (React/Vite)
-    if: github.event.action != 'closed' && secrets.SONAR_TOKEN_APPLIED_AI_TEAM_FRONTEND != '' && secrets.SONAR_HOST_URL_APPLIED_AI_TEAM != ''
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
