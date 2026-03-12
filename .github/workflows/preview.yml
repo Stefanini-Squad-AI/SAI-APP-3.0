@@ -1,47 +1,293 @@
-name: PR Preview
+name: CI
 
 on:
   pull_request:
-    types: [ready_for_review, synchronize, closed]
-    branches:
-      - main
+    types: [opened, reopened, ready_for_review, synchronize, closed]
+    branches: ["main"]
     paths-ignore:
-      - '**/*.md'
+      - "**/*.md"
 
 permissions:
   contents: read
   pull-requests: write
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  DOTNET_VERSION: "8.0.x"
+  NODE_VERSION: "20"
+  PREVIEW_DOMAIN: pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  PREVIEW_URL: https://pr-${{ github.event.number }}-sai-app-3-0.surge.sh
 
 jobs:
-  deploy-preview:
+  sonarqube-backend:
+    name: SonarQube Backend (.NET)
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.2.2
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache SonarQube scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/scanner
+          key: ${{ runner.os }}-sonar-scanner-${{ hashFiles('backend/**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-sonar-scanner
+
+      - name: Install SonarQube scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ${{ runner.temp }}/scanner
+          dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}/scanner
+
+      - name: Build and analyze backend
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_BACKEND }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+        shell: bash
+        run: |
+          cd backend
+          ${{ runner.temp }}/scanner/dotnet-sonarscanner begin \
+            /k:"sai-app-3-0-backend" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.host.url="$SONAR_HOST_URL" \
+            /d:sonar.exclusions="**/*.json,**/*.csproj,**/obj/**,**/bin/**" \
+            /d:sonar.coverage.exclusions="**/tests/**,**/*Tests*/**"
+          dotnet build TuCreditoOnline.sln --configuration Release
+          ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+  sonarqube-frontend:
+    name: SonarQube Frontend (React/Vite)
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          projectBaseDir: frontend
+          args: >
+            -Dsonar.projectKey=sai-app-3-0-frontend
+            -Dsonar.projectName=sai-app-3-0-frontend
+            -Dsonar.sources=src
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**,**/*.min.js,**/*.css,**/locales/**,**/*.gitkeep,**/test-results/**
+            -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx,**/*.spec.js,**/*.spec.jsx,**/__tests__/**
+            -Dsonar.sourceEncoding=UTF-8
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_FRONTEND }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+
+  backend-unit-tests:
+    name: Backend Unit Tests (.NET)
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('backend/**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4.4.0
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: ./backend/package-lock.json
 
-      - name: Install dependencies
+      - name: Restore and build backend
+        working-directory: ./backend
+        run: |
+          dotnet restore TuCreditoOnline.sln
+          dotnet build TuCreditoOnline.sln --no-restore --configuration Release
+
+      - name: Run backend unit tests
+        working-directory: ./backend
+        run: |
+          dotnet test tests/TuCreditoOnline.Tests/TuCreditoOnline.Tests.csproj \
+            --no-build --configuration Release \
+            --filter "FullyQualifiedName~.UnitTests." \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory ./TestResults \
+            --collect:"XPlat Code Coverage" \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
+        continue-on-error: true
+
+      - name: Generate backend test reports
+        if: always()
+        working-directory: ./backend
+        run: |
+          npm ci || npm install
+          npm run test:report || true
+          dotnet tool install -g dotnet-reportgenerator-globaltool || true
+          COVERAGE_FILE=$(find ./TestResults -name "coverage.cobertura.xml" -type f | head -n 1)
+          if [ -n "$COVERAGE_FILE" ]; then
+            reportgenerator -reports:"$COVERAGE_FILE" -targetdir:./TestResults/coverage-report -reporttypes:Html || true
+          fi
+
+      - name: Upload backend reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-unit-test-results
+          path: |
+            backend/TestResults/test-report.html
+            backend/TestResults/test-report.md
+            backend/TestResults/coverage-report/**
+          retention-days: 90
+
+      - name: Backend summary
+        if: always()
+        working-directory: ./backend
+        run: |
+          if [ -f "TestResults/test-report.md" ]; then
+            cat TestResults/test-report.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+  frontend-unit-tests:
+    name: Frontend Unit Tests (Jest)
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ./frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
         run: npm ci
-        working-directory: frontend
 
-      - name: Build
-        run: npm run build
-        working-directory: frontend
+      - name: Run frontend tests
+        working-directory: ./frontend
+        run: npm test -- --coverage --passWithNoTests --ci
+        continue-on-error: true
+
+      - name: Generate frontend test reports
+        if: always()
+        working-directory: ./frontend
+        run: npm run test:report || true
+
+      - name: Upload frontend reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-unit-test-results
+          path: |
+            frontend/test-results/jest/test-report.html
+            frontend/test-results/jest/test-report.md
+          retention-days: 90
+
+      - name: Frontend summary
+        if: always()
+        working-directory: ./frontend
+        run: |
+          if [ -f "test-results/jest/test-report.md" ]; then
+            cat test-results/jest/test-report.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+  build-and-quality-tests:
+    name: Build and Quality Tests
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    needs: [backend-unit-tests, frontend-unit-tests]
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('backend/**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore and build backend
+        working-directory: ./backend
+        run: |
+          dotnet restore TuCreditoOnline.sln
+          dotnet build TuCreditoOnline.sln --no-restore --configuration Release
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ./frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./frontend
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+
+  deploy-preview:
+    name: Deploy Preview with Surge
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    needs: [build-and-quality-tests]
+    outputs:
+      preview_url: ${{ steps.preview.outputs.preview_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download frontend build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
 
       - name: Deploy preview to Surge
-        run: npx surge --project frontend/dist --domain pr-${{ github.event.number }}-tucreditoonline.surge.sh
+        id: preview
+        run: |
+          npx surge --project frontend/dist --domain ${{ env.PREVIEW_DOMAIN }}
+          echo "preview_url=${{ env.PREVIEW_URL }}" >> $GITHUB_OUTPUT
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
@@ -50,8 +296,8 @@ jobs:
         uses: actions/github-script@v7.0.1
         with:
           script: |
-            const url = `https://pr-${{ github.event.number }}-tucreditoonline.surge.sh`;
-            const body = `### Preview deployment ready\n\n🔗 ${url}\n\n_Updated on push to this PR. Torn down when PR is closed._`;
+            const url = `${{ env.PREVIEW_URL }}`;
+            const body = `### Preview deployment ready\n\n${url}\n\n_Updated on push to this PR. Torn down when PR is closed._`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -79,12 +325,133 @@ jobs:
               });
             }
 
+  functional-tests-web:
+    name: Functional Tests - Web (AURA)
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    needs: [deploy-preview]
+    timeout-minutes: 25
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: automation/frameworks/applied-ai-aura/package-lock.json
+
+      - name: Install AURA dependencies and Playwright
+        working-directory: automation/frameworks/applied-ai-aura
+        run: |
+          npm ci
+          npx playwright install chromium --with-deps
+
+      - name: Create AURA .env for CI
+        working-directory: automation/frameworks/applied-ai-aura
+        env:
+          CI_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+        run: |
+          printf "MODEL_PROVIDER=perplexity\n" > .env
+          printf "PERPLEXITY_MODEL=sonar\n" >> .env
+          printf "PERPLEXITY_API_KEY=%s\n" "${CI_PERPLEXITY_API_KEY}" >> .env
+          printf "AURA_TESTER_NAME=SAI APP 3.0\n" >> .env
+          printf "AURA_TESTER_EMAIL=sai-latam@stefanini.com\n" >> .env
+          printf "AURA_BROWSER=chromium\n" >> .env
+          printf "AURA_HEADLESS=true\n" >> .env
+          printf "AURA_TIMEOUT=30000\n" >> .env
+          printf "AURA_COGNITIVE_ENABLED=true\n" >> .env
+          printf "AURA_COGNITIVE_CACHE=true\n" >> .env
+          printf "AURA_COGNITIVE_CACHE_TTL=3600\n" >> .env
+          printf "AURA_REPORT_TITLE=SAI Test Report\n" >> .env
+          printf "AURA_REPORT_VERSION=1.0.0\n" >> .env
+          printf "AURA_REPORT_THEME=light\n" >> .env
+          printf "AURA_RECORD_VIDEO=true\n" >> .env
+          printf "AURA_DOCS_DIR=docs\n" >> .env
+          printf "AURA_TARGET_URL=%s\n" "${{ needs.deploy-preview.outputs.preview_url }}" >> .env
+
+      - name: Run AURA functional tests (@preview)
+        working-directory: automation/frameworks/applied-ai-aura
+        run: npx cucumber-js --tags "@preview"
+        continue-on-error: true
+
+      - name: Locate latest AURA report and video
+        if: always()
+        id: aura-latest
+        working-directory: automation/frameworks/applied-ai-aura
+        run: |
+          LATEST_REPORT=$(find reports -name "aura-report.html" | sort | tail -n 1 || true)
+          LATEST_VIDEO=$(find reports -name "*.webm" | sort | tail -n 1 || true)
+          echo "latest_report=${LATEST_REPORT}" >> $GITHUB_OUTPUT
+          echo "latest_video=${LATEST_VIDEO}" >> $GITHUB_OUTPUT
+
+      - name: Upload AURA reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-functional-report
+          path: |
+            automation/frameworks/applied-ai-aura/reports/**
+            automation/frameworks/applied-ai-aura/docs/**
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Functional tests summary
+        if: always()
+        run: |
+          echo "## Functional Tests - Web (AURA)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Framework | AURA (Playwright + Cucumber + Cognitive Scanner) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Target | PR Preview (Surge) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Preview URL | \`${{ needs.deploy-preview.outputs.preview_url }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tag | \`@preview\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Latest AURA Report" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.aura-latest.outputs.latest_report }}" ]; then
+            echo "- HTML: \`${{ steps.aura-latest.outputs.latest_report }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- HTML: not generated" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -n "${{ steps.aura-latest.outputs.latest_video }}" ]; then
+            echo "- Video: \`${{ steps.aura-latest.outputs.latest_video }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Video: not generated" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download artifact \`aura-functional-report\` to open the latest HTML report and video." >> $GITHUB_STEP_SUMMARY
+
+  pipeline-summary:
+    name: Pipeline Summary
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    needs: [sonarqube-backend, sonarqube-frontend, backend-unit-tests, frontend-unit-tests, build-and-quality-tests, deploy-preview, functional-tests-web]
+    steps:
+      - name: Generate final summary
+        run: |
+          echo "# SAI APP 3.0 - CI Pipeline" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Phase | Description | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| SonarQube | Backend and Frontend scans | ${{ needs.sonarqube-backend.result }}/${{ needs.sonarqube-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | Backend and Frontend unit tests | ${{ needs.backend-unit-tests.result }}/${{ needs.frontend-unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | Build backend and frontend | ${{ needs.build-and-quality-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Preview Deploy | Deploy PR preview with Surge | ${{ needs.deploy-preview.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Functional Tests | AURA functional tests and video report | ${{ needs.functional-tests-web.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- backend-unit-test-results" >> $GITHUB_STEP_SUMMARY
+          echo "- frontend-unit-test-results" >> $GITHUB_STEP_SUMMARY
+          echo "- aura-functional-report (HTML + video)" >> $GITHUB_STEP_SUMMARY
+
   teardown-preview:
     if: github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: Tear down preview
-        run: npx surge teardown pr-${{ github.event.number }}-tucreditoonline.surge.sh
+        run: npx surge teardown ${{ env.PREVIEW_DOMAIN }}
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
@@ -108,6 +475,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: existing.id,
-                body: `### Preview deployment\n\n~~Torn down after PR was closed.~~`,
+                body: "### Preview deployment\n\n~~Torn down after PR was closed.~~",
               });
             }

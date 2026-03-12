@@ -23,7 +23,8 @@ i18n
       escapeValue: false,
     },
     detection: {
-      order: ['localStorage', 'cookie', 'navigator'],
+      // Default to English unless the user explicitly selected a language.
+      order: ['localStorage', 'cookie'],
       caches: ['localStorage', 'cookie'],
       lookupLocalStorage: LANGUAGE_CACHE_KEY,
       lookupCookie: LANGUAGE_CACHE_KEY,

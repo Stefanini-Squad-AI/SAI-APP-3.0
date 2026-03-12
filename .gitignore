@@ -35,6 +35,13 @@ frontend/.coverage/
 frontend/test-results/
 frontend/npm-debug.log*
 
+# Automation - AURA
+automation/frameworks/applied-ai-aura/reports/
+automation/frameworks/applied-ai-aura/docs/
+automation/frameworks/applied-ai-aura/node_modules/
+automation/frameworks/applied-ai-aura/dist/
+automation/frameworks/applied-ai-aura/.env
+
 # Docker
 docker-logs/
 *.tar

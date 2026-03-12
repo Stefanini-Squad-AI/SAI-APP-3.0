@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "lib": ["ES2022", "DOM"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@aura/core": ["./src/core/index.ts"],
+      "@aura/intent": ["./src/core/intent/index.ts"],
+      "@aura/cognitive": ["./src/core/cognitive/index.ts"],
+      "@aura/changelog": ["./src/core/changelog/index.ts"],
+      "@aura/reporting": ["./src/core/reporting/index.ts"],
+      "@aura/types": ["./src/types/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "features/**/*"],
+  "exclude": ["node_modules", "dist", "reports"]
+}
