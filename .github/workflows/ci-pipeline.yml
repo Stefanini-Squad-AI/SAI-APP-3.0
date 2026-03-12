@@ -23,6 +23,9 @@ env:
   BACKEND_REPORT_URL: https://backend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/test-report.html
   FRONTEND_REPORT_DOMAIN: frontend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   FRONTEND_REPORT_URL: https://frontend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/test-report.html
+  SECURITY_REPORT_DOMAIN: security-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  SECURITY_FRONTEND_REPORT_URL: https://security-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/zap-frontend-report.html
+  SECURITY_API_REPORT_URL: https://security-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/zap-api-report.html
 
 jobs:
   sonarqube-backend:
@@ -60,12 +63,20 @@ jobs:
           PROJ_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-proj.json -w "%{http_code}" "${SONAR_HOST_URL}/api/projects/search?projects=applied-ai-team-sai3-backend" || echo "000")
           PROJ_COUNT=$(python3 -c "import json; d=json.load(open('/tmp/sonar-proj.json')); print(int(d.get('paging',{}).get('total',0)))" 2>/dev/null || echo "0")
 
-          if [ "$AUTH_HTTP" = "200" ] && [ "$AUTH_VALID" = "true" ] && [ "$PROJ_HTTP" = "200" ] && [ "$PROJ_COUNT" -ge 1 ]; then
-            echo "can_scan=true" >> "$GITHUB_OUTPUT"
-            echo "reason=Access validated." >> "$GITHUB_OUTPUT"
+          if [ "$AUTH_HTTP" = "200" ] && [ "$AUTH_VALID" = "true" ]; then
+            if [ "$PROJ_HTTP" = "200" ] && [ "$PROJ_COUNT" -ge 1 ]; then
+              echo "can_scan=true" >> "$GITHUB_OUTPUT"
+              echo "reason=Access validated." >> "$GITHUB_OUTPUT"
+            elif [ "$PROJ_HTTP" = "401" ] || [ "$PROJ_HTTP" = "403" ]; then
+              echo "can_scan=true" >> "$GITHUB_OUTPUT"
+              echo "reason=Token is valid; project visibility check is restricted. Proceeding with scan." >> "$GITHUB_OUTPUT"
+            else
+              echo "can_scan=false" >> "$GITHUB_OUTPUT"
+              echo "reason=Validation failed (auth_http=$AUTH_HTTP, auth_valid=$AUTH_VALID, proj_http=$PROJ_HTTP, proj_count=$PROJ_COUNT)." >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "can_scan=false" >> "$GITHUB_OUTPUT"
-            echo "reason=Validation failed (auth_http=$AUTH_HTTP, auth_valid=$AUTH_VALID, proj_http=$PROJ_HTTP, proj_count=$PROJ_COUNT). Check token permissions and project key." >> "$GITHUB_OUTPUT"
+            echo "reason=Validation failed (auth_http=$AUTH_HTTP, auth_valid=$AUTH_VALID)." >> "$GITHUB_OUTPUT"
           fi
 
       - name: Cache SonarQube scanner
@@ -136,12 +147,20 @@ jobs:
           PROJ_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-proj.json -w "%{http_code}" "${SONAR_HOST_URL}/api/projects/search?projects=applied-ai-team-sai3-frontend" || echo "000")
           PROJ_COUNT=$(python3 -c "import json; d=json.load(open('/tmp/sonar-proj.json')); print(int(d.get('paging',{}).get('total',0)))" 2>/dev/null || echo "0")
 
-          if [ "$AUTH_HTTP" = "200" ] && [ "$AUTH_VALID" = "true" ] && [ "$PROJ_HTTP" = "200" ] && [ "$PROJ_COUNT" -ge 1 ]; then
-            echo "can_scan=true" >> "$GITHUB_OUTPUT"
-            echo "reason=Access validated." >> "$GITHUB_OUTPUT"
+          if [ "$AUTH_HTTP" = "200" ] && [ "$AUTH_VALID" = "true" ]; then
+            if [ "$PROJ_HTTP" = "200" ] && [ "$PROJ_COUNT" -ge 1 ]; then
+              echo "can_scan=true" >> "$GITHUB_OUTPUT"
+              echo "reason=Access validated." >> "$GITHUB_OUTPUT"
+            elif [ "$PROJ_HTTP" = "401" ] || [ "$PROJ_HTTP" = "403" ]; then
+              echo "can_scan=true" >> "$GITHUB_OUTPUT"
+              echo "reason=Token is valid; project visibility check is restricted. Proceeding with scan." >> "$GITHUB_OUTPUT"
+            else
+              echo "can_scan=false" >> "$GITHUB_OUTPUT"
+              echo "reason=Validation failed (auth_http=$AUTH_HTTP, auth_valid=$AUTH_VALID, proj_http=$PROJ_HTTP, proj_count=$PROJ_COUNT)." >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "can_scan=false" >> "$GITHUB_OUTPUT"
-            echo "reason=Validation failed (auth_http=$AUTH_HTTP, auth_valid=$AUTH_VALID, proj_http=$PROJ_HTTP, proj_count=$PROJ_COUNT). Check token permissions and project key." >> "$GITHUB_OUTPUT"
+            echo "reason=Validation failed (auth_http=$AUTH_HTTP, auth_valid=$AUTH_VALID)." >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run SonarQube scan
@@ -333,6 +352,9 @@ jobs:
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     needs: [backend-unit-tests, frontend-unit-tests]
+    outputs:
+      security_frontend_report_url: ${{ steps.publish-security-report.outputs.security_frontend_report_url }}
+      security_api_report_url: ${{ steps.publish-security-report.outputs.security_api_report_url }}
     timeout-minutes: 35
     steps:
       - name: Checkout code
@@ -549,32 +571,62 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
+      - name: Publish security reports to Surge
+        if: always()
+        id: publish-security-report
+        run: |
+          if [ -f "test-results/security/zap-frontend-report.html" ] || [ -f "test-results/security/zap-api-report.html" ]; then
+            npx surge --project test-results/security --domain ${{ env.SECURITY_REPORT_DOMAIN }}
+            if [ -f "test-results/security/zap-frontend-report.html" ]; then
+              echo "security_frontend_report_url=${{ env.SECURITY_FRONTEND_REPORT_URL }}" >> $GITHUB_OUTPUT
+            fi
+            if [ -f "test-results/security/zap-api-report.html" ]; then
+              echo "security_api_report_url=${{ env.SECURITY_API_REPORT_URL }}" >> $GITHUB_OUTPUT
+            fi
+          fi
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
       - name: Build and quality summary
         if: always()
         run: |
+          ARTIFACTS_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}#artifacts"
           echo "## Build and Quality Tests" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Integration Tests" >> $GITHUB_STEP_SUMMARY
           if [ -f "test-results/integration/integration-results.trx" ]; then
-            echo "- TRX generated: \`test-results/integration/integration-results.trx\`" >> $GITHUB_STEP_SUMMARY
+            echo "- TRX generated: \`integration-results.trx\` in artifact [integration-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
           else
             echo "- TRX not generated" >> $GITHUB_STEP_SUMMARY
           fi
           if [ -f "test-results/logs/integration.log" ]; then
-            echo "- Log generated: \`test-results/logs/integration.log\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Log generated: \`integration.log\` in artifact [integration-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Security Tests (OWASP ZAP)" >> $GITHUB_STEP_SUMMARY
           if [ -f "test-results/security/zap-frontend-report.md" ]; then
-            echo "- Frontend report: \`test-results/security/zap-frontend-report.md\`" >> $GITHUB_STEP_SUMMARY
+            echo "- Frontend report (Markdown): \`zap-frontend-report.md\` in artifact [security-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
+            if [ -n "${{ steps.publish-security-report.outputs.security_frontend_report_url }}" ]; then
+              echo "- Frontend report (HTML): [Open report](${{ steps.publish-security-report.outputs.security_frontend_report_url }})" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- Frontend report (HTML): open \`zap-frontend-report.html\` from artifact [security-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
+            fi
           else
             echo "- Frontend report not generated" >> $GITHUB_STEP_SUMMARY
           fi
           if [ -f "test-results/security/zap-api-report.md" ]; then
-            echo "- API report: \`test-results/security/zap-api-report.md\`" >> $GITHUB_STEP_SUMMARY
+            echo "- API report (Markdown): \`zap-api-report.md\` in artifact [security-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
+            if [ -n "${{ steps.publish-security-report.outputs.security_api_report_url }}" ]; then
+              echo "- API report (HTML): [Open report](${{ steps.publish-security-report.outputs.security_api_report_url }})" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- API report (HTML): open \`zap-api-report.html\` from artifact [security-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
+            fi
           else
             echo "- API report not generated" >> $GITHUB_STEP_SUMMARY
           fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts page: [Open run artifacts]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
 
       - name: Stop local services
         if: always()
@@ -841,6 +893,16 @@ jobs:
           else
             echo "- Frontend Unit Report: not published" >> $GITHUB_STEP_SUMMARY
           fi
+          if [ -n "${{ needs.build-and-quality-tests.outputs.security_frontend_report_url }}" ]; then
+            echo "- Security Frontend HTML Report: [Open report](${{ needs.build-and-quality-tests.outputs.security_frontend_report_url }})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Security Frontend HTML Report: not published" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -n "${{ needs.build-and-quality-tests.outputs.security_api_report_url }}" ]; then
+            echo "- Security API HTML Report: [Open report](${{ needs.build-and-quality-tests.outputs.security_api_report_url }})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Security API HTML Report: not published" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Comment unit test report URLs on PR
         if: always()
@@ -904,6 +966,12 @@ jobs:
 
       - name: Tear down frontend unit report preview
         run: npx surge teardown ${{ env.FRONTEND_REPORT_DOMAIN }} || true
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Tear down security report preview
+        run: npx surge teardown ${{ env.SECURITY_REPORT_DOMAIN }} || true
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
