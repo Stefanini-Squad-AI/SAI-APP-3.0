@@ -26,7 +26,8 @@ public class CreditRequestsControllerTests : IClassFixture<TestWebApplicationFac
         {
             Email = _faker.Internet.Email(),
             Password = "Admin123!@#",
-            FullName = "Admin User"
+            FullName = "Admin User",
+            Role = "Admin"
         };
 
         var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerDto);
@@ -38,13 +39,7 @@ public class CreditRequestsControllerTests : IClassFixture<TestWebApplicationFac
         }
         
         var registerResult = await registerResponse.Content.ReadFromJsonAsync<AuthResponseDto>();
-        // Registration now defaults to "User" role, so only return token for actual admins.
-        if (!string.Equals(registerResult?.User?.Role, "Admin", StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
-        return registerResult.Token;
+        return registerResult?.Token;
     }
 
     [Fact]

@@ -43,7 +43,8 @@ public class AuthServiceTests
         {
             Email = "test@example.com",
             Password = "Password123!",
-            FullName = "Test User"
+            FullName = "Test User",
+            Role = "User"
         };
 
         _mockUserRepository
@@ -55,7 +56,7 @@ public class AuthServiceTests
             Id = Guid.NewGuid().ToString(),
             Email = registerDto.Email,
             FullName = registerDto.FullName,
-            Role = "User"
+            Role = registerDto.Role
         };
 
         _mockUserRepository
@@ -83,7 +84,8 @@ public class AuthServiceTests
         {
             Email = "existing@example.com",
             Password = "Password123!",
-            FullName = "Test User"
+            FullName = "Test User",
+            Role = "User"
         };
 
         _mockUserRepository
