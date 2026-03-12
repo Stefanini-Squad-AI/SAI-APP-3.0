@@ -97,7 +97,7 @@ public class AuthServiceTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Message.Should().Contain("ya está registrado");
+        result.Message.Should().Contain("already registered");
         
         _mockUserRepository.Verify(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -112,10 +112,7 @@ public class AuthServiceTests
             Password = "Password123!"
         };
 
-        // Hash password using SHA256 (same as AuthService)
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes("Password123!"));
-        var hashedPassword = Convert.ToBase64String(hashedBytes);
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword("Password123!");
 
         var user = new User
         {
@@ -165,7 +162,7 @@ public class AuthServiceTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Message.Should().ContainAny("incorrectos", "inválidas");
+        result.Message.Should().Contain("Invalid email or password");
     }
 
     [Fact]
@@ -178,10 +175,7 @@ public class AuthServiceTests
             Password = "WrongPassword!"
         };
 
-        // Hash correct password using SHA256
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes("CorrectPassword123!"));
-        var hashedPassword = Convert.ToBase64String(hashedBytes);
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword("CorrectPassword123!");
 
         var user = new User
         {
@@ -199,7 +193,7 @@ public class AuthServiceTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Message.Should().ContainAny("incorrectos", "inválidas");
+        result.Message.Should().Contain("Invalid email or password");
     }
 
     [Fact]
@@ -212,10 +206,7 @@ public class AuthServiceTests
             Password = "Password123!"
         };
 
-        // Hash password using SHA256
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes("Password123!"));
-        var hashedPassword = Convert.ToBase64String(hashedBytes);
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword("Password123!");
 
         var user = new User
         {
@@ -233,13 +224,13 @@ public class AuthServiceTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Message.Should().ContainAny("inactivo", "incorrectos");
+        result.Message.Should().Contain("inactive");
     }
 
     [Theory]
-    [InlineData("", "Password123!", "Email es requerido")]
-    [InlineData("invalid-email", "Password123!", "Email no es válido")]
-    [InlineData("user@example.com", "", "contraseña es requerida")]
+    [InlineData("", "Password123!", "Email is required")]
+    [InlineData("invalid-email", "Password123!", "Email is not valid")]
+    [InlineData("user@example.com", "", "Password is required")]
     public async Task LoginAsync_WithInvalidInput_ShouldFail(string email, string password, string expectedError)
     {
         // Arrange
@@ -254,6 +245,6 @@ public class AuthServiceTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Message.Should().ContainAny(expectedError, expectedError.ToLower());
+        result.Message.Should().Contain(expectedError);
     }
 }

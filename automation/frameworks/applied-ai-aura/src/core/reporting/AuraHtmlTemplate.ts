@@ -1,578 +1,431 @@
 /**
- * AURA — HTML Report Template
- * Professional light-mode report with AI summary and i18n switcher.
+ * AURA — HTML Report Template v2
+ * Self-contained HTML with TailwindCSS, Chart.js, 7 tabs,
+ * full i18n (ES/EN/PT), accordion scenarios, Key Statistics,
+ * Coverage Overview, Failure Overview, and rich logs.
  */
 import type { AuraReportData, AuraStepData, AuraLogEntry } from './AuraReportCollector';
 
-type LanguageKey = 'en' | 'es' | 'pt';
-
 export function renderAuraHtml(data: AuraReportData): string {
-  const startedAt = new Date(data.startTime).toLocaleString('en-US');
-  const endedAt = new Date(data.endTime).toLocaleString('en-US');
-  const statusClass = data.status === 'PASSED' ? 'status-ok' : 'status-bad';
-  const statusKey = data.status === 'PASSED' ? 'statusPassed' : 'statusFailed';
+  const j = JSON.stringify(data).replace(/<\/script/g, '<\\/script');
+  const d = data;
+  const fastest = d.steps.length ? Math.min(...d.steps.map(s => s.durationMs)) : 0;
+  const slowest = d.steps.length ? Math.max(...d.steps.map(s => s.durationMs)) : 0;
+  const avg = d.steps.length ? Math.round(d.durationMs / d.steps.length) : 0;
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="es" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${escapeHtml(data.testName)} - AURA Report</title>
-  <style>
-    :root {
-      --bg: #f7f9fc;
-      --surface: #ffffff;
-      --surface-muted: #f2f5fb;
-      --border: #e2e8f0;
-      --text: #0f172a;
-      --muted: #64748b;
-      --primary: #3b82f6;
-      --primary-soft: #dbeafe;
-      --success: #16a34a;
-      --success-soft: #dcfce7;
-      --danger: #dc2626;
-      --danger-soft: #fee2e2;
-      --warning: #d97706;
-      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: radial-gradient(circle at top left, #edf4ff 0%, var(--bg) 40%);
-      color: var(--text);
-      font-family: Inter, Segoe UI, Arial, sans-serif;
-      line-height: 1.45;
-      padding: 22px;
-    }
-    .container { max-width: 1360px; margin: 0 auto; }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
-    }
-    .header {
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
-      justify-content: space-between;
-      padding: 18px 20px;
-    }
-    .brand {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .logo {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(135deg, var(--primary), #6366f1);
-      color: #fff;
-      font-weight: 800;
-      font-size: 12px;
-    }
-    h1 { margin: 0; font-size: 34px; letter-spacing: -0.02em; }
-    h2 { margin: 0 0 12px 0; font-size: 31px; letter-spacing: -0.02em; }
-    h3 { margin: 0 0 8px 0; font-size: 17px; }
-    .subtitle { margin-top: 6px; color: var(--muted); font-size: 15px; }
-    .meta { margin-top: 10px; color: var(--muted); font-size: 12px; }
-    .status-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 11px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      border: 1px solid transparent;
-    }
-    .status-ok {
-      color: var(--success);
-      background: var(--success-soft);
-      border-color: #bbf7d0;
-    }
-    .status-bad {
-      color: var(--danger);
-      background: var(--danger-soft);
-      border-color: #fecaca;
-    }
-    .language-switcher {
-      border: 1px solid var(--border);
-      background: #fff;
-      color: var(--text);
-      border-radius: 10px;
-      padding: 7px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
-    }
-    .nav {
-      display: flex;
-      gap: 6px;
-      padding: 0 10px 10px 10px;
-      border-top: 1px solid var(--border);
-      margin-top: 8px;
-    }
-    .tab-btn {
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      font-weight: 600;
-      font-size: 13px;
-      border-radius: 9px;
-      padding: 10px 12px;
-      cursor: pointer;
-    }
-    .tab-btn.active {
-      color: #1d4ed8;
-      background: var(--primary-soft);
-    }
-    .tab-content { display: none; padding: 16px 20px 20px 20px; }
-    .tab-content.active { display: block; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
-      gap: 12px;
-    }
-    .kpi {
-      background: var(--surface-muted);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 13px;
-    }
-    .kpi .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
-    .kpi .value { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
-    .ok { color: var(--success); }
-    .bad { color: var(--danger); }
-    .warn { color: var(--warning); }
-    .section-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      margin-top: 14px;
-      overflow: hidden;
-    }
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      padding: 13px 14px;
-      border-bottom: 1px solid var(--border);
-      background: #fcfdff;
-    }
-    .section-header h3 { margin: 0; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td {
-      border-bottom: 1px solid var(--border);
-      padding: 10px 11px;
-      text-align: left;
-      vertical-align: top;
-    }
-    th {
-      color: var(--muted);
-      font-weight: 700;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      background: #f8fafc;
-    }
-    .mono { font-family: Consolas, Menlo, monospace; font-size: 12px; }
-    .pill {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      border: 1px solid #cbd5e1;
-      color: #475569;
-      background: #f8fafc;
-    }
-    .summary-box {
-      background: linear-gradient(180deg, #f8fbff 0%, #f4f8ff 100%);
-      border: 1px solid #dbeafe;
-      border-radius: 12px;
-      padding: 14px;
-      color: #1e293b;
-      margin-top: 10px;
-    }
-    .summary-box p { margin: 0 0 10px 0; }
-    .summary-box p:last-child { margin-bottom: 0; }
-    .video-wrap { padding: 12px; }
-    video {
-      width: 100%;
-      max-width: 980px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: #000;
-    }
-    .empty {
-      padding: 16px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-      font-size: 12px;
-      color: var(--muted);
-      padding: 12px 16px 18px 16px;
-    }
-    @media (max-width: 900px) {
-      body { padding: 12px; }
-      h1 { font-size: 26px; }
-      .header { flex-direction: column; }
-      .nav { overflow-x: auto; white-space: nowrap; }
-    }
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${e(d.testName)}</title>
+<script src="https://cdn.tailwindcss.com"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"><\/script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script>tailwind.config={darkMode:'class',theme:{extend:{colors:{aura:{50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'}}}}};<\/script>
+<style>
+.tab-btn.active{border-color:#6366f1;color:#a5b4fc;background:rgba(99,102,241,.1)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.screenshot-thumb{cursor:pointer;transition:transform .2s,box-shadow .2s}
+.screenshot-thumb:hover{transform:scale(1.03);box-shadow:0 8px 25px rgba(99,102,241,.3)}
+#modal-overlay{display:none}#modal-overlay.open{display:flex}
+.log-row:nth-child(even){background:rgba(255,255,255,.02)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.acc-body.open{max-height:99999px}
+.acc-chevron{transition:transform .2s}.acc-chevron.open{transform:rotate(90deg)}
+.search-input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:.5rem;padding:.5rem .75rem;color:#e5e7eb;font-size:.75rem;width:100%}
+.search-input:focus{outline:none;border-color:#6366f1}
+</style>
 </head>
-<body>
-  <div class="container">
-    <div class="card">
-      <div class="header">
-        <div>
-          <div class="brand">
-            <div class="logo">SAI</div>
-            <div>
-              <div class="mono">AURA Professional Report</div>
-              <div class="mono" style="color:#94a3b8">v${escapeHtml(data.reportVersion)}</div>
-            </div>
-          </div>
-          <h1>${escapeHtml(data.testName)}</h1>
-          <div class="subtitle">${escapeHtml(data.featureName)} / ${escapeHtml(data.scenarioName)}</div>
-          <div class="meta">
-            <span data-i18n="startedAt"></span>: ${startedAt} &nbsp;|&nbsp;
-            <span data-i18n="endedAt"></span>: ${endedAt}
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span class="status-chip ${statusClass}">
-            <span data-i18n="${statusKey}"></span>
-          </span>
-          <select id="lang-select" class="language-switcher" aria-label="Language selector">
-            <option value="en">English</option>
-            <option value="es">Espanol</option>
-            <option value="pt">Portugues</option>
-          </select>
-        </div>
+<body class="bg-gray-950 text-gray-200 min-h-screen font-sans">
+
+<!-- ═══ HEADER ═══ -->
+<header class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
+<div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-lg bg-aura-600 flex items-center justify-center font-bold text-white text-[10px] tracking-tight">SAI</div>
+    <div>
+      <h1 class="text-lg font-bold text-white leading-tight">${e(d.testName)}</h1>
+      <p class="text-xs text-gray-400">${e(d.featureName)} · v${e(d.reportVersion)}</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <span class="px-3 py-1 rounded-full text-xs font-bold ${d.status==='PASSED'?'bg-emerald-900/50 text-emerald-300 border border-emerald-700':'bg-red-900/50 text-red-300 border border-red-700'}">${d.status}</span>
+    <select id="lang-select" onchange="switchLang(this.value)" class="bg-gray-800 border border-gray-700 text-gray-300 text-xs rounded-lg px-2 py-1.5">
+      <option value="es">🇪🇸 Español</option><option value="en">🇺🇸 English</option><option value="pt">🇧🇷 Português</option>
+    </select>
+  </div>
+</div>
+</header>
+
+<!-- ═══ TABS ═══ -->
+<nav class="bg-gray-900/50 border-b border-gray-800 overflow-x-auto">
+<div class="max-w-7xl mx-auto px-4 flex gap-1">
+  ${tb('executive','bi-file-earmark-text','tabExecutive','Resumen Ejecutivo',true)}
+  ${tb('overall','bi-graph-up','tabOverall','Resultados Generales')}
+  ${tb('results','bi-list-check','tabResults','Resultados de Pruebas')}
+  ${tb('steps','bi-layers','tabSteps','Detalle de Pasos')}
+  ${tb('success','bi-check-circle','tabSuccess','Logs de Éxito')}
+  ${tb('errors','bi-exclamation-triangle','tabErrors','Logs de Error')}
+  ${tb('video','bi-camera-video','tabVideo','Video')}
+</div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+<!-- ═══ TAB: EXECUTIVE SUMMARY ═══ -->
+<section id="tab-executive" class="tab-panel active">
+<div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+  <div class="flex items-center gap-3 mb-4">
+    <div class="w-10 h-10 rounded-lg bg-aura-600/20 flex items-center justify-center"><i class="bi bi-stars text-aura-400 text-xl"></i></div>
+    <div><h2 class="text-xl font-bold text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2><p class="text-xs text-gray-400" data-i18n="executiveSubtitle">Generado con Inteligencia Artificial</p></div>
+  </div>
+  <div class="prose prose-invert max-w-none text-gray-300 leading-relaxed">
+    ${d.executiveSummary ? mdHtml(d.executiveSummary) : '<p class="text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible.</p>'}
+  </div>
+</div>
+</section>
+
+<!-- ═══ TAB: OVERALL RESULTS ═══ -->
+<section id="tab-overall" class="tab-panel">
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    ${kpi('bi-collection','kpiTotal','Total',d.summary.totalSteps,'aura')}
+    ${kpi('bi-check-circle-fill','kpiPassed','Exitosos',d.summary.passedSteps,'emerald')}
+    ${kpi('bi-x-circle-fill','kpiFailed','Fallidos',d.summary.failedSteps,'red')}
+    ${kpi('bi-percent','kpiRate','Tasa de Éxito',d.summary.successRate+'%','blue')}
+    ${kpi('bi-clock','kpiDuration','Duración',fmtDur(d.durationMs),'amber')}
+  </div>
+
+  <!-- Charts -->
+  <div class="grid md:grid-cols-2 gap-6 mb-6">
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+      <h3 class="text-sm font-semibold text-gray-400 mb-4" data-i18n="chartResults">Resultados</h3>
+      <div class="flex justify-center"><canvas id="chart-donut" width="280" height="280"></canvas></div>
+      <div class="flex flex-wrap justify-center gap-3 mt-4 text-[10px]">
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span><span data-i18n="lgPassing">Exitosos</span></span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500"></span><span data-i18n="lgFailed">Fallidos</span></span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span><span data-i18n="lgPending">Pendientes</span></span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-gray-500"></span><span data-i18n="lgSkipped">Omitidos</span></span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-slate-600"></span><span data-i18n="lgIgnored">Ignorados</span></span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-orange-500"></span><span data-i18n="lgAborted">Abortados</span></span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-purple-500"></span><span data-i18n="lgBroken">Rotos</span></span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-pink-500"></span><span data-i18n="lgCompromised">Comprometidos</span></span>
       </div>
+    </div>
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+      <h3 class="text-sm font-semibold text-gray-400 mb-4" data-i18n="chartDuration">Duración por Paso (ms)</h3>
+      <canvas id="chart-bar" height="280"></canvas>
+    </div>
+  </div>
 
-      <div class="nav">
-        <button class="tab-btn active" data-tab="tab-summary" data-i18n="tabSummary"></button>
-        <button class="tab-btn" data-tab="tab-results" data-i18n="tabResults"></button>
-        <button class="tab-btn" data-tab="tab-success" data-i18n="tabSuccessLogs"></button>
-        <button class="tab-btn" data-tab="tab-errors" data-i18n="tabErrorLogs"></button>
-        <button class="tab-btn" data-tab="tab-video" data-i18n="tabVideo"></button>
+  <!-- Key Statistics -->
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-400 mb-4 flex items-center gap-2"><i class="bi bi-clipboard-data"></i><span data-i18n="keyStats">Estadísticas Clave</span></h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      ${statRow('bi-collection','ksScenarios','Escenarios',1)}
+      ${statRow('bi-list-task','ksTestCases','Casos de Prueba',1)}
+      ${statRow('bi-play-circle','ksStarted','Inicio de Pruebas',new Date(d.startTime).toLocaleString('es-ES'))}
+      ${statRow('bi-stop-circle','ksFinished','Fin de Pruebas',new Date(d.endTime).toLocaleString('es-ES'))}
+      ${statRow('bi-hourglass-split','ksTotalDuration','Duración Total',fmtDur(d.durationMs))}
+      ${statRow('bi-lightning','ksFastest','Prueba Más Rápida',fmtDur(fastest))}
+      ${statRow('bi-hourglass-bottom','ksSlowest','Prueba Más Lenta',fmtDur(slowest))}
+      ${statRow('bi-speedometer2','ksAverage','Tiempo Promedio',fmtDur(avg))}
+    </div>
+  </div>
+
+  <!-- Functional Coverage Overview -->
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-400 mb-4 flex items-center gap-2"><i class="bi bi-bar-chart-line"></i><span data-i18n="covOverview">Cobertura Funcional</span></h3>
+    <canvas id="chart-coverage" height="100"></canvas>
+  </div>
+
+  <!-- Functional Coverage Details -->
+  <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden mb-6">
+    <div class="p-4 border-b border-gray-800"><h3 class="text-sm font-semibold text-gray-400 flex items-center gap-2"><i class="bi bi-table"></i><span data-i18n="covDetails">Detalle de Cobertura Funcional</span></h3></div>
+    <table class="w-full text-xs">
+      <thead class="bg-gray-800/50"><tr>
+        <th class="px-4 py-2 text-left text-gray-400" data-i18n="covFeature">Feature</th>
+        <th class="px-4 py-2 text-center text-gray-400" data-i18n="covScenarios">Escenarios</th>
+        <th class="px-4 py-2 text-center text-gray-400" data-i18n="covTestCases">Casos</th>
+        <th class="px-4 py-2 text-center text-gray-400" data-i18n="covPassRate">% Éxito</th>
+        <th class="px-4 py-2 text-center text-gray-400" data-i18n="covResult">Resultado</th>
+        <th class="px-4 py-2 text-left text-gray-400" data-i18n="covCoverage">Cobertura</th>
+      </tr></thead>
+      <tbody>
+        <tr class="border-t border-gray-800/50 hover:bg-gray-800/20">
+          <td class="px-4 py-3 text-aura-300">${e(d.featureName)}</td>
+          <td class="px-4 py-3 text-center text-gray-300">1</td>
+          <td class="px-4 py-3 text-center text-gray-300">1</td>
+          <td class="px-4 py-3 text-center font-bold ${d.status==='PASSED'?'text-emerald-400':'text-red-400'}">${d.summary.successRate}%</td>
+          <td class="px-4 py-3 text-center">${d.status==='PASSED'?'<i class="bi bi-check-circle-fill text-emerald-400"></i>':'<i class="bi bi-x-circle-fill text-red-400"></i>'}</td>
+          <td class="px-4 py-3"><div class="w-full bg-gray-800 rounded-full h-2.5"><div class="h-2.5 rounded-full ${d.status==='PASSED'?'bg-emerald-500':'bg-red-500'}" style="width:${d.summary.successRate}%"></div></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Test Failure Overview -->
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+    <h3 class="text-sm font-semibold text-gray-400 mb-4 flex items-center gap-2"><i class="bi bi-bug"></i><span data-i18n="failOverview">Resumen de Fallos</span></h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <p class="text-xs font-semibold text-gray-300 mb-2" data-i18n="failFrequent">Fallos Más Frecuentes</p>
+        ${d.summary.failedSteps>0 ? d.steps.filter(s=>s.status==='failed').map(s=>`<div class="bg-red-950/20 border border-red-900/30 rounded-lg p-3 mb-2"><p class="text-xs text-red-300">${e(s.keyword)} ${e(s.text)}</p><p class="text-[10px] text-red-400/70 mt-1">${e(s.error??'')}</p></div>`).join('') : `<p class="text-xs text-gray-600" data-i18n="noFailures">No se registraron fallos.</p>`}
       </div>
-
-      <div id="tab-summary" class="tab-content active">
-        <div class="grid">
-          <div class="kpi"><div class="label" data-i18n="kpiTotalSteps"></div><div class="value">${data.summary.totalSteps}</div></div>
-          <div class="kpi"><div class="label" data-i18n="kpiPassed"></div><div class="value ok">${data.summary.passedSteps}</div></div>
-          <div class="kpi"><div class="label" data-i18n="kpiFailed"></div><div class="value bad">${data.summary.failedSteps}</div></div>
-          <div class="kpi"><div class="label" data-i18n="kpiSkipped"></div><div class="value warn">${data.summary.skippedSteps + data.summary.pendingSteps}</div></div>
-          <div class="kpi"><div class="label" data-i18n="kpiSuccessRate"></div><div class="value">${data.summary.successRate}%</div></div>
-          <div class="kpi"><div class="label" data-i18n="kpiDuration"></div><div class="value">${formatDuration(data.durationMs)}</div></div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-header">
-            <h3 data-i18n="aiAnalysisTitle"></h3>
-            <span class="mono" style="color:#64748b" data-i18n="aiGeneratedLabel"></span>
-          </div>
-          <div class="summary-box">
-            ${renderExecutiveSummary(data.executiveSummary)}
-          </div>
-        </div>
-      </div>
-
-      <div id="tab-results" class="tab-content">
-        <div class="section-card">
-          <div class="section-header">
-            <h3 data-i18n="executionDetails"></h3>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th data-i18n="step"></th>
-                <th data-i18n="status"></th>
-                <th data-i18n="duration"></th>
-                <th data-i18n="error"></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.steps.map(renderStepRow).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div id="tab-success" class="tab-content">
-        <div class="section-card">
-          <div class="section-header">
-            <h3><span data-i18n="successLogs"></span> (${data.successLogs.length})</h3>
-          </div>
-          ${renderLogs(data.successLogs)}
-        </div>
-      </div>
-
-      <div id="tab-errors" class="tab-content">
-        <div class="section-card">
-          <div class="section-header">
-            <h3><span data-i18n="errorLogs"></span> (${data.errorLogs.length})</h3>
-          </div>
-          ${renderLogs(data.errorLogs)}
-        </div>
-      </div>
-
-      <div id="tab-video" class="tab-content">
-        <div class="section-card">
-          <div class="section-header">
-            <h3 data-i18n="videoTitle"></h3>
-          </div>
-          <div class="video-wrap">
-            ${data.videoRelPath
-              ? `<video controls><source src="${escapeHtml(data.videoRelPath)}" type="video/webm" /></video>`
-              : `<div class="empty" data-i18n="videoUnavailable"></div>`}
-          </div>
-        </div>
-      </div>
-
-      <div class="footer">
-        <span>AURA / ${escapeHtml(data.tester.name || 'Automation')}</span>
-        <span>${escapeHtml(data.browserInfo.name)} ${data.browserInfo.headless ? '(headless)' : ''}</span>
+      <div>
+        <p class="text-xs font-semibold text-gray-300 mb-2" data-i18n="failUnstable">Features Más Inestables</p>
+        ${d.summary.failedSteps>0 ? `<div class="bg-red-950/20 border border-red-900/30 rounded-lg p-3"><p class="text-xs text-red-300">${e(d.featureName)}</p><p class="text-[10px] text-red-400/70 mt-1">${d.summary.failedSteps} paso(s) fallido(s)</p></div>` : `<p class="text-xs text-gray-600" data-i18n="noUnstable">No hay features inestables.</p>`}
       </div>
     </div>
   </div>
 
-  <script>
-    const I18N = ${JSON.stringify(getTranslations())};
-    let currentLang = 'en';
+  <!-- Info Cards -->
+  <div class="grid md:grid-cols-3 gap-4 mt-6">
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+      <p class="text-xs text-gray-500 mb-1" data-i18n="infoScenario">Escenario</p>
+      <p class="text-sm text-white font-medium">${e(d.scenarioName)}</p>
+      <p class="text-xs text-gray-400 mt-1">${d.tags.map(t=>`<span class="inline-block bg-aura-900/40 text-aura-300 px-2 py-0.5 rounded text-[10px] mr-1 mb-1">${e(t)}</span>`).join('')}</p>
+    </div>
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+      <p class="text-xs text-gray-500 mb-1" data-i18n="infoEnvironment">Entorno</p>
+      <p class="text-sm text-white"><span data-i18n="envBrowser">Navegador</span>: <span class="text-gray-300">${e(d.browserInfo.name)}</span></p>
+      <p class="text-sm text-white">Headless: <span class="text-gray-300">${d.browserInfo.headless?'Sí':'No'}</span></p>
+      <p class="text-sm text-white">Viewport: <span class="text-gray-300">${e(d.browserInfo.viewport)}</span></p>
+    </div>
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+      <p class="text-xs text-gray-500 mb-1" data-i18n="infoTester">Ejecutor</p>
+      <p class="text-sm text-white">${e(d.tester.name)}</p>
+      <p class="text-xs text-gray-400">${e(d.tester.email)}</p>
+      <p class="text-xs text-gray-500 mt-1">${new Date(d.startTime).toLocaleString('es-ES')}</p>
+    </div>
+  </div>
+</section>
 
-    function translatePage() {
-      const dict = I18N[currentLang] || I18N.en;
-      document.documentElement.setAttribute('lang', currentLang);
-      document.querySelectorAll('[data-i18n]').forEach((node) => {
-        const key = node.getAttribute('data-i18n');
-        if (!key) return;
-        node.textContent = dict[key] || I18N.en[key] || key;
-      });
-    }
+<!-- ═══ TAB: TEST RESULTS ═══ -->
+<section id="tab-results" class="tab-panel">
+  <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+    <!-- Scenario Accordion Header -->
+    <button onclick="toggleAcc(this)" class="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-800/30 transition-colors border-b border-gray-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg ${d.status==='PASSED'?'bg-emerald-900/30':'bg-red-900/30'} flex items-center justify-center">
+          <i class="bi ${d.status==='PASSED'?'bi-check-lg text-emerald-400':'bi-x-lg text-red-400'} text-lg"></i>
+        </div>
+        <div class="text-left">
+          <p class="text-sm text-white font-semibold">${e(d.scenarioName)}</p>
+          <p class="text-xs text-gray-500">${e(d.featureName)} · ${d.tags.map(t=>`<span class="text-aura-400">${e(t)}</span>`).join(' ')}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        ${badge(d.status==='PASSED'?'passed':'failed')}
+        <span class="text-xs text-gray-500 font-mono">${fmtDur(d.durationMs)}</span>
+        <i class="bi bi-chevron-right acc-chevron text-gray-500"></i>
+      </div>
+    </button>
+    <!-- Scenario Steps Table (accordion body) -->
+    <div class="acc-body">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-800/50"><tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400" data-i18n="colStep">#</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400" data-i18n="colDescription">Descripción</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400" data-i18n="colStatus">Estado</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-400" data-i18n="colDuration">Duración</th>
+        </tr></thead>
+        <tbody class="divide-y divide-gray-800/50">
+          ${d.steps.map(s=>`<tr class="hover:bg-gray-800/30 transition-colors"><td class="px-4 py-3 text-gray-400 font-mono text-xs">${s.stepNumber}</td><td class="px-4 py-3"><span class="text-aura-400 font-medium">${e(s.keyword)}</span> ${e(s.text)}</td><td class="px-4 py-3">${badge(s.status)}</td><td class="px-4 py-3 text-xs text-gray-400 font-mono">${s.durationMs}ms</td></tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
 
-    document.querySelectorAll('.tab-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach((panel) => panel.classList.remove('active'));
-        btn.classList.add('active');
-        const tab = btn.getAttribute('data-tab');
-        if (tab) {
-          const panel = document.getElementById(tab);
-          if (panel) panel.classList.add('active');
-        }
-      });
-    });
+<!-- ═══ TAB: STEPS DETAILS ═══ -->
+<section id="tab-steps" class="tab-panel">
+  <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+    <!-- Scenario Accordion Header -->
+    <button onclick="toggleAcc(this)" class="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-800/30 transition-colors border-b border-gray-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg ${d.status==='PASSED'?'bg-emerald-900/30':'bg-red-900/30'} flex items-center justify-center">
+          <i class="bi ${d.status==='PASSED'?'bi-check-lg text-emerald-400':'bi-x-lg text-red-400'} text-lg"></i>
+        </div>
+        <div class="text-left">
+          <p class="text-sm text-white font-semibold">${e(d.scenarioName)}</p>
+          <p class="text-xs text-gray-500">${d.summary.passedSteps}/${d.summary.totalSteps} <span data-i18n="stepsLabel">pasos exitosos</span> · ${fmtDur(d.durationMs)}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        ${badge(d.status==='PASSED'?'passed':'failed')}
+        <i class="bi bi-chevron-right acc-chevron text-gray-500"></i>
+      </div>
+    </button>
+    <!-- Steps cards (accordion body) -->
+    <div class="acc-body">
+      <div class="p-4 space-y-3">
+        ${d.steps.map(s=>stepCard(s,d)).join('')}
+      </div>
+    </div>
+  </div>
+</section>
 
-    const langSelect = document.getElementById('lang-select');
-    if (langSelect) {
-      langSelect.addEventListener('change', (event) => {
-        const target = event.target;
-        if (target instanceof HTMLSelectElement) {
-          currentLang = target.value;
-          translatePage();
-        }
-      });
-    }
+<!-- ═══ TAB: SUCCESS LOGS ═══ -->
+<section id="tab-success" class="tab-panel">
+  ${richLogs(d.successLogs,'emerald','successEmpty','No se registraron logs de éxito.','successCount','Logs de Éxito')}
+</section>
 
-    translatePage();
-  </script>
-</body>
-</html>`;
+<!-- ═══ TAB: ERROR LOGS ═══ -->
+<section id="tab-errors" class="tab-panel">
+  ${richLogs(d.errorLogs,'red','errorEmpty','No se registraron errores. ¡Excelente!','errorCount','Logs de Error')}
+</section>
+
+<!-- ═══ TAB: VIDEO ═══ -->
+<section id="tab-video" class="tab-panel">
+<div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+  ${d.videoRelPath
+    ? `<video controls class="w-full max-w-4xl mx-auto rounded-lg border border-gray-700 bg-black" preload="metadata" style="aspect-ratio:16/9;height:auto;object-fit:contain"><source src="${e(d.videoRelPath)}" type="video/webm"></video>`
+    : `<div class="text-center py-16"><i class="bi bi-camera-video-off text-5xl text-gray-700 mb-4 block"></i><p class="text-gray-500" data-i18n="noVideo">No se grabó video para esta ejecución.</p><p class="text-xs text-gray-600 mt-2" data-i18n="noVideoHint">Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.</p></div>`}
+</div>
+</section>
+
+</main>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="border-t border-gray-800 mt-8 py-6 text-center text-xs text-gray-500">
+  <p class="font-medium text-gray-400" data-i18n="footerMadeBy">Hecho por Applied AI Team</p>
+  <p class="mt-1"><span data-i18n="generatedAt">Generado</span> ${new Date(d.endTime).toLocaleString('es-ES')} · v${e(d.reportVersion)}</p>
+</footer>
+
+<!-- ═══ MODAL ═══ -->
+<div id="modal-overlay" class="fixed inset-0 bg-black/80 z-50 items-center justify-center p-4" onclick="closeModal()">
+  <img id="modal-img" src="" alt="Screenshot" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl">
+</div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script>
+const R=${j};
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active')})});
+
+// Modal
+function openModal(s){document.getElementById('modal-img').src=s;document.getElementById('modal-overlay').classList.add('open')}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open')}
+
+// Accordion
+function toggleAcc(btn){const body=btn.nextElementSibling;body.classList.toggle('open');btn.querySelector('.acc-chevron').classList.toggle('open')}
+function toggleStep(btn){const body=btn.nextElementSibling;body.classList.toggle('hidden');btn.querySelector('.step-chev').classList.toggle('rotate-90')}
+
+// Log search
+function filterLogs(input,tableId){const q=input.value.toLowerCase();document.querySelectorAll('#'+tableId+' tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'})}
+
+// Charts
+const donutCtx=document.getElementById('chart-donut');
+if(donutCtx){new Chart(donutCtx,{type:'doughnut',data:{labels:['Passed','Failed','Pending','Skipped'],datasets:[{data:[R.summary.passedSteps,R.summary.failedSteps,R.summary.pendingSteps||0,R.summary.skippedSteps],backgroundColor:['#10b981','#ef4444','#f59e0b','#6b7280'],borderWidth:0,borderRadius:4}]},options:{responsive:false,cutout:'65%',plugins:{legend:{display:false}}}})}
+const barCtx=document.getElementById('chart-bar');
+if(barCtx){new Chart(barCtx,{type:'bar',data:{labels:R.steps.map(s=>'Step '+s.stepNumber),datasets:[{label:'ms',data:R.steps.map(s=>s.durationMs),backgroundColor:R.steps.map(s=>s.status==='passed'?'#6366f1':'#ef4444'),borderRadius:6,barThickness:28}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7280'},grid:{display:false}},y:{ticks:{color:'#6b7280'},grid:{color:'rgba(255,255,255,.05)'}}}}})}
+const covCtx=document.getElementById('chart-coverage');
+if(covCtx){new Chart(covCtx,{type:'bar',data:{labels:[R.featureName],datasets:[{label:'Passing',data:[R.summary.passedSteps],backgroundColor:'#bef264',barThickness:30},{label:'Failed',data:[R.summary.failedSteps],backgroundColor:'#fca5a5',barThickness:30}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#9ca3af'}}},scales:{x:{stacked:true,ticks:{color:'#6b7280'},grid:{color:'rgba(255,255,255,.05)'}},y:{stacked:true,ticks:{color:'#9ca3af'},grid:{display:false}}}}})}
+
+// ── i18n ──
+const i18n={
+es:{reportTitle:'Reporte de Pruebas SAI',footerMadeBy:'Hecho por Applied AI Team',tabExecutive:'Resumen Ejecutivo',tabOverall:'Resultados Generales',tabResults:'Resultados de Pruebas',tabSteps:'Detalle de Pasos',tabSuccess:'Logs de Éxito',tabErrors:'Logs de Error',tabVideo:'Video',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Generado con Inteligencia Artificial',noSummary:'Resumen ejecutivo no disponible.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiDuration:'Duración',chartResults:'Resultados',chartDuration:'Duración por Paso (ms)',lgPassing:'Exitosos',lgFailed:'Fallidos',lgPending:'Pendientes',lgSkipped:'Omitidos',lgIgnored:'Ignorados',lgAborted:'Abortados',lgBroken:'Rotos',lgCompromised:'Comprometidos',keyStats:'Estadísticas Clave',ksScenarios:'Escenarios',ksTestCases:'Casos de Prueba',ksStarted:'Inicio de Pruebas',ksFinished:'Fin de Pruebas',ksTotalDuration:'Duración Total',ksFastest:'Prueba Más Rápida',ksSlowest:'Prueba Más Lenta',ksAverage:'Tiempo Promedio',covOverview:'Cobertura Funcional',covDetails:'Detalle de Cobertura Funcional',covFeature:'Feature',covScenarios:'Escenarios',covTestCases:'Casos',covPassRate:'% Éxito',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Resumen de Fallos',failFrequent:'Fallos Más Frecuentes',failUnstable:'Features Más Inestables',noFailures:'No se registraron fallos.',noUnstable:'No hay features inestables.',infoScenario:'Escenario',infoEnvironment:'Entorno',infoTester:'Ejecutor',envBrowser:'Navegador',colStep:'#',colDescription:'Descripción',colStatus:'Estado',colDuration:'Duración',stepsLabel:'pasos exitosos',screenshot:'Captura de Pantalla',stepLogs:'Logs del Paso',successEmpty:'No se registraron logs de éxito.',errorEmpty:'No se registraron errores. ¡Excelente!',noVideo:'No se grabó video para esta ejecución.',noVideoHint:'Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.',generatedAt:'Generado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Acción',colMessage:'Mensaje',colDetails:'Detalles',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Éxito',errorCount:'Logs de Error'},
+en:{reportTitle:'SAI Test Report',footerMadeBy:'Made by Applied AI Team',tabExecutive:'Executive Summary',tabOverall:'Overall Results',tabResults:'Test Results',tabSteps:'Steps Details',tabSuccess:'Success Logs',tabErrors:'Error Logs',tabVideo:'Video',executiveTitle:'Executive Summary',executiveSubtitle:'AI-Generated Analysis',noSummary:'Executive summary not available.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Success Rate',kpiDuration:'Duration',chartResults:'Results',chartDuration:'Duration per Step (ms)',lgPassing:'Passing',lgFailed:'Failed',lgPending:'Pending',lgSkipped:'Skipped',lgIgnored:'Ignored',lgAborted:'Aborted',lgBroken:'Broken',lgCompromised:'Compromised',keyStats:'Key Statistics',ksScenarios:'Scenarios',ksTestCases:'Test Cases',ksStarted:'Tests Started',ksFinished:'Tests Finished',ksTotalDuration:'Total Duration',ksFastest:'Fastest Test',ksSlowest:'Slowest Test',ksAverage:'Average Execution Time',covOverview:'Functional Coverage Overview',covDetails:'Functional Coverage Details',covFeature:'Feature',covScenarios:'Scenarios',covTestCases:'Test Cases',covPassRate:'% Pass',covResult:'Result',covCoverage:'Coverage',failOverview:'Test Failure Overview',failFrequent:'Most Frequent Failures',failUnstable:'Most Unstable Features',noFailures:'No failures recorded.',noUnstable:'No unstable features.',infoScenario:'Scenario',infoEnvironment:'Environment',infoTester:'Tester',envBrowser:'Browser',colStep:'#',colDescription:'Description',colStatus:'Status',colDuration:'Duration',stepsLabel:'steps passed',screenshot:'Screenshot',stepLogs:'Step Logs',successEmpty:'No success logs recorded.',errorEmpty:'No errors recorded. Excellent!',noVideo:'No video recorded for this execution.',noVideoHint:'Set AURA_RECORD_VIDEO=true in .env to enable recording.',generatedAt:'Generated',colTimestamp:'Time',colElement:'Element',colAction:'Action',colMessage:'Message',colDetails:'Details',logTotal:'Total',logLogs:'logs',searchLogs:'Search logs...',successCount:'Success Logs',errorCount:'Error Logs'},
+pt:{reportTitle:'Relatório de Testes SAI',footerMadeBy:'Feito por Applied AI Team',tabExecutive:'Resumo Executivo',tabOverall:'Resultados Gerais',tabResults:'Resultados dos Testes',tabSteps:'Detalhes dos Passos',tabSuccess:'Logs de Sucesso',tabErrors:'Logs de Erro',tabVideo:'Vídeo',executiveTitle:'Resumo Executivo',executiveSubtitle:'Gerado com Inteligência Artificial',noSummary:'Resumo executivo não disponível.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiDuration:'Duração',chartResults:'Resultados',chartDuration:'Duração por Passo (ms)',lgPassing:'Aprovados',lgFailed:'Falhos',lgPending:'Pendentes',lgSkipped:'Omitidos',lgIgnored:'Ignorados',lgAborted:'Abortados',lgBroken:'Quebrados',lgCompromised:'Comprometidos',keyStats:'Estatísticas Principais',ksScenarios:'Cenários',ksTestCases:'Casos de Teste',ksStarted:'Início dos Testes',ksFinished:'Fim dos Testes',ksTotalDuration:'Duração Total',ksFastest:'Teste Mais Rápido',ksSlowest:'Teste Mais Lento',ksAverage:'Tempo Médio de Execução',covOverview:'Visão Geral de Cobertura Funcional',covDetails:'Detalhes de Cobertura Funcional',covFeature:'Feature',covScenarios:'Cenários',covTestCases:'Casos',covPassRate:'% Sucesso',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Visão Geral de Falhas',failFrequent:'Falhas Mais Frequentes',failUnstable:'Features Mais Instáveis',noFailures:'Nenhuma falha registrada.',noUnstable:'Nenhuma feature instável.',infoScenario:'Cenário',infoEnvironment:'Ambiente',infoTester:'Executor',envBrowser:'Navegador',colStep:'#',colDescription:'Descrição',colStatus:'Status',colDuration:'Duração',stepsLabel:'passos aprovados',screenshot:'Captura de Tela',stepLogs:'Logs do Passo',successEmpty:'Nenhum log de sucesso registrado.',errorEmpty:'Nenhum erro registrado. Excelente!',noVideo:'Nenhum vídeo gravado para esta execução.',noVideoHint:'Configure AURA_RECORD_VIDEO=true em .env para habilitar gravação.',generatedAt:'Gerado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Ação',colMessage:'Mensagem',colDetails:'Detalhes',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Sucesso',errorCount:'Logs de Erro'}
+};
+function switchLang(l){const t=i18n[l]||i18n.es;document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.getAttribute('data-i18n');if(t[k])el.textContent=t[k]});document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{const k=el.getAttribute('data-i18n-placeholder');if(t[k])el.placeholder=t[k]});document.documentElement.lang=l}
+<\/script>
+</body></html>`;
 }
 
-function renderExecutiveSummary(summary?: string): string {
-  if (!summary || summary.trim().length === 0) {
-    return '<p data-i18n="aiUnavailable"></p>';
-  }
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-  return summary
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter((paragraph) => paragraph.length > 0)
-    .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
-    .join('');
+function e(s: string): string {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function renderStepRow(step: AuraStepData): string {
-  const statusClass = step.status === 'passed' ? 'ok' : step.status === 'failed' ? 'bad' : 'warn';
-  return `<tr>
-    <td class="mono">${step.stepNumber}</td>
-    <td><span class="pill">${escapeHtml(step.keyword)}</span> ${escapeHtml(step.text)}</td>
-    <td class="${statusClass}">${escapeHtml(step.status.toUpperCase())}</td>
-    <td class="mono">${step.durationMs}ms</td>
-    <td class="mono">${step.error ? escapeHtml(step.error) : '-'}</td>
-  </tr>`;
+function mdHtml(md: string): string {
+  return md.split('\n\n').map(b => {
+    b = b.trim(); if (!b) return '';
+    if (b.startsWith('# '))   return `<h2 class="text-xl font-bold text-white mt-4 mb-2">${e(b.slice(2))}</h2>`;
+    if (b.startsWith('## '))  return `<h3 class="text-lg font-semibold text-white mt-3 mb-2">${e(b.slice(3))}</h3>`;
+    if (b.startsWith('### ')) return `<h4 class="text-base font-semibold text-gray-200 mt-3 mb-1">${e(b.slice(4))}</h4>`;
+    let h = e(b);
+    h = h.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>');
+    h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    return `<p class="mb-3">${h}</p>`;
+  }).join('\n');
 }
 
-function renderLogs(logs: readonly AuraLogEntry[]): string {
-  if (logs.length === 0) return '<div class="empty" data-i18n="noLogsRecorded"></div>';
-
-  return `<table>
-    <thead>
-      <tr>
-        <th data-i18n="time"></th>
-        <th data-i18n="level"></th>
-        <th data-i18n="element"></th>
-        <th data-i18n="action"></th>
-        <th data-i18n="message"></th>
-        <th data-i18n="details"></th>
-      </tr>
-    </thead>
-    <tbody>
-      ${logs.map((log) => `<tr>
-        <td class="mono">${new Date(log.timestamp).toLocaleTimeString('en-US')}</td>
-        <td>${escapeHtml(log.level)}</td>
-        <td>${log.element ? escapeHtml(log.element) : '-'}</td>
-        <td>${log.action ? escapeHtml(log.action) : '-'}</td>
-        <td>${escapeHtml(log.message)}</td>
-        <td class="mono">${log.details ? escapeHtml(log.details) : '-'}</td>
-      </tr>`).join('')}
-    </tbody>
-  </table>`;
-}
-
-function getTranslations(): Record<LanguageKey, Record<string, string>> {
-  return {
-    en: {
-      startedAt: 'Started',
-      endedAt: 'Ended',
-      statusPassed: 'PASSED',
-      statusFailed: 'FAILED',
-      tabSummary: 'Executive Summary',
-      tabResults: 'Test Results',
-      tabSuccessLogs: 'Success Logs',
-      tabErrorLogs: 'Error Logs',
-      tabVideo: 'Video',
-      kpiTotalSteps: 'Total Steps',
-      kpiPassed: 'Passed',
-      kpiFailed: 'Failed',
-      kpiSkipped: 'Skipped/Pending',
-      kpiSuccessRate: 'Success Rate',
-      kpiDuration: 'Duration',
-      aiAnalysisTitle: 'AI Analysis',
-      aiGeneratedLabel: 'Generated with AI',
-      aiUnavailable: 'AI analysis is unavailable for this run.',
-      executionDetails: 'Execution Details',
-      step: 'Step',
-      status: 'Status',
-      duration: 'Duration',
-      error: 'Error',
-      successLogs: 'Success Logs',
-      errorLogs: 'Error Logs',
-      videoTitle: 'Execution Video',
-      videoUnavailable: 'No video available for this run.',
-      noLogsRecorded: 'No logs recorded.',
-      time: 'Time',
-      level: 'Level',
-      element: 'Element',
-      action: 'Action',
-      message: 'Message',
-      details: 'Details',
-    },
-    es: {
-      startedAt: 'Inicio',
-      endedAt: 'Fin',
-      statusPassed: 'EXITOSO',
-      statusFailed: 'FALLIDO',
-      tabSummary: 'Resumen Ejecutivo',
-      tabResults: 'Resultados de Pruebas',
-      tabSuccessLogs: 'Logs de Exito',
-      tabErrorLogs: 'Logs de Error',
-      tabVideo: 'Video',
-      kpiTotalSteps: 'Pasos Totales',
-      kpiPassed: 'Exitosos',
-      kpiFailed: 'Fallidos',
-      kpiSkipped: 'Omitidos/Pendientes',
-      kpiSuccessRate: 'Tasa de Exito',
-      kpiDuration: 'Duracion',
-      aiAnalysisTitle: 'Analisis de IA',
-      aiGeneratedLabel: 'Generado con IA',
-      aiUnavailable: 'El analisis de IA no esta disponible en esta ejecucion.',
-      executionDetails: 'Detalle de Pasos',
-      step: 'Paso',
-      status: 'Estado',
-      duration: 'Duracion',
-      error: 'Error',
-      successLogs: 'Logs de Exito',
-      errorLogs: 'Logs de Error',
-      videoTitle: 'Video de Ejecucion',
-      videoUnavailable: 'No hay video disponible para esta ejecucion.',
-      noLogsRecorded: 'No se registraron logs.',
-      time: 'Hora',
-      level: 'Nivel',
-      element: 'Elemento',
-      action: 'Accion',
-      message: 'Mensaje',
-      details: 'Detalles',
-    },
-    pt: {
-      startedAt: 'Inicio',
-      endedAt: 'Fim',
-      statusPassed: 'APROVADO',
-      statusFailed: 'FALHOU',
-      tabSummary: 'Resumo Executivo',
-      tabResults: 'Resultados de Teste',
-      tabSuccessLogs: 'Logs de Sucesso',
-      tabErrorLogs: 'Logs de Erro',
-      tabVideo: 'Video',
-      kpiTotalSteps: 'Total de Etapas',
-      kpiPassed: 'Aprovadas',
-      kpiFailed: 'Falhas',
-      kpiSkipped: 'Ignoradas/Pendentes',
-      kpiSuccessRate: 'Taxa de Sucesso',
-      kpiDuration: 'Duracao',
-      aiAnalysisTitle: 'Analise de IA',
-      aiGeneratedLabel: 'Gerado com IA',
-      aiUnavailable: 'A analise de IA nao esta disponivel nesta execucao.',
-      executionDetails: 'Detalhes da Execucao',
-      step: 'Etapa',
-      status: 'Status',
-      duration: 'Duracao',
-      error: 'Erro',
-      successLogs: 'Logs de Sucesso',
-      errorLogs: 'Logs de Erro',
-      videoTitle: 'Video de Execucao',
-      videoUnavailable: 'Nenhum video disponivel para esta execucao.',
-      noLogsRecorded: 'Nenhum log registrado.',
-      time: 'Hora',
-      level: 'Nivel',
-      element: 'Elemento',
-      action: 'Acao',
-      message: 'Mensagem',
-      details: 'Detalhes',
-    },
-  };
-}
-
-function formatDuration(ms: number): string {
+function fmtDur(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-  const min = Math.floor(ms / 60000);
-  const sec = Math.round((ms % 60000) / 1000);
-  return `${min}m ${sec}s`;
+  if (ms < 60000) return `${(ms/1000).toFixed(1)}s`;
+  const m = Math.floor(ms/60000); const s = Math.round((ms%60000)/1000);
+  return `${m}m ${s}s`;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+function tb(id: string, icon: string, key: string, label: string, active = false): string {
+  return `<button data-tab="${id}" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 ${active?'border-aura-500 text-aura-300 bg-aura-500/10':'border-transparent text-gray-400 hover:text-gray-200'} transition-colors whitespace-nowrap"><i class="bi ${icon}"></i><span data-i18n="${key}">${label}</span></button>`;
+}
+
+function kpi(icon: string, key: string, label: string, val: string|number, color: string): string {
+  const cm: Record<string,string> = { aura:'bg-aura-900/30 border-aura-800/50 text-aura-300', emerald:'bg-emerald-900/30 border-emerald-800/50 text-emerald-300', red:'bg-red-900/30 border-red-800/50 text-red-300', blue:'bg-blue-900/30 border-blue-800/50 text-blue-300', amber:'bg-amber-900/30 border-amber-800/50 text-amber-300' };
+  return `<div class="rounded-xl border p-4 ${cm[color]??cm.aura}"><div class="flex items-center gap-2 mb-2"><i class="bi ${icon} text-lg"></i><span class="text-xs font-medium" data-i18n="${key}">${label}</span></div><p class="text-2xl font-bold text-white">${val}</p></div>`;
+}
+
+function statRow(icon: string, key: string, label: string, val: string|number): string {
+  return `<div class="flex items-center gap-3 p-3 rounded-lg bg-gray-800/30"><i class="bi ${icon} text-gray-500"></i><div class="flex-1"><p class="text-xs text-gray-400" data-i18n="${key}">${label}</p></div><p class="text-sm font-semibold text-white">${val}</p></div>`;
+}
+
+function badge(status: string): string {
+  const m: Record<string,string> = { passed:'bg-emerald-900/40 text-emerald-300 border-emerald-700', failed:'bg-red-900/40 text-red-300 border-red-700', skipped:'bg-gray-800 text-gray-400 border-gray-600', pending:'bg-amber-900/40 text-amber-300 border-amber-700' };
+  return `<span class="px-2 py-0.5 rounded text-[10px] font-bold border ${m[status]??m.skipped}">${status.toUpperCase()}</span>`;
+}
+
+function logClr(level: string): string {
+  const m: Record<string,string> = { INFO:'text-gray-400', SUCCESS:'text-emerald-400', ERROR:'text-red-400', WARNING:'text-amber-400' };
+  return m[level] ?? 'text-gray-400';
+}
+
+function stepCard(s: AuraStepData, d: AuraReportData): string {
+  const statusCls = s.status==='passed'?'bg-emerald-900/40 text-emerald-400':s.status==='failed'?'bg-red-900/40 text-red-400':'bg-gray-800 text-gray-400';
+  return `<div class="bg-gray-800/30 rounded-xl border border-gray-800 overflow-hidden">
+<button onclick="toggleStep(this)" class="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors">
+  <div class="flex items-center gap-3">
+    <span class="w-7 h-7 rounded-lg ${statusCls} flex items-center justify-center font-bold text-xs">${s.stepNumber}</span>
+    <div class="text-left">
+      <p class="text-sm text-white"><span class="text-aura-400 font-semibold">${e(s.keyword)}</span> ${e(s.text)}</p>
+      <p class="text-xs text-gray-500">${s.durationMs}ms · ${new Date(d.startTime).toLocaleTimeString('es-ES')}</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">${badge(s.status)}<i class="bi bi-chevron-right step-chev text-gray-500 transition-transform duration-200"></i></div>
+</button>
+<div class="hidden border-t border-gray-700/50">
+  <div class="p-4 space-y-4">
+    ${s.error?`<div class="bg-red-950/30 border border-red-900/50 rounded-lg p-3"><p class="text-xs text-red-400 font-mono break-all">${e(s.error)}</p></div>`:''}
+    ${s.screenshotPath?`<div><p class="text-xs text-gray-500 mb-2" data-i18n="screenshot">Captura de Pantalla</p><img src="${e(s.screenshotPath)}" alt="Step ${s.stepNumber}" class="screenshot-thumb max-w-xl rounded-lg border border-gray-700" onclick="openModal(this.src)"></div>`:''}
+    ${s.logs.length>0?`<div><p class="text-xs text-gray-500 mb-2" data-i18n="stepLogs">Logs del Paso</p><div class="space-y-1 text-xs font-mono">${s.logs.map(l=>`<div class="log-row px-2 py-1 rounded ${logClr(l.level)}">[${new Date(l.timestamp).toLocaleTimeString('es-ES')}] ${l.element?'<span class="text-aura-300">'+e(l.element)+'</span> · ':''}${l.action?'<span class="text-gray-300">'+e(l.action)+'</span> · ':''}${e(l.message)}${l.details?' — <span class="text-gray-500">'+e(l.details)+'</span>':''}</div>`).join('')}</div></div>`:''}
+  </div>
+</div></div>`;
+}
+
+function richLogs(logs: readonly AuraLogEntry[], color: string, emptyKey: string, emptyText: string, countKey: string, title: string): string {
+  if (logs.length === 0) {
+    return `<div class="bg-gray-900 rounded-xl border border-gray-800 p-10 text-center"><i class="bi ${color==='emerald'?'bi-check-circle':'bi-shield-check'} text-4xl text-gray-700 mb-3 block"></i><p class="text-gray-500" data-i18n="${emptyKey}">${emptyText}</p></div>`;
+  }
+  const tableId = `log-table-${color}`;
+  return `<div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+<div class="p-4 border-b border-gray-800 flex items-center justify-between">
+  <div class="flex items-center gap-2"><i class="bi ${color==='emerald'?'bi-check-circle':'bi-exclamation-triangle'} text-${color}-400"></i><h3 class="text-sm font-semibold text-gray-300" data-i18n="${countKey}">${title}</h3><span class="text-xs text-gray-500"><span data-i18n="logTotal">Total</span>: ${logs.length} <span data-i18n="logLogs">logs</span></span></div>
+  <input type="text" class="search-input max-w-xs" placeholder="Buscar logs..." data-i18n-placeholder="searchLogs" oninput="filterLogs(this,'${tableId}')">
+</div>
+<table id="${tableId}" class="w-full text-xs">
+  <thead class="bg-gray-800/50"><tr>
+    <th class="px-4 py-2 text-left text-gray-400 whitespace-nowrap" data-i18n="colTimestamp">Hora</th>
+    <th class="px-4 py-2 text-left text-gray-400" data-i18n="colElement">Elemento</th>
+    <th class="px-4 py-2 text-left text-gray-400" data-i18n="colAction">Acción</th>
+    <th class="px-4 py-2 text-left text-gray-400" data-i18n="colMessage">Mensaje</th>
+    <th class="px-4 py-2 text-left text-gray-400" data-i18n="colDetails">Detalles</th>
+  </tr></thead>
+  <tbody class="divide-y divide-gray-800/50">
+    ${logs.map(l=>`<tr class="log-row hover:bg-gray-800/20"><td class="px-4 py-2 text-gray-500 font-mono whitespace-nowrap">${new Date(l.timestamp).toLocaleTimeString('es-ES')}</td><td class="px-4 py-2 text-gray-300">${l.element?e(l.element):'—'}</td><td class="px-4 py-2 text-gray-400">${l.action?e(l.action):'—'}</td><td class="px-4 py-2 text-${color}-300">${e(l.message)}</td><td class="px-4 py-2 text-gray-500 max-w-xs truncate">${l.details?e(l.details):'—'}</td></tr>`).join('')}
+  </tbody>
+</table></div>`;
 }

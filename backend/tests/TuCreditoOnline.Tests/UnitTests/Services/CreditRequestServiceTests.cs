@@ -61,11 +61,11 @@ public class CreditRequestServiceTests
     }
 
     [Theory]
-    [InlineData("", "juan@example.com", "5551234567", 50000, "Nombre completo")]
+    [InlineData("", "juan@example.com", "5551234567", 50000, "Full name")]
     [InlineData("Juan Pérez", "", "5551234567", 50000, "Email")]
-    [InlineData("Juan Pérez", "juan@example.com", "", 50000, "Teléfono")]
-    [InlineData("Juan Pérez", "juan@example.com", "5551234567", 0, "Monto solicitado")]
-    [InlineData("Juan Pérez", "juan@example.com", "5551234567", -1000, "Monto solicitado")]
+    [InlineData("Juan Pérez", "juan@example.com", "", 50000, "Phone")]
+    [InlineData("Juan Pérez", "juan@example.com", "5551234567", 0, "Requested amount")]
+    [InlineData("Juan Pérez", "juan@example.com", "5551234567", -1000, "Requested amount")]
     public async Task CreateCreditRequestAsync_WithInvalidData_ShouldFail(
         string fullName, string email, string phone, decimal amount, string expectedError)
     {
@@ -87,7 +87,7 @@ public class CreditRequestServiceTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Message.Should().ContainAny(expectedError, expectedError.ToLower());
+        result.Message.Should().Contain(expectedError);
         
         _mockRepository.Verify(x => x.AddAsync(It.IsAny<CreditRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -135,7 +135,7 @@ public class CreditRequestServiceTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Message.Should().Contain("no encontrada");
+        result.Message.Should().Contain("not found");
     }
 
     [Fact]

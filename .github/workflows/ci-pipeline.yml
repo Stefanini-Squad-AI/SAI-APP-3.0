@@ -2,7 +2,7 @@ name: CI Pipeline
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review, synchronize, closed]
+    types: [ready_for_review, closed]
     branches: ["main"]
     paths-ignore:
       - "**/*.md"
@@ -574,7 +574,8 @@ jobs:
           echo "- AURA HTML Report: [Open report](${{ env.AURA_REPORT_URL }})" >> $GITHUB_STEP_SUMMARY
 
   teardown-preview:
-    if: github.event.action == 'closed'
+    if: always() && github.event.action == 'closed'
+    needs: [pipeline-summary]
     runs-on: ubuntu-latest
     steps:
       - name: Tear down preview
@@ -608,6 +609,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: existing.id,
-                body: "### Preview deployment\n\n~~Torn down after PR was closed.~~",
+                body: "### Preview deployment\n\n~~Torn down after CI pipeline completed.~~",
               });
             }
