@@ -1,4 +1,4 @@
-name: CD
+name: CD Pipeline
 
 on:
   push:
@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   build:
@@ -28,7 +28,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4.4.0
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 

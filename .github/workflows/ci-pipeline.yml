@@ -1,4 +1,4 @@
-name: CI
+name: CI Pipeline
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ permissions:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   DOTNET_VERSION: "8.0.x"
-  NODE_VERSION: "20"
+  NODE_VERSION: "24"
   PREVIEW_DOMAIN: pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   PREVIEW_URL: https://pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   AURA_REPORT_DOMAIN: aura-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
