@@ -17,6 +17,8 @@ env:
   NODE_VERSION: "20"
   PREVIEW_DOMAIN: pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   PREVIEW_URL: https://pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  AURA_REPORT_DOMAIN: aura-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  AURA_REPORT_URL: https://aura-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/aura-report.html
 
 jobs:
   sonarqube-backend:
@@ -456,6 +458,52 @@ jobs:
           echo "latest_report=${LATEST_REPORT}" >> $GITHUB_OUTPUT
           echo "latest_video=${LATEST_VIDEO}" >> $GITHUB_OUTPUT
 
+      - name: Publish latest AURA report to Surge
+        if: always() && steps.aura-latest.outputs.latest_report != ''
+        id: publish-aura
+        working-directory: automation/frameworks/applied-ai-aura
+        run: |
+          REPORT_DIR=$(dirname "${{ steps.aura-latest.outputs.latest_report }}")
+          npx surge --project "$REPORT_DIR" --domain ${{ env.AURA_REPORT_DOMAIN }}
+          echo "aura_report_url=${{ env.AURA_REPORT_URL }}" >> $GITHUB_OUTPUT
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Comment AURA report URL on PR
+        if: always() && steps.publish-aura.outputs.aura_report_url != ''
+        uses: actions/github-script@v7.0.1
+        with:
+          script: |
+            const url = `${{ steps.publish-aura.outputs.aura_report_url }}`;
+            const body = `### AURA report ready\n\n[Open latest AURA HTML report](${url})\n\n_Updated on push to this PR. Torn down when PR is closed._`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c =>
+              c.user.login === 'github-actions[bot]' && c.body.includes('AURA report ready')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
       - name: Upload AURA reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -490,6 +538,11 @@ jobs:
           else
             echo "- Video: not generated" >> $GITHUB_STEP_SUMMARY
           fi
+          if [ -n "${{ steps.publish-aura.outputs.aura_report_url }}" ]; then
+            echo "- Public URL: [Open report](${{ steps.publish-aura.outputs.aura_report_url }})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Public URL: not published" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Download artifact \`aura-functional-report\` to open the latest HTML report and video." >> $GITHUB_STEP_SUMMARY
 
@@ -515,6 +568,10 @@ jobs:
           echo "- backend-unit-test-results" >> $GITHUB_STEP_SUMMARY
           echo "- frontend-unit-test-results" >> $GITHUB_STEP_SUMMARY
           echo "- aura-functional-report (HTML + video)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- Preview App: [Open preview](${{ needs.deploy-preview.outputs.preview_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "- AURA HTML Report: [Open report](${{ env.AURA_REPORT_URL }})" >> $GITHUB_STEP_SUMMARY
 
   teardown-preview:
     if: github.event.action == 'closed'
@@ -522,6 +579,12 @@ jobs:
     steps:
       - name: Tear down preview
         run: npx surge teardown ${{ env.PREVIEW_DOMAIN }}
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Tear down AURA report preview
+        run: npx surge teardown ${{ env.AURA_REPORT_DOMAIN }} || true
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
