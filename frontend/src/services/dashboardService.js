@@ -8,7 +8,7 @@ const dashboardService = {
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.error || error.message || 'Error al obtener estadísticas'
+        error: error.response?.data?.error || error.message || 'Failed to fetch dashboard statistics'
       };
     }
   },
@@ -20,7 +20,7 @@ const dashboardService = {
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.error || error.message || 'Error al obtener distribución'
+        error: error.response?.data?.error || error.message || 'Failed to fetch status distribution'
       };
     }
   },

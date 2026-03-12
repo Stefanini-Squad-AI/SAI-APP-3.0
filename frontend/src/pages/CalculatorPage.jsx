@@ -23,8 +23,7 @@ const CalculatorPage = () => {
     setUseOfMoney,
     setMonthlyIncome,
     setRequestedAmount,
-    setTermYears,
-    setInterestRate
+    setTermYears
   } = useCreditCalculator();
 
   const handleOpenWizard = () => {
@@ -88,7 +87,7 @@ const CalculatorPage = () => {
               <h2 className="text-2xl font-bold mb-6 text-gray-900">{t('calculatorPage.creditData')}</h2>
               
               <div className="space-y-6">
-                {/* Tipo de Crédito */}
+                {/* Credit type */}
                 <div>
                   <label htmlFor="creditType" className="block text-sm font-medium text-gray-700 mb-2">
                     {t('calculatorPage.creditType')}
@@ -110,7 +109,7 @@ const CalculatorPage = () => {
                   )}
                 </div>
 
-                {/* Uso del Dinero */}
+                {/* Purpose of funds */}
                 <div>
                   <label htmlFor="useOfMoney" className="block text-sm font-medium text-gray-700 mb-2">
                     {t('calculatorPage.useOfMoney')}
@@ -130,7 +129,7 @@ const CalculatorPage = () => {
                   </select>
                 </div>
 
-                {/* Ingresos Mensuales */}
+                {/* Monthly income */}
                 <div>
                   <label htmlFor="monthlyIncome" className="block text-sm font-medium text-gray-700 mb-2">
                     {t('calculatorPage.monthlyIncome')}
@@ -152,7 +151,7 @@ const CalculatorPage = () => {
                   </p>
                 </div>
 
-                {/* Monto Solicitado */}
+                {/* Requested amount */}
                 <div>
                   <label htmlFor="requestedAmount" className="block text-sm font-medium text-gray-700 mb-2">
                     {t('calculatorPage.requestedAmount')}: {formatCurrency(requestedAmount)}
@@ -173,7 +172,7 @@ const CalculatorPage = () => {
                   </div>
                 </div>
 
-                {/* Plazo */}
+                {/* Loan term */}
                 <div>
                   <label htmlFor="termYears" className="block text-sm font-medium text-gray-700 mb-2">
                     {t('calculatorPage.term')}: {termYears} {termYears === 1 ? t('calculatorPage.year') : t('calculatorPage.years')} ({termYears * 12} {t('calculatorPage.months')})
@@ -194,13 +193,13 @@ const CalculatorPage = () => {
                   </div>
                 </div>
 
-                {/* Tasa de Interés */}
+                {/* Interest rate */}
                 <div>
                   <label htmlFor="interestRate" className="block text-sm font-medium text-gray-700 mb-2">
                     {t('calculatorPage.interestRate')}
                   </label>
                   <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50">
-                    <p className="text-gray-700 font-medium text-lg">{formatPercent(selectedCreditType?.baseInterestRate || interestRate)}</p>
+                    <p className="text-gray-700 font-medium text-lg">{formatPercent(selectedCreditType?.baseInterestRate ?? interestRate)}</p>
                     <p className="text-xs text-gray-500 mt-1">{t('calculatorPage.fixedRate')}</p>
                   </div>
                 </div>
@@ -209,12 +208,12 @@ const CalculatorPage = () => {
 
             {/* Right Side - Results */}
             <div className="space-y-6">
-              {/* Resultados Principales */}
+              {/* Primary results */}
               <div className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl shadow-soft p-8 text-white">
                 <h2 className="text-2xl font-bold mb-6">{t('calculatorPage.resultsTitle')}</h2>
                 
                 <div className="space-y-6">
-                  {/* Cuota Mensual */}
+                  {/* Monthly installment */}
                   <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
                     <div className="text-sm text-primary-100 mb-2">{t('calculatorPage.monthlyPayment')}</div>
                     <div className="text-4xl font-bold">
@@ -225,7 +224,7 @@ const CalculatorPage = () => {
                     </div>
                   </div>
 
-                  {/* Monto Máximo */}
+                  {/* Maximum financing */}
                   <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-primary-100">{t('calculatorPage.maxFinancing')}</span>
@@ -238,7 +237,7 @@ const CalculatorPage = () => {
                     )}
                   </div>
 
-                  {/* Tasa Aplicada */}
+                  {/* Applied rate */}
                   <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-primary-100">{t('calculatorPage.appliedRate')}</span>
@@ -248,7 +247,7 @@ const CalculatorPage = () => {
                   </div>
                 </div>
 
-              {/* Botón Solicitar */}
+              {/* Apply button */}
               <button 
                 onClick={handleOpenWizard}
                 className="w-full mt-8 px-6 py-4 bg-white text-primary-600 rounded-lg hover:bg-primary-50 transition font-bold text-lg shadow-lg"
@@ -257,7 +256,7 @@ const CalculatorPage = () => {
               </button>
               </div>
 
-              {/* Desglose Detallado */}
+              {/* Detailed breakdown */}
               <div className="bg-white rounded-xl shadow-soft p-6">
                 <h3 className="text-lg font-bold mb-4 text-gray-900">{t('calculatorPage.breakdown')}</h3>
                 <div className="space-y-3">
@@ -284,7 +283,7 @@ const CalculatorPage = () => {
                 </div>
               </div>
 
-              {/* Info Adicional */}
+              {/* Additional info */}
               <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
                 <div className="flex">
                   <div className="flex-shrink-0">

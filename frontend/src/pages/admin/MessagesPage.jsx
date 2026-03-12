@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { XCircle, Eye, Trash2, RefreshCw } from 'lucide-react';
 import contactMessageService from '../../services/contactMessageService';
 import Swal from 'sweetalert2';
@@ -10,21 +11,22 @@ const MessagesPage = () => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchMessages();
-  }, [filterStatus]);
-
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       setLoading(true);
       const data = await contactMessageService.getAll(filterStatus);
       setMessages(data);
     } catch (error) {
+      console.error('Failed to fetch contact messages', error);
       Swal.fire('Error', 'Failed to load messages', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterStatus]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
 
   const handleViewMessage = (message) => {
     setSelectedMessage(message);
@@ -38,6 +40,7 @@ const MessagesPage = () => {
       fetchMessages();
       setIsDetailModalOpen(false);
     } catch (error) {
+      console.error(`Failed to update message status ${messageId}`, error);
       Swal.fire('Error', error.response?.data?.error || 'Failed to update status', 'error');
     }
   };
@@ -60,6 +63,7 @@ const MessagesPage = () => {
         Swal.fire('Deleted', 'Message deleted successfully', 'success');
         fetchMessages();
       } catch (error) {
+        console.error(`Failed to delete message ${id}`, error);
         Swal.fire('Error', error.response?.data?.error || 'Failed to delete message', 'error');
       }
     }
@@ -297,10 +301,11 @@ const MessageDetailModal = ({ message, onClose, onUpdateStatus }) => {
               <h3 className="font-semibold text-gray-900 mb-3">Update Status</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">New Status</label>
+                  <label htmlFor="newStatus" className="block text-sm font-medium text-gray-700 mb-2">New Status</label>
                   <select
+                    id="newStatus"
                     value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(parseInt(e.target.value))}
+                    onChange={(e) => setSelectedStatus(Number.parseInt(e.target.value, 10))}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
                     <option value={message.status}>
@@ -312,8 +317,9 @@ const MessageDetailModal = ({ message, onClose, onUpdateStatus }) => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Admin Notes</label>
+                  <label htmlFor="adminNotes" className="block text-sm font-medium text-gray-700 mb-2">Admin Notes</label>
                   <textarea
+                    id="adminNotes"
                     value={adminNotes}
                     onChange={(e) => setAdminNotes(e.target.value)}
                     rows={4}
@@ -346,6 +352,25 @@ const MessageDetailModal = ({ message, onClose, onUpdateStatus }) => {
       </div>
     </div>
   );
+};
+
+MessageDetailModal.propTypes = {
+  message: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    status: PropTypes.number.isRequired,
+    adminNotes: PropTypes.string,
+    name: PropTypes.string.isRequired,
+    email: PropTypes.string.isRequired,
+    createdAt: PropTypes.string.isRequired,
+    subject: PropTypes.string.isRequired,
+    message: PropTypes.string.isRequired,
+    respondedAt: PropTypes.string,
+    respondedBy: PropTypes.string,
+    closedAt: PropTypes.string,
+    closedBy: PropTypes.string,
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onUpdateStatus: PropTypes.func.isRequired,
 };
 
 export default MessagesPage;

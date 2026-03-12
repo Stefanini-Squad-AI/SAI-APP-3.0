@@ -110,7 +110,7 @@ public class UsersController : ControllerBase
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
     {
-        _logger.LogInformation("Cambiando contraseña para usuario con ID: {UserId}", dto.UserId);
+        _logger.LogInformation("Changing password for user ID: {UserId}", dto.UserId);
         var result = await _userManagementService.ChangePasswordAsync(dto);
 
         if (!result.IsSuccess)

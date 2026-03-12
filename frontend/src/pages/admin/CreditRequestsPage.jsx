@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Eye, CheckCircle, XCircle, Clock, Filter } from 'lucide-react';
 import creditRequestService from '../../services/creditRequestService';
 import CreditRequestDetailModal from '../../components/admin/CreditRequestDetailModal';
@@ -12,15 +12,7 @@ const CreditRequestsPage = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
 
-  useEffect(() => {
-    fetchCreditRequests();
-  }, []);
-
-  useEffect(() => {
-    filterRequests();
-  }, [statusFilter, creditRequests]);
-
-  const fetchCreditRequests = async () => {
+  const fetchCreditRequests = useCallback(async () => {
     try {
       setLoading(true);
       const result = await creditRequestService.getAllCreditRequests();
@@ -33,19 +25,24 @@ const CreditRequestsPage = () => {
         Swal.fire('Error', result.error, 'error');
       }
     } catch (error) {
+      console.error('Failed to fetch credit requests', error);
       Swal.fire('Error', 'Failed to load credit requests', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filterRequests = () => {
+  useEffect(() => {
+    fetchCreditRequests();
+  }, [fetchCreditRequests]);
+
+  useEffect(() => {
     if (statusFilter === 'all') {
       setFilteredRequests(creditRequests);
     } else {
       setFilteredRequests(creditRequests.filter(req => req.status === statusFilter));
     }
-  };
+  }, [statusFilter, creditRequests]);
 
   const handleViewDetails = (request) => {
     setSelectedRequest(request);
@@ -88,6 +85,7 @@ const CreditRequestsPage = () => {
           Swal.fire('Error', response.error, 'error');
         }
       } catch (error) {
+        console.error(`Failed to approve request ${request.id}`, error);
         Swal.fire('Error', 'Failed to approve request', 'error');
       }
     }
@@ -125,6 +123,7 @@ const CreditRequestsPage = () => {
           Swal.fire('Error', response.error, 'error');
         }
       } catch (error) {
+        console.error(`Failed to reject request ${request.id}`, error);
         Swal.fire('Error', 'Failed to reject request', 'error');
       }
     }

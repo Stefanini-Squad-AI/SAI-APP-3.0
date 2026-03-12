@@ -1,5 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import creditTypeService from '../services/creditTypeService';
+
+const getSafeTermYears = (currentYears, minTermMonths, maxTermMonths) => {
+  const minYears = Math.ceil(minTermMonths / 12);
+  const maxYears = Math.floor(maxTermMonths / 12);
+
+  // Normal case: there is at least one full-year value inside the allowed month range.
+  if (minYears <= maxYears) {
+    return Math.min(Math.max(currentYears, minYears), maxYears);
+  }
+
+  // Edge case: no exact year exists in the month range (e.g. 7-11 or 13-23 months).
+  // Pick a deterministic nearest value to avoid oscillation loops.
+  const lowerCandidate = Math.max(1, maxYears);
+  const upperCandidate = Math.max(1, minYears);
+  const targetYears = (minTermMonths + maxTermMonths) / 24;
+
+  const lowerDistance = Math.abs(lowerCandidate - targetYears);
+  const upperDistance = Math.abs(upperCandidate - targetYears);
+
+  return lowerDistance <= upperDistance ? lowerCandidate : upperCandidate;
+};
 
 const useCreditCalculator = () => {
   const [creditTypes, setCreditTypes] = useState([]);
@@ -31,9 +52,7 @@ const useCreditCalculator = () => {
           setSelectedCreditTypeId(data[0].id);
           setSelectedCreditType(data[0]);
           setInterestRate(data[0].baseInterestRate);
-          if (requestedAmount > data[0].maxAmount) {
-            setRequestedAmount(data[0].maxAmount);
-          }
+          setRequestedAmount((prevAmount) => Math.min(prevAmount, data[0].maxAmount));
         }
       } catch (error) {
         console.error('Error loading credit types:', error);
@@ -52,22 +71,18 @@ const useCreditCalculator = () => {
         setSelectedCreditType(creditType);
         setInterestRate(creditType.baseInterestRate);
 
-        if (requestedAmount > creditType.maxAmount) {
-          setRequestedAmount(creditType.maxAmount);
-        }
-
-        const termMonths = termYears * 12;
-        if (termMonths > creditType.maxTermMonths) {
-          setTermYears(Math.floor(creditType.maxTermMonths / 12));
-        } else if (termMonths < creditType.minTermMonths) {
-          setTermYears(Math.ceil(creditType.minTermMonths / 12));
-        }
+        setRequestedAmount((prevAmount) => Math.min(prevAmount, creditType.maxAmount));
+        setTermYears((prevYears) => getSafeTermYears(
+          prevYears,
+          creditType.minTermMonths,
+          creditType.maxTermMonths
+        ));
       }
     }
   }, [selectedCreditTypeId, creditTypes]);
 
   // Max affordable amount based on income: monthly payment capped at 35% of income
-  const calculateMaxFinancing = (income) => {
+  const calculateMaxFinancing = useCallback((income) => {
     if (!selectedCreditType) return 0;
 
     const maxMonthlyPayment = income * 0.35;
@@ -85,7 +100,7 @@ const useCreditCalculator = () => {
         (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)));
 
     return Math.min(Math.floor(maxAmount), selectedCreditType.maxAmount);
-  };
+  }, [selectedCreditType, termYears]);
 
   // French amortization formula: M = P * (r * (1+r)^n) / ((1+r)^n - 1)
   const calculateMonthlyPayment = (principal, annualRate, years) => {
@@ -115,7 +130,7 @@ const useCreditCalculator = () => {
       totalPayment,
       totalInterest
     });
-  }, [selectedCreditType, monthlyIncome, requestedAmount, termYears, interestRate, loading]);
+  }, [selectedCreditType, monthlyIncome, requestedAmount, termYears, interestRate, loading, calculateMaxFinancing]);
 
   return {
     creditTypes,

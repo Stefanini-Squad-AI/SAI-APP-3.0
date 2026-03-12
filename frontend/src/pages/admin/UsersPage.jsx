@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import userService from '../../services/userService';
 import UserModal from '../../components/admin/UserModal';
 import Swal from 'sweetalert2';
@@ -15,11 +15,7 @@ const UsersPage = () => {
   const [modalMode, setModalMode] = useState('create');
   const [selectedUser, setSelectedUser] = useState(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, searchTerm]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     const result = await userService.getAllUsers(currentPage, pageSize, searchTerm);
     if (result.success) {
@@ -30,7 +26,11 @@ const UsersPage = () => {
       Swal.fire({ icon: 'error', title: 'Error', text: result.error });
     }
     setLoading(false);
-  };
+  }, [currentPage, pageSize, searchTerm]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -98,6 +98,13 @@ const UsersPage = () => {
       case 'Analista': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const getRoleLabel = (role) => {
+    if (role === 'Analista') {
+      return 'Analyst';
+    }
+    return role;
   };
 
   const formatDate = (dateString) => {
@@ -190,7 +197,7 @@ const UsersPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
-                          {user.role}
+                          {getRoleLabel(user.role)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -234,7 +241,7 @@ const UsersPage = () => {
                 >
                   Previous
                 </button>
-                {[...Array(totalPages)].map((_, idx) => (
+                {Array.from({ length: totalPages }).map((_, idx) => (
                   <button
                     key={idx + 1}
                     onClick={() => setCurrentPage(idx + 1)}

@@ -24,7 +24,13 @@ export const sanitizeString = (input) => {
   let sanitized = sanitizeHtml(input);
   
   // Remove control characters except newline and tab
-  sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  sanitized = [...sanitized]
+    .filter((char) => {
+      const code = char.codePointAt(0) ?? 0;
+      const isControl = code >= 0 && code <= 31;
+      return !isControl || code === 9 || code === 10;
+    })
+    .join('');
   
   // Trim whitespace
   return sanitized.trim();
@@ -52,15 +58,15 @@ export const sanitizePhoneNumber = (phone) => {
   if (!phone || typeof phone !== 'string') return '';
   
   // Remove all non-digit characters
-  return phone.replace(/\D/g, '');
+  return phone.replaceAll(/\D/g, '');
 };
 
 /**
  * Sanitize numeric input
  */
 export const sanitizeNumber = (value, min = 0, max = Number.MAX_SAFE_INTEGER) => {
-  const num = parseFloat(value);
-  if (isNaN(num)) return min;
+  const num = Number.parseFloat(value);
+  if (Number.isNaN(num)) return min;
   if (num < min) return min;
   if (num > max) return max;
   return num;
@@ -125,7 +131,7 @@ export const escapeHtml = (text) => {
     '/': '&#x2F;',
   };
   
-  return text.replace(/[&<>"'/]/g, (char) => map[char]);
+  return text.replaceAll(/[&<>"'/]/g, (char) => map[char]);
 };
 
 /**

@@ -45,7 +45,7 @@ public class DashboardService
         }
         catch (Exception ex)
         {
-            return Result.Failure<DashboardStatsDto>($"Error al obtener estadísticas: {ex.Message}");
+            return Result.Failure<DashboardStatsDto>($"Failed to fetch dashboard statistics: {ex.Message}");
         }
     }
 
@@ -76,7 +76,7 @@ public class DashboardService
         }
         catch (Exception ex)
         {
-            return Result.Failure<List<StatusDistributionDto>>($"Error al obtener distribución: {ex.Message}");
+            return Result.Failure<List<StatusDistributionDto>>($"Failed to fetch status distribution: {ex.Message}");
         }
     }
 
