@@ -7,7 +7,7 @@ const TEST_RESULTS_DIR = path.join(__dirname, 'TestResults');
 const HTML_REPORT_PATH = path.join(__dirname, 'TestResults', 'test-report.html');
 const MARKDOWN_REPORT_PATH = path.join(__dirname, 'TestResults', 'test-report.md');
 
-// Buscar archivo de cobertura recursivamente
+// Find coverage file recursively
 function findCoberturaFile(dir) {
     const files = fs.readdirSync(dir);
     
@@ -26,10 +26,10 @@ function findCoberturaFile(dir) {
     return null;
 }
 
-// Parsear archivo TRX
+// Parse TRX file
 async function parseTrxFile() {
     if (!fs.existsSync(TRX_PATH)) {
-        console.error(`❌ No se encontró el archivo TRX en: ${TRX_PATH}`);
+        console.error(`TRX file not found: ${TRX_PATH}`);
         process.exit(1);
     }
 
@@ -38,12 +38,12 @@ async function parseTrxFile() {
     return await parser.parseStringPromise(trxContent);
 }
 
-// Parsear archivo Cobertura
+// Parse Cobertura file
 async function parseCoberturaFile() {
     const COBERTURA_PATH = findCoberturaFile(TEST_RESULTS_DIR);
     
     if (!COBERTURA_PATH) {
-        console.warn(`⚠️ No se encontró archivo de cobertura en: ${TEST_RESULTS_DIR}`);
+        console.warn(`Coverage file not found in: ${TEST_RESULTS_DIR}`);
         return null;
     }
 
@@ -53,7 +53,7 @@ async function parseCoberturaFile() {
     return await parser.parseStringPromise(coberturaContent);
 }
 
-// Extraer información del TRX
+// Extract test info from TRX
 function extractTestInfo(trxData) {
     const testRun = trxData.TestRun;
     const results = testRun.Results?.[0]?.UnitTestResult || [];
@@ -95,7 +95,7 @@ function extractTestInfo(trxData) {
     };
 }
 
-// Extraer información de cobertura
+// Extract coverage info
 function extractCoverageInfo(coberturaData) {
     if (!coberturaData) return null;
 
@@ -147,7 +147,7 @@ function extractCoverageInfo(coberturaData) {
     };
 }
 
-// Generar reporte HTML mejorado
+// Generate rich HTML report
 function generateHtmlReport(testInfo, coverageInfo) {
     const passRate = testInfo.total > 0 
         ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) 
@@ -164,7 +164,7 @@ function generateHtmlReport(testInfo, coverageInfo) {
 
     const html = `
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -670,7 +670,7 @@ function generateHtmlReport(testInfo, coverageInfo) {
         </div>
 
         <div class="footer">
-            <div class="timestamp">Generated on ${new Date().toLocaleString('es-ES', { dateStyle: 'full', timeStyle: 'long' })}</div>
+            <div class="timestamp">Generated on ${new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'long' })}</div>
         </div>
     </div>
 
@@ -889,7 +889,7 @@ function getCoverageClass(rate) {
     return 'low';
 }
 
-// Generar reporte Markdown simplificado (sin detalles de test por clase)
+// Generate simplified Markdown summary (without per-test details)
 function generateMarkdownReport(testInfo, coverageInfo) {
     const passRate = testInfo.total > 0 
         ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) 
@@ -914,7 +914,7 @@ function generateMarkdownReport(testInfo, coverageInfo) {
         markdown += `\n`;
     }
 
-    markdown += `> 📦 Ver artifact **backend-unit-test-results** para el reporte completo con detalles de cada test.\n`;
+    markdown += `> Download artifact **backend-unit-test-results** for the complete report with per-test details.\n`;
 
     return markdown;
 }
@@ -947,43 +947,43 @@ function escapeHtml(text) {
 // Main
 async function main() {
     try {
-        console.log('🔍 Parseando archivo TRX...');
+        console.log('Parsing TRX file...');
         const trxData = await parseTrxFile();
         
-        console.log('📊 Extrayendo información de tests...');
+        console.log('Extracting test information...');
         const testInfo = extractTestInfo(trxData);
         
-        console.log('📈 Parseando archivo de cobertura...');
+        console.log('Parsing coverage file...');
         const coberturaData = await parseCoberturaFile();
         const coverageInfo = extractCoverageInfo(coberturaData);
         
-        console.log(`\n✨ Resumen de Tests:`);
+        console.log('\nTest summary:');
         console.log(`   Total: ${testInfo.total}`);
-        console.log(`   Pasadas: ${testInfo.passed}`);
-        console.log(`   Fallidas: ${testInfo.failed}`);
-        console.log(`   Omitidas: ${testInfo.skipped}`);
+        console.log(`   Passed: ${testInfo.passed}`);
+        console.log(`   Failed: ${testInfo.failed}`);
+        console.log(`   Skipped: ${testInfo.skipped}`);
         
         if (coverageInfo) {
-            console.log(`\n📈 Cobertura de Código:`);
-            console.log(`   Líneas: ${coverageInfo.lineRate.toFixed(2)}%`);
-            console.log(`   Ramas: ${coverageInfo.branchRate.toFixed(2)}%`);
+            console.log('\nCode coverage:');
+            console.log(`   Lines: ${coverageInfo.lineRate.toFixed(2)}%`);
+            console.log(`   Branches: ${coverageInfo.branchRate.toFixed(2)}%`);
         }
         
-        console.log('\n📄 Generando reporte HTML...');
+        console.log('\nGenerating HTML report...');
         const htmlReport = generateHtmlReport(testInfo, coverageInfo);
         fs.writeFileSync(HTML_REPORT_PATH, htmlReport, 'utf-8');
-        console.log(`   ✅ HTML generado: ${HTML_REPORT_PATH}`);
+        console.log(`   HTML generated: ${HTML_REPORT_PATH}`);
         
-        console.log('\n📝 Generando reporte Markdown...');
+        console.log('\nGenerating Markdown report...');
         const markdownReport = generateMarkdownReport(testInfo, coverageInfo);
         fs.writeFileSync(MARKDOWN_REPORT_PATH, markdownReport, 'utf-8');
-        console.log(`   ✅ Markdown generado: ${MARKDOWN_REPORT_PATH}`);
+        console.log(`   Markdown generated: ${MARKDOWN_REPORT_PATH}`);
         
-        console.log('\n🎉 ¡Reportes generados exitosamente!\n');
+        console.log('\nReports generated successfully.\n');
         
         process.exit(testInfo.failed > 0 ? 1 : 0);
     } catch (error) {
-        console.error('❌ Error al generar reportes:', error);
+        console.error('Failed to generate reports:', error);
         process.exit(1);
     }
 }
