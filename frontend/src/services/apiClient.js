@@ -8,8 +8,10 @@ const normalizeApiBaseUrl = (rawBaseUrl) => {
   return /\/api$/i.test(base) ? base : `${base}/api`;
 };
 
-export const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
-const USE_MOCK_AUTH = String(import.meta.env.VITE_ENABLE_MOCK_AUTH || 'false').toLowerCase() === 'true';
+const RAW_API_URL = String(import.meta.env.VITE_API_URL || '').trim();
+const ENABLE_MOCK_AUTH = String(import.meta.env.VITE_ENABLE_MOCK_AUTH || 'false').toLowerCase() === 'true';
+const USE_MOCK_API = ENABLE_MOCK_AUTH && RAW_API_URL.length === 0;
+export const API_BASE_URL = normalizeApiBaseUrl(RAW_API_URL);
 
 const nowIso = () => new Date().toISOString();
 const id = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
@@ -306,7 +308,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    if (USE_MOCK_AUTH) {
+    if (USE_MOCK_API) {
       attachMockAdapter(config);
       return config;
     }
