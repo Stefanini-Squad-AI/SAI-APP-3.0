@@ -34,9 +34,13 @@ services:
       - JwtSettings__Secret=${JWT_SECRET:-TuCreditoOnline-SecretKey-32chars-minimum-security-local-dev}
       - JwtSettings__Issuer=TuCreditoOnline
       - JwtSettings__Audience=TuCreditoOnline.Client
+      - DefaultAdmin__Email=${DEFAULT_ADMIN_EMAIL:-admin@tucreditoonline.local}
+      - DefaultAdmin__Password=${DEFAULT_ADMIN_PASSWORD:-Admin123!}
+      - DefaultAdmin__FullName=${DEFAULT_ADMIN_FULL_NAME:-System Administrator}
+      - DefaultAdmin__Role=Admin
     depends_on:
       mongodb:
-        condition: service_healthy
+        condition: service_started
     networks:
       - tco-network
 

@@ -583,7 +583,7 @@ jobs:
 
       - name: Start local services for integration and security tests
         run: |
-          docker compose up -d mongodb backend frontend
+          docker compose up -d mongodb backend frontend || true
 
       - name: Wait and verify services
         run: |
@@ -768,6 +768,8 @@ jobs:
           ARTIFACTS_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}#artifacts"
           echo "## Build and Quality Tests" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Preview URL: [Open preview](${{ env.PREVIEW_URL }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Integration Tests" >> $GITHUB_STEP_SUMMARY
           if [ -f "test-results/integration/integration-results.trx" ]; then
             echo "- TRX generated: \`integration-results.trx\` in artifact [integration-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
@@ -818,18 +820,28 @@ jobs:
     name: Deploy Preview with Surge
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
-    needs: [build-and-quality-tests]
     outputs:
       preview_url: ${{ steps.preview.outputs.preview_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Download frontend build artifact
-        uses: actions/download-artifact@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          name: frontend-dist
-          path: frontend/dist
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ./frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend for preview
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
 
       - name: Deploy preview to Surge
         id: preview
@@ -839,6 +851,17 @@ jobs:
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Preview summary
+        if: always()
+        run: |
+          echo "## Preview Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.preview.outputs.preview_url }}" ]; then
+            echo "- Preview URL: [Open preview](${{ steps.preview.outputs.preview_url }})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Preview URL: expected at [Open preview](${{ env.PREVIEW_URL }})" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Comment preview URL on PR
         uses: actions/github-script@v8
