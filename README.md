@@ -4,7 +4,7 @@ Full-stack online credit application platform.
 
 **Live demo (GitHub Pages):** https://stefanini-squad-ai.github.io/SAI-APP-3.0/
 
-| Layer | Technology |
+| Layer | Technology | 
 |---|---|
 | Frontend | React 18 + Vite + Tailwind CSS |
 | Backend | .NET 8 (ASP.NET Core Web API) |
