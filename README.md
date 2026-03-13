@@ -126,3 +126,16 @@ The frontend uses [i18next](https://www.i18next.com/). Three locales are bundled
 | `pt` | Brazilian Portuguese |
 
 Users switch languages at runtime using the dropdown in the navigation header. The selection is persisted via `localStorage` between sessions.
+
+---
+
+## Pruebas funcionales web (E2E)
+
+Las pruebas E2E con Playwright están en la carpeta `e2e/`. Cubren la portada, navegación pública, login de administración y calculadora.
+
+```bash
+# Con el frontend en marcha (p. ej. docker compose up)
+cd e2e && npm install && npx playwright install chromium && npm test
+```
+
+Contra otra URL: `BASE_URL=https://tu-url npm test`. Ver `e2e/README.md` para más opciones.
