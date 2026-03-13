@@ -8,7 +8,7 @@ const normalizeApiBaseUrl = (rawBaseUrl) => {
   return /\/api$/i.test(base) ? base : `${base}/api`;
 };
 
-const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
+export const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
