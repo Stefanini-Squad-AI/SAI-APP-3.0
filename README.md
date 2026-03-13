@@ -15,7 +15,23 @@ The UI supports **English**, **Latin American Spanish**, and **Brazilian Portugu
 
 ---
 
-## Quick Start (Docker)
+## Run Modes and Requirements
+
+You can run this project in two modes:
+
+1. **Local Full-Stack Mode** (frontend + backend + MongoDB with real API)
+2. **GitHub Pages Demo Mode** (frontend-only, no backend dependency)
+
+### Requirements
+
+| Mode | Requirements |
+|---|---|
+| Local Full-Stack | Docker Desktop (running) |
+| GitHub Pages Demo | GitHub Actions + GitHub Pages enabled on the repository |
+
+---
+
+## Quick Start (Local Full-Stack via Docker)
 
 **Prerequisites:** Docker Desktop running.
 
@@ -56,21 +72,36 @@ docker compose down -v
 
 ---
 
-## First Login
+## First Login (Local Full-Stack)
 
-The database initializes empty. Create the first admin user via the Swagger UI:
+The backend seeds a default admin account at startup (idempotent).
 
-1. Open http://localhost:5000/swagger
-2. `POST /api/auth/register` with:
-```json
-{
-  "email": "admin@example.com",
-  "password": "Admin123!",
-  "fullName": "Admin User",
-  "role": "Admin"
-}
-```
-3. Log in at http://localhost:3000/admin/login with those credentials.
+- Open: `http://localhost:3000/admin/login`
+- Default credentials:
+  - Email: `admin@tucreditoonline.local`
+  - Password: `Admin123!`
+
+You can override these with env vars in `.env`:
+- `DEFAULT_ADMIN_EMAIL`
+- `DEFAULT_ADMIN_PASSWORD`
+- `DEFAULT_ADMIN_FULL_NAME`
+
+---
+
+## GitHub Pages Demo Mode (No Backend Dependency)
+
+GitHub Pages deploys the frontend only. In this mode, login and admin pages run with frontend mock data so the demo works without backend/API.
+
+CD workflow (`.github/workflows/cd-pipeline.yml`) enables:
+- `VITE_ENABLE_MOCK_AUTH=true`
+
+Optional GitHub repository secrets for demo credentials shown in the login panel:
+- `DEFAULT_ADMIN_EMAIL`
+- `DEFAULT_ADMIN_PASSWORD`
+
+If these secrets are not set, fallback values are used:
+- `admin@tucreditoonline.local`
+- `Admin123!`
 
 ---
 
@@ -85,6 +116,9 @@ A `.env` file with safe local defaults is included. Edit it as needed.
 | `MONGO_DATABASE` | `tucreditoonline` | Database name |
 | `API_PORT` | `5000` | Host port for the backend API |
 | `JWT_SECRET` | *(see file)* | JWT signing key — must be 32+ characters |
+| `DEFAULT_ADMIN_EMAIL` | `admin@tucreditoonline.local` | Seeded admin email (local/full-stack) |
+| `DEFAULT_ADMIN_PASSWORD` | `Admin123!` | Seeded admin password (local/full-stack) |
+| `DEFAULT_ADMIN_FULL_NAME` | `System Administrator` | Seeded admin display name |
 
 ---
 
