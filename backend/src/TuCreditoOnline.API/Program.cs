@@ -107,6 +107,16 @@ builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
+// Seed default admin account on startup (idempotent)
+try
+{
+    await AdminUserSeeder.SeedAsync(app);
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Warning: default admin seed failed but startup will continue. Error: {ex.Message}");
+}
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
