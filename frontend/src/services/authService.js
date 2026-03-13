@@ -1,8 +1,6 @@
 import apiClient, { API_BASE_URL } from './apiClient';
 
-const USE_MOCK_AUTH =
-  !import.meta.env.PROD &&
-  String(import.meta.env.VITE_ENABLE_MOCK_AUTH || 'false').toLowerCase() === 'true';
+const USE_MOCK_AUTH = String(import.meta.env.VITE_ENABLE_MOCK_AUTH || 'false').toLowerCase() === 'true';
 const DEFAULT_ADMIN_EMAIL = (import.meta.env.VITE_DEFAULT_ADMIN_EMAIL || 'admin@tucreditoonline.local').trim().toLowerCase();
 const DEFAULT_ADMIN_PASSWORD = (import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || 'Admin123!').trim();
 
