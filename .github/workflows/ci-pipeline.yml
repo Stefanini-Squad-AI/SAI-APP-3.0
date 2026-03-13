@@ -1112,9 +1112,10 @@ jobs:
           script: |
             const backendUrl = `${{ needs.backend-unit-tests.outputs.backend_report_url }}`;
             const frontendUrl = `${{ needs.frontend-unit-tests.outputs.frontend_report_url }}`;
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
             const backendLine = backendUrl ? `[Open backend unit report](${backendUrl})` : 'Backend unit report not published';
             const frontendLine = frontendUrl ? `[Open frontend unit report](${frontendUrl})` : 'Frontend unit report not published';
-            const body = `### Unit test reports ready\n\n- ${backendLine}\n- ${frontendLine}\n\n_Updated on push to this PR. Torn down when PR is closed._`;
+            const body = `### Unit test reports ready\n\n- ${backendLine}\n- ${frontendLine}\n- [Open this CI run](${runUrl})\n\n_Updated on push to this PR. Torn down when PR is closed._`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,

@@ -8,9 +8,32 @@ import LanguageSelector from '../../components/layout/LanguageSelector';
 
 const DEFAULT_ADMIN_EMAIL = import.meta.env.VITE_DEFAULT_ADMIN_EMAIL || 'admin@tucreditoonline.local';
 const DEFAULT_ADMIN_PASSWORD = import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || 'Admin123!';
+const ADMIN_PANEL_TEXTS = {
+  en: {
+    title: 'Default admin credentials',
+    help: 'Use these credentials for quick access in local/dev and preview environments.',
+    copy: 'Copy',
+    copied: 'Copied',
+    use: 'Use these credentials'
+  },
+  es: {
+    title: 'Credenciales de administrador por defecto',
+    help: 'Usa estas credenciales para acceso rapido en entornos local/dev y preview.',
+    copy: 'Copiar',
+    copied: 'Copiado',
+    use: 'Usar estas credenciales'
+  },
+  pt: {
+    title: 'Credenciais padrao de administrador',
+    help: 'Use estas credenciais para acesso rapido em ambientes local/dev e preview.',
+    copy: 'Copiar',
+    copied: 'Copiado',
+    use: 'Usar estas credenciais'
+  }
+};
 
 const LoginPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
@@ -19,6 +42,8 @@ const LoginPage = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [copiedField, setCopiedField] = useState('');
+  const panelText = ADMIN_PANEL_TEXTS[i18n.resolvedLanguage] || ADMIN_PANEL_TEXTS.en;
 
   const fillAdminCredentials = () => {
     setFormData({
@@ -28,22 +53,14 @@ const LoginPage = () => {
     setErrors({});
   };
 
-  const copyToClipboard = async (value, label) => {
+  const copyToClipboard = async (value, field) => {
     try {
+      if (!navigator.clipboard?.writeText) return;
       await navigator.clipboard.writeText(value);
-      await Swal.fire({
-        icon: 'success',
-        title: `${label} copied`,
-        text: value,
-        timer: 1600,
-        showConfirmButton: false
-      });
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(''), 1600);
     } catch {
-      await Swal.fire({
-        icon: 'error',
-        title: 'Copy failed',
-        text: `Could not copy ${label.toLowerCase()}.`
-      });
+      setCopiedField('');
     }
   };
 
@@ -144,50 +161,6 @@ const LoginPage = () => {
           <p className="text-gray-600 mt-2">{t('loginPage.subtitle')}</p>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-          <p className="text-sm font-semibold text-blue-900">Default admin credentials</p>
-          <p className="text-xs text-blue-700 mt-1">Use these credentials for quick access in local/dev and preview environments.</p>
-          <div className="mt-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={DEFAULT_ADMIN_EMAIL}
-                readOnly
-                className="w-full px-3 py-2 border border-blue-200 bg-white rounded-lg text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => copyToClipboard(DEFAULT_ADMIN_EMAIL, 'Email')}
-                className="px-3 py-2 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Copy
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={DEFAULT_ADMIN_PASSWORD}
-                readOnly
-                className="w-full px-3 py-2 border border-blue-200 bg-white rounded-lg text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => copyToClipboard(DEFAULT_ADMIN_PASSWORD, 'Password')}
-                className="px-3 py-2 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={fillAdminCredentials}
-            className="mt-3 w-full px-4 py-2 text-sm font-medium bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200"
-          >
-            Use these credentials
-          </button>
-        </div>
-
         {/* Form */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -231,6 +204,57 @@ const LoginPage = () => {
               {errors.password && (
                 <p className="text-red-500 text-sm mt-1">{errors.password}</p>
               )}
+            </div>
+
+            {/* Default admin credentials */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-sm font-semibold text-blue-900">{panelText.title}</p>
+              <p className="text-xs text-blue-700 mt-1">{panelText.help}</p>
+              <div className="mt-3 space-y-3">
+                <div>
+                  <p className="text-xs font-medium text-blue-900 mb-1">{t('loginPage.email')}</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={DEFAULT_ADMIN_EMAIL}
+                      readOnly
+                      className="w-full px-3 py-2 border border-blue-200 bg-white rounded-lg text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(DEFAULT_ADMIN_EMAIL, 'email')}
+                      className="px-3 py-2 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 min-w-[74px]"
+                    >
+                      {copiedField === 'email' ? panelText.copied : panelText.copy}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-blue-900 mb-1">{t('loginPage.password')}</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={DEFAULT_ADMIN_PASSWORD}
+                      readOnly
+                      className="w-full px-3 py-2 border border-blue-200 bg-white rounded-lg text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(DEFAULT_ADMIN_PASSWORD, 'password')}
+                      className="px-3 py-2 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 min-w-[74px]"
+                    >
+                      {copiedField === 'password' ? panelText.copied : panelText.copy}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={fillAdminCredentials}
+                className="mt-3 w-full px-4 py-2 text-sm font-medium bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200"
+              >
+                {panelText.use}
+              </button>
             </div>
 
             {/* Submit Button */}

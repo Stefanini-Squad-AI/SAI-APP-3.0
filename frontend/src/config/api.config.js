@@ -1,6 +1,12 @@
 // API Configuration
+const normalizeApiBaseUrl = (rawBaseUrl) => {
+  const fallback = 'http://localhost:5000/api';
+  const base = (rawBaseUrl || fallback).trim().replace(/\/+$/, '');
+  return /\/api$/i.test(base) ? base : `${base}/api`;
+};
+
 export const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: normalizeApiBaseUrl(import.meta.env.VITE_API_URL),
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
