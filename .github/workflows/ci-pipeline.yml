@@ -33,6 +33,9 @@ jobs:
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     continue-on-error: true
+    outputs:
+      quality_gate: ${{ steps.quality-gate.outputs.status }}
+      dashboard_url: ${{ steps.quality-gate.outputs.dashboard_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -48,12 +51,12 @@ jobs:
         id: sonar-backend-access
         shell: bash
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_BACKEND }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_BACKEND }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
         run: |
           if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then
             echo "can_scan=false" >> "$GITHUB_OUTPUT"
-            echo "reason=Missing SONAR_TOKEN_APPLIED_AI_TEAM_BACKEND or SONAR_HOST_URL_APPLIED_AI_TEAM secret." >> "$GITHUB_OUTPUT"
+            echo "reason=Missing SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_BACKEND or SONAR_HOST_URL_APPLIED_AI_TEAM secret." >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -63,13 +66,16 @@ jobs:
           PROJ_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-proj.json -w "%{http_code}" "${SONAR_HOST_URL}/api/projects/search?projects=applied-ai-team-sai3-backend" || echo "000")
           PROJ_COUNT=$(python3 -c "import json; d=json.load(open('/tmp/sonar-proj.json')); print(int(d.get('paging',{}).get('total',0)))" 2>/dev/null || echo "0")
 
+          echo "::notice::SonarQube backend validation — auth_http=$AUTH_HTTP auth_valid=$AUTH_VALID proj_http=$PROJ_HTTP proj_count=$PROJ_COUNT"
+
           if [ "$AUTH_HTTP" = "200" ] && [ "$AUTH_VALID" = "true" ]; then
             if [ "$PROJ_HTTP" = "200" ] && [ "$PROJ_COUNT" -ge 1 ]; then
               echo "can_scan=true" >> "$GITHUB_OUTPUT"
-              echo "reason=Access validated." >> "$GITHUB_OUTPUT"
+              echo "reason=Access fully validated." >> "$GITHUB_OUTPUT"
             elif [ "$PROJ_HTTP" = "401" ] || [ "$PROJ_HTTP" = "403" ]; then
               echo "can_scan=true" >> "$GITHUB_OUTPUT"
-              echo "reason=Token is valid; project visibility check is restricted. Proceeding with scan." >> "$GITHUB_OUTPUT"
+              echo "reason=Token is valid but lacks Browse permission (HTTP $PROJ_HTTP). Scan will proceed. Grant Browse permission on the project to enable full Quality Gate reporting." >> "$GITHUB_OUTPUT"
+              echo "::warning::SonarQube backend token lacks Browse permission (HTTP $PROJ_HTTP on /api/projects/search). Grant Browse permission to enable Quality Gate checks."
             else
               echo "can_scan=false" >> "$GITHUB_OUTPUT"
               echo "reason=Validation failed (auth_http=$AUTH_HTTP, auth_valid=$AUTH_VALID, proj_http=$PROJ_HTTP, proj_count=$PROJ_COUNT)." >> "$GITHUB_OUTPUT"
@@ -95,9 +101,10 @@ jobs:
           dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}/scanner
 
       - name: Build and analyze backend
+        id: sonar-scan
         if: steps.sonar-backend-access.outputs.can_scan == 'true'
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_BACKEND }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_BACKEND }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
         shell: bash
         run: |
@@ -111,14 +118,90 @@ jobs:
           dotnet build TuCreditoOnline.sln --configuration Release
           ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
+      - name: Check backend Quality Gate
+        id: quality-gate
+        if: always() && steps.sonar-backend-access.outputs.can_scan == 'true'
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_BACKEND }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+        run: |
+          REPORT_TASK="backend/.sonarqube/out/.sonar/report-task.txt"
+          if [ ! -f "$REPORT_TASK" ]; then
+            echo "status=UNAVAILABLE" >> "$GITHUB_OUTPUT"
+            echo "detail=report-task.txt not found." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CE_TASK_ID=$(grep '^ceTaskId=' "$REPORT_TASK" | cut -d= -f2)
+          DASHBOARD_URL=$(grep '^dashboardUrl=' "$REPORT_TASK" | cut -d= -f2-)
+          echo "dashboard_url=$DASHBOARD_URL" >> "$GITHUB_OUTPUT"
+
+          MAX_WAIT=300; ELAPSED=0; CE_STATUS="PENDING"
+          while [ "$CE_STATUS" = "PENDING" ] || [ "$CE_STATUS" = "IN_PROGRESS" ]; do
+            if [ $ELAPSED -ge $MAX_WAIT ]; then
+              echo "status=TIMEOUT" >> "$GITHUB_OUTPUT"
+              echo "detail=Analysis task did not complete within ${MAX_WAIT}s." >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 5; ELAPSED=$((ELAPSED + 5))
+            CE_RESPONSE=$(curl -sS -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/ce/task?id=${CE_TASK_ID}" 2>/dev/null || echo '{}')
+            CE_STATUS=$(python3 -c "import sys,json; print(json.load(sys.stdin).get('task',{}).get('status','UNKNOWN'))" <<< "$CE_RESPONSE" 2>/dev/null || echo "UNKNOWN")
+          done
+
+          if [ "$CE_STATUS" != "SUCCESS" ]; then
+            echo "status=CE_FAILED" >> "$GITHUB_OUTPUT"
+            echo "detail=Analysis task ended with status: $CE_STATUS." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          ANALYSIS_ID=$(python3 -c "import sys,json; print(json.load(sys.stdin).get('task',{}).get('analysisId',''))" <<< "$CE_RESPONSE" 2>/dev/null || echo "")
+          QG_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/qg-backend.json -w "%{http_code}" \
+            "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${ANALYSIS_ID}" 2>/dev/null || echo "000")
+
+          if [ "$QG_HTTP" != "200" ]; then
+            echo "status=UNAVAILABLE" >> "$GITHUB_OUTPUT"
+            echo "detail=Could not retrieve Quality Gate (HTTP $QG_HTTP). Token may lack Browse permission." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          QG_STATUS=$(python3 -c "import json; print(json.load(open('/tmp/qg-backend.json')).get('projectStatus',{}).get('status','UNKNOWN'))" 2>/dev/null || echo "UNKNOWN")
+          echo "status=$QG_STATUS" >> "$GITHUB_OUTPUT"
+
+          if [ "$QG_STATUS" = "OK" ]; then
+            echo "detail=Quality Gate passed." >> "$GITHUB_OUTPUT"
+          elif [ "$QG_STATUS" = "ERROR" ]; then
+            echo "detail=Quality Gate FAILED." >> "$GITHUB_OUTPUT"
+            echo "::warning::SonarQube Quality Gate FAILED for backend project."
+          else
+            echo "detail=Quality Gate status: $QG_STATUS." >> "$GITHUB_OUTPUT"
+          fi
+
       - name: SonarQube backend summary
         if: always()
         run: |
           echo "## SonarQube Backend (.NET)" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.sonar-backend-access.outputs.can_scan }}" = "true" ]; then
-            echo "Sonar backend scan was executed. ${{ steps.sonar-backend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Scan | Executed |" >> $GITHUB_STEP_SUMMARY
+            QG_STATUS="${{ steps.quality-gate.outputs.status }}"
+            QG_DETAIL="${{ steps.quality-gate.outputs.detail }}"
+            if [ "$QG_STATUS" = "OK" ]; then
+              echo "| Quality Gate | :white_check_mark: PASSED |" >> $GITHUB_STEP_SUMMARY
+            elif [ "$QG_STATUS" = "ERROR" ]; then
+              echo "| Quality Gate | :x: FAILED |" >> $GITHUB_STEP_SUMMARY
+            elif [ -n "$QG_STATUS" ]; then
+              echo "| Quality Gate | :warning: $QG_DETAIL |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Quality Gate | :grey_question: Not checked |" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> ${{ steps.sonar-backend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Skipped Sonar backend scan: ${{ steps.sonar-backend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Skipped: ${{ steps.sonar-backend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
           fi
 
   sonarqube-frontend:
@@ -126,6 +209,9 @@ jobs:
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     continue-on-error: true
+    outputs:
+      quality_gate: ${{ steps.quality-gate.outputs.status }}
+      dashboard_url: ${{ steps.quality-gate.outputs.dashboard_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -136,12 +222,12 @@ jobs:
         id: sonar-frontend-access
         shell: bash
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_FRONTEND }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_FRONTEND }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
         run: |
           if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then
             echo "can_scan=false" >> "$GITHUB_OUTPUT"
-            echo "reason=Missing SONAR_TOKEN_APPLIED_AI_TEAM_FRONTEND or SONAR_HOST_URL_APPLIED_AI_TEAM secret." >> "$GITHUB_OUTPUT"
+            echo "reason=Missing SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_FRONTEND or SONAR_HOST_URL_APPLIED_AI_TEAM secret." >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -151,13 +237,16 @@ jobs:
           PROJ_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/sonar-proj.json -w "%{http_code}" "${SONAR_HOST_URL}/api/projects/search?projects=applied-ai-team-sai3-frontend" || echo "000")
           PROJ_COUNT=$(python3 -c "import json; d=json.load(open('/tmp/sonar-proj.json')); print(int(d.get('paging',{}).get('total',0)))" 2>/dev/null || echo "0")
 
+          echo "::notice::SonarQube frontend validation — auth_http=$AUTH_HTTP auth_valid=$AUTH_VALID proj_http=$PROJ_HTTP proj_count=$PROJ_COUNT"
+
           if [ "$AUTH_HTTP" = "200" ] && [ "$AUTH_VALID" = "true" ]; then
             if [ "$PROJ_HTTP" = "200" ] && [ "$PROJ_COUNT" -ge 1 ]; then
               echo "can_scan=true" >> "$GITHUB_OUTPUT"
-              echo "reason=Access validated." >> "$GITHUB_OUTPUT"
+              echo "reason=Access fully validated." >> "$GITHUB_OUTPUT"
             elif [ "$PROJ_HTTP" = "401" ] || [ "$PROJ_HTTP" = "403" ]; then
               echo "can_scan=true" >> "$GITHUB_OUTPUT"
-              echo "reason=Token is valid; project visibility check is restricted. Proceeding with scan." >> "$GITHUB_OUTPUT"
+              echo "reason=Token is valid but lacks Browse permission (HTTP $PROJ_HTTP). Scan will proceed. Grant Browse permission on the project to enable full Quality Gate reporting." >> "$GITHUB_OUTPUT"
+              echo "::warning::SonarQube frontend token lacks Browse permission (HTTP $PROJ_HTTP on /api/projects/search). Grant Browse permission to enable Quality Gate checks."
             else
               echo "can_scan=false" >> "$GITHUB_OUTPUT"
               echo "reason=Validation failed (auth_http=$AUTH_HTTP, auth_valid=$AUTH_VALID, proj_http=$PROJ_HTTP, proj_count=$PROJ_COUNT)." >> "$GITHUB_OUTPUT"
@@ -168,6 +257,7 @@ jobs:
           fi
 
       - name: Run SonarQube scan
+        id: sonar-scan
         if: steps.sonar-frontend-access.outputs.can_scan == 'true'
         uses: SonarSource/sonarqube-scan-action@v6
         with:
@@ -180,17 +270,93 @@ jobs:
             -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx,**/*.spec.js,**/*.spec.jsx,**/__tests__/**
             -Dsonar.sourceEncoding=UTF-8
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_FRONTEND }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_FRONTEND }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+
+      - name: Check frontend Quality Gate
+        id: quality-gate
+        if: always() && steps.sonar-frontend-access.outputs.can_scan == 'true'
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_FRONTEND }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+        run: |
+          REPORT_TASK="frontend/.scannerwork/report-task.txt"
+          if [ ! -f "$REPORT_TASK" ]; then
+            echo "status=UNAVAILABLE" >> "$GITHUB_OUTPUT"
+            echo "detail=report-task.txt not found." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CE_TASK_ID=$(grep '^ceTaskId=' "$REPORT_TASK" | cut -d= -f2)
+          DASHBOARD_URL=$(grep '^dashboardUrl=' "$REPORT_TASK" | cut -d= -f2-)
+          echo "dashboard_url=$DASHBOARD_URL" >> "$GITHUB_OUTPUT"
+
+          MAX_WAIT=300; ELAPSED=0; CE_STATUS="PENDING"
+          while [ "$CE_STATUS" = "PENDING" ] || [ "$CE_STATUS" = "IN_PROGRESS" ]; do
+            if [ $ELAPSED -ge $MAX_WAIT ]; then
+              echo "status=TIMEOUT" >> "$GITHUB_OUTPUT"
+              echo "detail=Analysis task did not complete within ${MAX_WAIT}s." >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 5; ELAPSED=$((ELAPSED + 5))
+            CE_RESPONSE=$(curl -sS -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/ce/task?id=${CE_TASK_ID}" 2>/dev/null || echo '{}')
+            CE_STATUS=$(python3 -c "import sys,json; print(json.load(sys.stdin).get('task',{}).get('status','UNKNOWN'))" <<< "$CE_RESPONSE" 2>/dev/null || echo "UNKNOWN")
+          done
+
+          if [ "$CE_STATUS" != "SUCCESS" ]; then
+            echo "status=CE_FAILED" >> "$GITHUB_OUTPUT"
+            echo "detail=Analysis task ended with status: $CE_STATUS." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          ANALYSIS_ID=$(python3 -c "import sys,json; print(json.load(sys.stdin).get('task',{}).get('analysisId',''))" <<< "$CE_RESPONSE" 2>/dev/null || echo "")
+          QG_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -o /tmp/qg-frontend.json -w "%{http_code}" \
+            "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${ANALYSIS_ID}" 2>/dev/null || echo "000")
+
+          if [ "$QG_HTTP" != "200" ]; then
+            echo "status=UNAVAILABLE" >> "$GITHUB_OUTPUT"
+            echo "detail=Could not retrieve Quality Gate (HTTP $QG_HTTP). Token may lack Browse permission." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          QG_STATUS=$(python3 -c "import json; print(json.load(open('/tmp/qg-frontend.json')).get('projectStatus',{}).get('status','UNKNOWN'))" 2>/dev/null || echo "UNKNOWN")
+          echo "status=$QG_STATUS" >> "$GITHUB_OUTPUT"
+
+          if [ "$QG_STATUS" = "OK" ]; then
+            echo "detail=Quality Gate passed." >> "$GITHUB_OUTPUT"
+          elif [ "$QG_STATUS" = "ERROR" ]; then
+            echo "detail=Quality Gate FAILED." >> "$GITHUB_OUTPUT"
+            echo "::warning::SonarQube Quality Gate FAILED for frontend project."
+          else
+            echo "detail=Quality Gate status: $QG_STATUS." >> "$GITHUB_OUTPUT"
+          fi
 
       - name: SonarQube frontend summary
         if: always()
         run: |
           echo "## SonarQube Frontend (React/Vite)" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.sonar-frontend-access.outputs.can_scan }}" = "true" ]; then
-            echo "Sonar frontend scan was executed. ${{ steps.sonar-frontend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Scan | Executed |" >> $GITHUB_STEP_SUMMARY
+            QG_STATUS="${{ steps.quality-gate.outputs.status }}"
+            QG_DETAIL="${{ steps.quality-gate.outputs.detail }}"
+            if [ "$QG_STATUS" = "OK" ]; then
+              echo "| Quality Gate | :white_check_mark: PASSED |" >> $GITHUB_STEP_SUMMARY
+            elif [ "$QG_STATUS" = "ERROR" ]; then
+              echo "| Quality Gate | :x: FAILED |" >> $GITHUB_STEP_SUMMARY
+            elif [ -n "$QG_STATUS" ]; then
+              echo "| Quality Gate | :warning: $QG_DETAIL |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| Quality Gate | :grey_question: Not checked |" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> ${{ steps.sonar-frontend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
           else
-            echo "Skipped Sonar frontend scan: ${{ steps.sonar-frontend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Skipped: ${{ steps.sonar-frontend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
           fi
 
   backend-unit-tests:
@@ -868,7 +1034,11 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Phase | Description | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|-------------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| SonarQube | Backend and Frontend scans | ${{ needs.sonarqube-backend.result }}/${{ needs.sonarqube-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          BE_QG="${{ needs.sonarqube-backend.outputs.quality_gate }}"
+          FE_QG="${{ needs.sonarqube-frontend.outputs.quality_gate }}"
+          BE_ICON=":grey_question:"; [ "$BE_QG" = "OK" ] && BE_ICON=":white_check_mark:"; [ "$BE_QG" = "ERROR" ] && BE_ICON=":x:"
+          FE_ICON=":grey_question:"; [ "$FE_QG" = "OK" ] && FE_ICON=":white_check_mark:"; [ "$FE_QG" = "ERROR" ] && FE_ICON=":x:"
+          echo "| SonarQube | Backend QG ${BE_ICON} / Frontend QG ${FE_ICON} | ${{ needs.sonarqube-backend.result }}/${{ needs.sonarqube-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Unit Tests | Backend and Frontend unit tests | ${{ needs.backend-unit-tests.result }}/${{ needs.frontend-unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build | Build backend and frontend | ${{ needs.build-and-quality-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Preview Deploy | Deploy PR preview with Surge | ${{ needs.deploy-preview.result }} |" >> $GITHUB_STEP_SUMMARY
