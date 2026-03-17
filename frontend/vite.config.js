@@ -12,6 +12,18 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     // /SAI-APP-3.0/ for GitHub Pages (set via VITE_BASE_PATH in workflow), / everywhere else
     base: env.VITE_BASE_PATH || '/',
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            charts: ['recharts'],
+            i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+            ui: ['lucide-react', 'sweetalert2']
+          }
+        }
+      }
+    },
     server: {
       host: '0.0.0.0',
       port: 3000,

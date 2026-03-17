@@ -525,7 +525,6 @@ jobs:
     name: Build and Quality Tests
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
-    needs: [backend-unit-tests, frontend-unit-tests]
     outputs:
       security_frontend_report_url: ${{ steps.publish-security-report.outputs.security_frontend_report_url }}
       security_api_report_url: ${{ steps.publish-security-report.outputs.security_api_report_url }}
@@ -1149,7 +1148,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Tear down preview
-        run: npx surge teardown ${{ env.PREVIEW_DOMAIN }}
+        run: npx surge teardown ${{ env.PREVIEW_DOMAIN }} || true
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}

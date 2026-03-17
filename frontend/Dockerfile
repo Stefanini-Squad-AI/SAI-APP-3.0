@@ -26,14 +26,13 @@ ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
 # Set NODE_ENV for production build
-# Esto es opcional, pero puedes establecer NODE_ENV para evitar que algunas bibliotecas se comporten de forma diferente.
-ENV NODE_ENV=development
+ENV NODE_ENV=production
 
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies)
-RUN npm install
+# Install dependencies (ci for reproducible builds)
+RUN npm ci
 
 # Copy source code
 COPY . .

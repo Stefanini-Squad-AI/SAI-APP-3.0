@@ -3,7 +3,16 @@ export default {
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/__mocks__/fileMock.js'
+    '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/__mocks__/fileMock.js',
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@components/(.*)$': '<rootDir>/src/components/$1',
+    '^@pages/(.*)$': '<rootDir>/src/pages/$1',
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@hooks/(.*)$': '<rootDir>/src/hooks/$1',
+    '^@contexts/(.*)$': '<rootDir>/src/contexts/$1',
+    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@assets/(.*)$': '<rootDir>/src/assets/$1'
   },
   transform: {
     '^.+\\.(js|jsx)$': ['babel-jest', {
