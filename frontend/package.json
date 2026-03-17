@@ -14,7 +14,7 @@
     "test:report": "node generate-test-report.cjs"
   },
   "dependencies": {
-    "axios": "^1.6.5",
+    "axios": "^1.13.5",
     "i18next": "^25.8.11",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^0.309.0",
