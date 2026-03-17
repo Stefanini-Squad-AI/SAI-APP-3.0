@@ -262,7 +262,7 @@ jobs:
       - name: Run SonarQube scan
         id: sonar-scan
         if: steps.sonar-frontend-access.outputs.can_scan == 'true'
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@v7
         with:
           projectBaseDir: frontend
           args: >
