@@ -15,11 +15,13 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom'],
-            charts: ['recharts'],
-            i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
-            ui: ['lucide-react', 'sweetalert2']
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              if (id.includes('/recharts/')) return 'charts'
+              if (id.includes('/i18next/') || id.includes('/react-i18next/')) return 'i18n'
+              if (id.includes('/lucide-react/') || id.includes('/sweetalert2/')) return 'ui'
+              if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/react-router')) return 'vendor'
+            }
           }
         }
       }
