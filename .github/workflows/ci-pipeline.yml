@@ -20,8 +20,8 @@ env:
   NODE_VERSION: "24"
   PREVIEW_DOMAIN: pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   PREVIEW_URL: https://pr-${{ github.event.number }}-sai-app-3-0.surge.sh
-  AURA_REPORT_DOMAIN: aura-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
-  AURA_REPORT_URL: https://aura-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/aura-report.html
+  FUNCTIONAL_REPORT_DOMAIN: functional-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  FUNCTIONAL_REPORT_URL: https://functional-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/aura-report.html
   BACKEND_REPORT_DOMAIN: backend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   BACKEND_REPORT_URL: https://backend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/test-report.html
   FRONTEND_REPORT_DOMAIN: frontend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
@@ -31,11 +31,158 @@ env:
   SECURITY_API_REPORT_URL: https://security-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/zap-api-report.html
 
 jobs:
-  sonarqube-backend:
-    name: SonarQube Backend (.NET)
+  init-dashboard:
+    name: "\U0001F680 Inicializar Panel de Resultados"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Crear panel de resultados en el Pull Request
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const runId = process.env.GITHUB_RUN_ID;
+            const runNumber = process.env.GITHUB_RUN_NUMBER;
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}`;
+            const artifactsUrl = `${runUrl}#artifacts`;
+
+            const body = [
+              '<!-- ci-dashboard -->',
+              '',
+              '<div align="center">',
+              '',
+              '# \u{1F680} Panel de Resultados \u2014 CI Pipeline',
+              '',
+              `**Pull Request #${prNumber}** \u00B7 Ejecuci\u00F3n [**#${runNumber}**](${runUrl})`,
+              '',
+              '_Los resultados se actualizan autom\u00E1ticamente conforme cada fase del pipeline finaliza._',
+              '',
+              '</div>',
+              '',
+              '---',
+              '',
+              '### \u{1F310} Sitio Web \u2014 Previsualizaci\u00F3n del Pull Request',
+              '',
+              '<!-- section:preview -->',
+              '> \u23F3 _Desplegando sitio de previsualizaci\u00F3n..._',
+              '<!-- /section:preview -->',
+              '',
+              '---',
+              '',
+              '### \u{1F50D} An\u00E1lisis de Calidad de C\u00F3digo',
+              '',
+              '<!-- section:sonar-backend -->',
+              '> \u{1F7E6} **Backend** \u00B7 \u23F3 _Analizando c\u00F3digo fuente..._',
+              '<!-- /section:sonar-backend -->',
+              '',
+              '<!-- section:sonar-frontend -->',
+              '> \u{1F7E6} **Frontend** \u00B7 \u23F3 _Analizando c\u00F3digo fuente..._',
+              '<!-- /section:sonar-frontend -->',
+              '',
+              '---',
+              '',
+              '### \u{1F4CA} Reportes de Pruebas',
+              '',
+              '<details open>',
+              '<summary><b>\u{1F9EA} Pruebas Unitarias</b></summary>',
+              '<br>',
+              '',
+              '<!-- section:unit-backend -->',
+              '> \u{1F7E6} **Backend** \u00B7 \u23F3 _Ejecutando pruebas..._',
+              '<!-- /section:unit-backend -->',
+              '',
+              '<!-- section:unit-frontend -->',
+              '> \u{1F7E6} **Frontend** \u00B7 \u23F3 _Ejecutando pruebas..._',
+              '<!-- /section:unit-frontend -->',
+              '',
+              '</details>',
+              '',
+              '<details open>',
+              '<summary><b>\u{1F517} Pruebas de Integraci\u00F3n</b></summary>',
+              '<br>',
+              '',
+              '<!-- section:integration -->',
+              '> \u23F3 _Pendiente \u2014 se ejecutar\u00E1n una vez finalicen las pruebas unitarias..._',
+              '<!-- /section:integration -->',
+              '',
+              '</details>',
+              '',
+              '<details open>',
+              '<summary><b>\u{1F6E1}\uFE0F Pruebas de Seguridad</b></summary>',
+              '<br>',
+              '',
+              '<!-- section:security -->',
+              '> \u23F3 _Pendiente \u2014 se ejecutar\u00E1n una vez finalicen las pruebas unitarias..._',
+              '<!-- /section:security -->',
+              '',
+              '</details>',
+              '',
+              '<details open>',
+              '<summary><b>\u2705 Pruebas Funcionales</b></summary>',
+              '<br>',
+              '',
+              '<!-- section:functional -->',
+              '> \u23F3 _Pendiente \u2014 se ejecutar\u00E1n una vez el sitio de previsualizaci\u00F3n est\u00E9 disponible..._',
+              '<!-- /section:functional -->',
+              '',
+              '</details>',
+              '',
+              '---',
+              '',
+              '### \u{1F4E6} Artefactos Descargables',
+              '',
+              '| | Nombre | Descripci\u00F3n |',
+              '|:---:|--------|-------------|',
+              '| \u{1F4E6} | `backend-unit-test-report` | Resultados de pruebas unitarias \u2014 Backend |',
+              '| \u{1F4E6} | `frontend-unit-test-report` | Resultados de pruebas unitarias \u2014 Frontend |',
+              '| \u{1F4E6} | `integration-test-report` | Resultados de pruebas de integraci\u00F3n |',
+              '| \u{1F4E6} | `security-test-report` | Resultados de pruebas de seguridad |',
+              '| \u{1F4E6} | `functional-report` | Resultados de pruebas funcionales |',
+              '',
+              `> \u{1F4E5} [**Ir a la p\u00E1gina de artefactos**](${artifactsUrl})`,
+              '',
+              '---',
+              '',
+              `<sub>\u{1F916} Generado autom\u00E1ticamente por el pipeline de integraci\u00F3n continua \u00B7 <a href="${runUrl}">Ver ejecuci\u00F3n completa</a></sub>`,
+            ].join('\n');
+
+            const marker = '<!-- ci-dashboard -->';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
+
+  sonarqube-backend:
+    name: "SonarQube \u2014 Backend"
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    needs: [init-dashboard]
     continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
     outputs:
       quality_gate: ${{ steps.quality-gate.outputs.status }}
       dashboard_url: ${{ steps.quality-gate.outputs.dashboard_url }}
@@ -180,38 +327,65 @@ jobs:
             echo "detail=Quality Gate status: $QG_STATUS." >> "$GITHUB_OUTPUT"
           fi
 
-      - name: SonarQube backend summary
+      - name: Actualizar panel de resultados
         if: always()
-        run: |
-          echo "## SonarQube Backend (.NET)" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.sonar-backend-access.outputs.can_scan }}" = "true" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
-            echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Scan | Executed |" >> $GITHUB_STEP_SUMMARY
-            QG_STATUS="${{ steps.quality-gate.outputs.status }}"
-            QG_DETAIL="${{ steps.quality-gate.outputs.detail }}"
-            if [ "$QG_STATUS" = "OK" ]; then
-              echo "| Quality Gate | :white_check_mark: PASSED |" >> $GITHUB_STEP_SUMMARY
-            elif [ "$QG_STATUS" = "ERROR" ]; then
-              echo "| Quality Gate | :x: FAILED |" >> $GITHUB_STEP_SUMMARY
-            elif [ -n "$QG_STATUS" ]; then
-              echo "| Quality Gate | :warning: $QG_DETAIL |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| Quality Gate | :grey_question: Not checked |" >> $GITHUB_STEP_SUMMARY
-            fi
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "> ${{ steps.sonar-backend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Skipped: ${{ steps.sonar-backend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
-          fi
+        uses: actions/github-script@v8
+        env:
+          QG_STATUS: ${{ steps.quality-gate.outputs.status }}
+          DASHBOARD_URL: ${{ steps.quality-gate.outputs.dashboard_url }}
+          CAN_SCAN: ${{ steps.sonar-backend-access.outputs.can_scan }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+        with:
+          script: |
+            async function updateDashboard(github, context, sections) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+              if (!c) return;
+              let body = c.body;
+              for (const [name, content] of Object.entries(sections)) {
+                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                const si = body.indexOf(s), ei = body.indexOf(e);
+                if (si !== -1 && ei !== -1)
+                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              }
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: c.id, body,
+              });
+            }
+
+            const qg = process.env.QG_STATUS;
+            const url = process.env.DASHBOARD_URL ||
+              (process.env.SONAR_HOST_URL ? `${process.env.SONAR_HOST_URL}/dashboard?id=applied-ai-team-sai3-backend` : '');
+            const canScan = process.env.CAN_SCAN;
+
+            let content;
+            if (canScan !== 'true') {
+              content = '> \u26A0\uFE0F **Backend** \u00B7 _An\u00E1lisis no ejecutado \u2014 verificar configuraci\u00F3n de acceso_';
+            } else if (qg === 'OK') {
+              content = `> \u2705 **Backend** \u00B7 Quality Gate Aprobado \u00B7 \u{1F517} [Ver an\u00E1lisis en detalle](${url})`;
+            } else if (qg === 'ERROR') {
+              content = `> \u274C **Backend** \u00B7 Quality Gate No Aprobado \u00B7 \u{1F517} [Ver an\u00E1lisis en detalle](${url})`;
+            } else {
+              content = url
+                ? `> \u26A0\uFE0F **Backend** \u00B7 Quality Gate: ${qg || 'Pendiente'} \u00B7 \u{1F517} [Ver resultados](${url})`
+                : `> \u26A0\uFE0F **Backend** \u00B7 Quality Gate: ${qg || 'No disponible'}`;
+            }
+
+            await updateDashboard(github, context, { 'sonar-backend': content });
 
   sonarqube-frontend:
-    name: SonarQube Frontend (React/Vite)
+    name: "SonarQube \u2014 Frontend"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    needs: [init-dashboard]
     continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
     outputs:
       quality_gate: ${{ steps.quality-gate.outputs.status }}
       dashboard_url: ${{ steps.quality-gate.outputs.dashboard_url }}
@@ -335,38 +509,65 @@ jobs:
             echo "detail=Quality Gate status: $QG_STATUS." >> "$GITHUB_OUTPUT"
           fi
 
-      - name: SonarQube frontend summary
+      - name: Actualizar panel de resultados
         if: always()
-        run: |
-          echo "## SonarQube Frontend (React/Vite)" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.sonar-frontend-access.outputs.can_scan }}" = "true" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
-            echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Scan | Executed |" >> $GITHUB_STEP_SUMMARY
-            QG_STATUS="${{ steps.quality-gate.outputs.status }}"
-            QG_DETAIL="${{ steps.quality-gate.outputs.detail }}"
-            if [ "$QG_STATUS" = "OK" ]; then
-              echo "| Quality Gate | :white_check_mark: PASSED |" >> $GITHUB_STEP_SUMMARY
-            elif [ "$QG_STATUS" = "ERROR" ]; then
-              echo "| Quality Gate | :x: FAILED |" >> $GITHUB_STEP_SUMMARY
-            elif [ -n "$QG_STATUS" ]; then
-              echo "| Quality Gate | :warning: $QG_DETAIL |" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "| Quality Gate | :grey_question: Not checked |" >> $GITHUB_STEP_SUMMARY
-            fi
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "> ${{ steps.sonar-frontend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Skipped: ${{ steps.sonar-frontend-access.outputs.reason }}" >> $GITHUB_STEP_SUMMARY
-          fi
+        uses: actions/github-script@v8
+        env:
+          QG_STATUS: ${{ steps.quality-gate.outputs.status }}
+          DASHBOARD_URL: ${{ steps.quality-gate.outputs.dashboard_url }}
+          CAN_SCAN: ${{ steps.sonar-frontend-access.outputs.can_scan }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+        with:
+          script: |
+            async function updateDashboard(github, context, sections) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+              if (!c) return;
+              let body = c.body;
+              for (const [name, content] of Object.entries(sections)) {
+                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                const si = body.indexOf(s), ei = body.indexOf(e);
+                if (si !== -1 && ei !== -1)
+                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              }
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: c.id, body,
+              });
+            }
+
+            const qg = process.env.QG_STATUS;
+            const url = process.env.DASHBOARD_URL ||
+              (process.env.SONAR_HOST_URL ? `${process.env.SONAR_HOST_URL}/dashboard?id=applied-ai-team-sai3-frontend` : '');
+            const canScan = process.env.CAN_SCAN;
+
+            let content;
+            if (canScan !== 'true') {
+              content = '> \u26A0\uFE0F **Frontend** \u00B7 _An\u00E1lisis no ejecutado \u2014 verificar configuraci\u00F3n de acceso_';
+            } else if (qg === 'OK') {
+              content = `> \u2705 **Frontend** \u00B7 Quality Gate Aprobado \u00B7 \u{1F517} [Ver an\u00E1lisis en detalle](${url})`;
+            } else if (qg === 'ERROR') {
+              content = `> \u274C **Frontend** \u00B7 Quality Gate No Aprobado \u00B7 \u{1F517} [Ver an\u00E1lisis en detalle](${url})`;
+            } else {
+              content = url
+                ? `> \u26A0\uFE0F **Frontend** \u00B7 Quality Gate: ${qg || 'Pendiente'} \u00B7 \u{1F517} [Ver resultados](${url})`
+                : `> \u26A0\uFE0F **Frontend** \u00B7 Quality Gate: ${qg || 'No disponible'}`;
+            }
+
+            await updateDashboard(github, context, { 'sonar-frontend': content });
 
   backend-unit-tests:
-    name: Backend Unit Tests (.NET)
+    name: "Pruebas Unitarias \u2014 Backend"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    needs: [init-dashboard]
     continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
     outputs:
       backend_report_url: ${{ steps.publish-backend-report.outputs.backend_report_url }}
     steps:
@@ -426,7 +627,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: backend-unit-test-results
+          name: backend-unit-test-report
           path: |
             backend/TestResults/test-report.html
             backend/TestResults/test-report.md
@@ -447,23 +648,49 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Backend summary
+      - name: Actualizar panel de resultados
         if: always()
-        working-directory: ./backend
-        run: |
-          if [ -f "TestResults/test-report.md" ]; then
-            cat TestResults/test-report.md >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -n "${{ steps.publish-backend-report.outputs.backend_report_url }}" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- Backend HTML Report: [Open report](${{ steps.publish-backend-report.outputs.backend_report_url }})" >> $GITHUB_STEP_SUMMARY
-          fi
+        uses: actions/github-script@v8
+        env:
+          REPORT_URL: ${{ steps.publish-backend-report.outputs.backend_report_url }}
+        with:
+          script: |
+            async function updateDashboard(github, context, sections) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+              if (!c) return;
+              let body = c.body;
+              for (const [name, content] of Object.entries(sections)) {
+                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                const si = body.indexOf(s), ei = body.indexOf(e);
+                if (si !== -1 && ei !== -1)
+                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              }
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: c.id, body,
+              });
+            }
+
+            const url = process.env.REPORT_URL;
+            const content = url
+              ? `> \u2705 **Backend** \u00B7 Pruebas completadas \u00B7 \u{1F4C4} [Ver reporte detallado](${url})`
+              : '> \u2705 **Backend** \u00B7 Pruebas completadas \u00B7 \u{1F4E6} _Reporte disponible en artefactos_';
+
+            await updateDashboard(github, context, { 'unit-backend': content });
 
   frontend-unit-tests:
-    name: Frontend Unit Tests (Jest)
+    name: "Pruebas Unitarias \u2014 Frontend"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    needs: [init-dashboard]
     continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
     outputs:
       frontend_report_url: ${{ steps.publish-frontend-report.outputs.frontend_report_url }}
     steps:
@@ -495,7 +722,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: frontend-unit-test-results
+          name: frontend-unit-test-report
           path: |
             frontend/test-results/jest/test-report.html
             frontend/test-results/jest/test-report.md
@@ -514,23 +741,48 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Frontend summary
+      - name: Actualizar panel de resultados
         if: always()
-        working-directory: ./frontend
-        run: |
-          if [ -f "test-results/jest/test-report.md" ]; then
-            cat test-results/jest/test-report.md >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -n "${{ steps.publish-frontend-report.outputs.frontend_report_url }}" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- Frontend HTML Report: [Open report](${{ steps.publish-frontend-report.outputs.frontend_report_url }})" >> $GITHUB_STEP_SUMMARY
-          fi
+        uses: actions/github-script@v8
+        env:
+          REPORT_URL: ${{ steps.publish-frontend-report.outputs.frontend_report_url }}
+        with:
+          script: |
+            async function updateDashboard(github, context, sections) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+              if (!c) return;
+              let body = c.body;
+              for (const [name, content] of Object.entries(sections)) {
+                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                const si = body.indexOf(s), ei = body.indexOf(e);
+                if (si !== -1 && ei !== -1)
+                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              }
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: c.id, body,
+              });
+            }
+
+            const url = process.env.REPORT_URL;
+            const content = url
+              ? `> \u2705 **Frontend** \u00B7 Pruebas completadas \u00B7 \u{1F4C4} [Ver reporte detallado](${url})`
+              : '> \u2705 **Frontend** \u00B7 Pruebas completadas \u00B7 \u{1F4E6} _Reporte disponible en artefactos_';
+
+            await updateDashboard(github, context, { 'unit-frontend': content });
 
   build-and-quality-tests:
-    name: Build and Quality Tests
+    name: "Pruebas de Integraci\u00F3n & Seguridad"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     needs: [backend-unit-tests, frontend-unit-tests]
+    permissions:
+      contents: read
+      pull-requests: write
     outputs:
       security_frontend_report_url: ${{ steps.publish-security-report.outputs.security_frontend_report_url }}
       security_api_report_url: ${{ steps.publish-security-report.outputs.security_api_report_url }}
@@ -573,13 +825,6 @@ jobs:
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
         run: npm run build
-
-      - name: Upload frontend build artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: frontend-dist
-          path: frontend/dist
-          retention-days: 7
 
       - name: Pre-pull ZAP image (background)
         run: |
@@ -730,7 +975,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: integration-test-results
+          name: integration-test-report
           path: |
             test-results/integration/**
             test-results/logs/integration.log
@@ -743,7 +988,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: security-test-results
+          name: security-test-report
           path: |
             test-results/security/**
             test-results/logs/zap-*.log
@@ -767,47 +1012,58 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Build and quality summary
+      - name: Actualizar panel de resultados
         if: always()
-        run: |
-          ARTIFACTS_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}#artifacts"
-          echo "## Build and Quality Tests" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Preview URL: [Open preview](${{ env.PREVIEW_URL }})" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Integration Tests" >> $GITHUB_STEP_SUMMARY
-          if [ -f "test-results/integration/integration-results.trx" ]; then
-            echo "- TRX generated: \`integration-results.trx\` in artifact [integration-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- TRX not generated" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -f "test-results/logs/integration.log" ]; then
-            echo "- Log generated: \`integration.log\` in artifact [integration-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Security Tests (OWASP ZAP)" >> $GITHUB_STEP_SUMMARY
-          if [ -f "test-results/security/zap-frontend-report.md" ]; then
-            echo "- Frontend report (Markdown): \`zap-frontend-report.md\` in artifact [security-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
-            if [ -n "${{ steps.publish-security-report.outputs.security_frontend_report_url }}" ]; then
-              echo "- Frontend report (HTML): [Open report](${{ steps.publish-security-report.outputs.security_frontend_report_url }})" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- Frontend report (HTML): open \`zap-frontend-report.html\` from artifact [security-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
-            fi
-          else
-            echo "- Frontend report not generated" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -f "test-results/security/zap-api-report.md" ]; then
-            echo "- API report (Markdown): \`zap-api-report.md\` in artifact [security-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
-            if [ -n "${{ steps.publish-security-report.outputs.security_api_report_url }}" ]; then
-              echo "- API report (HTML): [Open report](${{ steps.publish-security-report.outputs.security_api_report_url }})" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- API report (HTML): open \`zap-api-report.html\` from artifact [security-test-results]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
-            fi
-          else
-            echo "- API report not generated" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Artifacts page: [Open run artifacts]($ARTIFACTS_URL)" >> $GITHUB_STEP_SUMMARY
+        uses: actions/github-script@v8
+        env:
+          INTEGRATION_OK: ${{ env.INTEGRATION_OK }}
+          SEC_FRONTEND_URL: ${{ steps.publish-security-report.outputs.security_frontend_report_url }}
+          SEC_API_URL: ${{ steps.publish-security-report.outputs.security_api_report_url }}
+        with:
+          script: |
+            async function updateDashboard(github, context, sections) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+              if (!c) return;
+              let body = c.body;
+              for (const [name, content] of Object.entries(sections)) {
+                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                const si = body.indexOf(s), ei = body.indexOf(e);
+                if (si !== -1 && ei !== -1)
+                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              }
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: c.id, body,
+              });
+            }
+
+            const integrationOk = process.env.INTEGRATION_OK === 'true';
+            const secFrontendUrl = process.env.SEC_FRONTEND_URL;
+            const secApiUrl = process.env.SEC_API_URL;
+
+            const integrationIcon = integrationOk ? '\u2705' : '\u274C';
+            const integrationStatus = integrationOk ? 'Pruebas completadas exitosamente' : 'Pruebas finalizadas con errores';
+            const integrationContent = `> ${integrationIcon} ${integrationStatus} \u00B7 \u{1F4E6} _Resultados en artefacto \`integration-test-report\`_`;
+
+            let securityLines = [];
+            if (secFrontendUrl || secApiUrl) {
+              securityLines.push('> \u2705 Pruebas de seguridad completadas');
+              securityLines.push('>');
+              if (secFrontendUrl) securityLines.push(`> \u{1F4C4} [Reporte de seguridad \u2014 Frontend](${secFrontendUrl})`);
+              if (secApiUrl) securityLines.push(`> \u{1F4C4} [Reporte de seguridad \u2014 API](${secApiUrl})`);
+            } else {
+              securityLines.push('> \u2705 Pruebas de seguridad completadas \u00B7 \u{1F4E6} _Resultados en artefacto \`security-test-report\`_');
+            }
+            const securityContent = securityLines.join('\n');
+
+            await updateDashboard(github, context, {
+              'integration': integrationContent,
+              'security': securityContent,
+            });
 
       - name: Stop local services
         if: always()
@@ -822,9 +1078,10 @@ jobs:
           fi
 
   deploy-preview:
-    name: Deploy Preview with Surge
+    name: "Desplegar Previsualizaci\u00F3n"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    needs: [init-dashboard]
     permissions:
       contents: read
       pull-requests: write
@@ -860,23 +1117,54 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Preview summary
+      - name: Actualizar panel de resultados
         if: always()
-        run: |
-          echo "## Preview Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ steps.preview.outputs.preview_url }}" ]; then
-            echo "- Preview URL: [Open preview](${{ steps.preview.outputs.preview_url }})" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Preview URL: expected at [Open preview](${{ env.PREVIEW_URL }})" >> $GITHUB_STEP_SUMMARY
-          fi
+        uses: actions/github-script@v8
+        env:
+          PREVIEW_URL: ${{ steps.preview.outputs.preview_url }}
+          EXPECTED_URL: ${{ env.PREVIEW_URL }}
+        with:
+          script: |
+            async function updateDashboard(github, context, sections) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+              if (!c) return;
+              let body = c.body;
+              for (const [name, content] of Object.entries(sections)) {
+                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                const si = body.indexOf(s), ei = body.indexOf(e);
+                if (si !== -1 && ei !== -1)
+                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              }
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: c.id, body,
+              });
+            }
+
+            const url = process.env.PREVIEW_URL || process.env.EXPECTED_URL;
+            let content;
+            if (url) {
+              content = [
+                '> \u{1F7E2} **Sitio desplegado exitosamente**',
+                '>',
+                `> \u{1F517} **[Abrir sitio de previsualizaci\u00F3n](${url})**`,
+              ].join('\n');
+            } else {
+              content = '> \u274C _No se pudo desplegar el sitio de previsualizaci\u00F3n_';
+            }
+
+            await updateDashboard(github, context, { 'preview': content });
 
       - name: Comment preview URL on PR
         uses: actions/github-script@v8
         with:
           script: |
             const url = `${{ env.PREVIEW_URL }}`;
-            const body = `### Preview deployment ready\n\n${url}\n\n_Updated on push to this PR. Torn down when PR is closed._`;
+            const body = `### \u{1F310} Previsualizaci\u00F3n disponible\n\n${url}\n\n_Se actualiza con cada push a este PR. Se desactiva al cerrar el PR._`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -885,7 +1173,7 @@ jobs:
             });
 
             const existing = comments.find(c =>
-              c.user.login === 'github-actions[bot]' && c.body.includes('Preview deployment ready')
+              c.user.login === 'github-actions[bot]' && c.body.includes('Previsualizaci\u00F3n disponible')
             );
 
             if (existing) {
@@ -905,7 +1193,7 @@ jobs:
             }
 
   functional-tests-web:
-    name: Functional Tests - Web (AURA)
+    name: "Pruebas Funcionales"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     needs: [deploy-preview]
@@ -931,7 +1219,7 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('automation/frameworks/applied-ai-aura/package-lock.json') }}
 
-      - name: Install AURA dependencies and Playwright
+      - name: Install dependencies and browser engine
         working-directory: automation/frameworks/applied-ai-aura
         run: |
           npm ci
@@ -939,7 +1227,7 @@ jobs:
             npx playwright install chromium --with-deps
           fi
 
-      - name: Create AURA .env for CI
+      - name: Create test configuration for CI
         working-directory: automation/frameworks/applied-ai-aura
         env:
           CI_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
@@ -962,14 +1250,14 @@ jobs:
           printf "AURA_DOCS_DIR=docs\n" >> .env
           printf "AURA_TARGET_URL=%s\n" "${{ needs.deploy-preview.outputs.preview_url }}" >> .env
 
-      - name: Run AURA functional tests (@preview)
+      - name: Run functional tests
         working-directory: automation/frameworks/applied-ai-aura
         run: npx cucumber-js --tags "@preview"
         continue-on-error: true
 
-      - name: Locate latest AURA report and video
+      - name: Locate latest report and video
         if: always()
-        id: aura-latest
+        id: locate-report
         working-directory: automation/frameworks/applied-ai-aura
         run: |
           LATEST_REPORT=$(find reports -name "aura-report.html" | sort | tail -n 1 || true)
@@ -977,199 +1265,73 @@ jobs:
           echo "latest_report=${LATEST_REPORT}" >> $GITHUB_OUTPUT
           echo "latest_video=${LATEST_VIDEO}" >> $GITHUB_OUTPUT
 
-      - name: Publish latest AURA report to Surge
-        if: always() && steps.aura-latest.outputs.latest_report != ''
-        id: publish-aura
+      - name: Publish test report to Surge
+        if: always() && steps.locate-report.outputs.latest_report != ''
+        id: publish-report
         working-directory: automation/frameworks/applied-ai-aura
         run: |
-          REPORT_DIR=$(dirname "${{ steps.aura-latest.outputs.latest_report }}")
-          npx surge --project "$REPORT_DIR" --domain ${{ env.AURA_REPORT_DOMAIN }}
-          echo "aura_report_url=${{ env.AURA_REPORT_URL }}" >> $GITHUB_OUTPUT
+          REPORT_DIR=$(dirname "${{ steps.locate-report.outputs.latest_report }}")
+          npx surge --project "$REPORT_DIR" --domain ${{ env.FUNCTIONAL_REPORT_DOMAIN }}
+          echo "functional_report_url=${{ env.FUNCTIONAL_REPORT_URL }}" >> $GITHUB_OUTPUT
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Comment AURA report URL on PR
-        if: always() && steps.publish-aura.outputs.aura_report_url != ''
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const url = `${{ steps.publish-aura.outputs.aura_report_url }}`;
-            const body = `### AURA report ready\n\n[Open latest AURA HTML report](${url})\n\n_Updated on push to this PR. Torn down when PR is closed._`;
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const existing = comments.find(c =>
-              c.user.login === 'github-actions[bot]' && c.body.includes('AURA report ready')
-            );
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
-            }
-
-      - name: Upload AURA reports
+      - name: Upload functional test reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: aura-functional-report
+          name: functional-report
           path: |
             automation/frameworks/applied-ai-aura/reports/**
             automation/frameworks/applied-ai-aura/docs/**
           retention-days: 90
           if-no-files-found: warn
 
-      - name: Functional tests summary
-        if: always()
-        run: |
-          echo "## Functional Tests - Web (AURA)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Framework | AURA (Playwright + Cucumber + Cognitive Scanner) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Target | PR Preview (Surge) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Preview URL | \`${{ needs.deploy-preview.outputs.preview_url }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Tag | \`@preview\` |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Latest AURA Report" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ steps.aura-latest.outputs.latest_report }}" ]; then
-            echo "- HTML: \`${{ steps.aura-latest.outputs.latest_report }}\`" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- HTML: not generated" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -n "${{ steps.aura-latest.outputs.latest_video }}" ]; then
-            echo "- Video: \`${{ steps.aura-latest.outputs.latest_video }}\`" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Video: not generated" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -n "${{ steps.publish-aura.outputs.aura_report_url }}" ]; then
-            echo "- Public URL: [Open report](${{ steps.publish-aura.outputs.aura_report_url }})" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Public URL: not published" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Download artifact \`aura-functional-report\` to open the latest HTML report and video." >> $GITHUB_STEP_SUMMARY
-
-  pipeline-summary:
-    name: Pipeline Summary
-    if: always() && github.event.action != 'closed'
-    runs-on: ubuntu-latest
-    needs: [sonarqube-backend, sonarqube-frontend, backend-unit-tests, frontend-unit-tests, build-and-quality-tests, deploy-preview, functional-tests-web]
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Generate final summary
-        run: |
-          echo "# SAI APP 3.0 - CI Pipeline" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Phase | Description | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|-------------|--------|" >> $GITHUB_STEP_SUMMARY
-          BE_QG="${{ needs.sonarqube-backend.outputs.quality_gate }}"
-          FE_QG="${{ needs.sonarqube-frontend.outputs.quality_gate }}"
-          BE_ICON=":grey_question:"; [ "$BE_QG" = "OK" ] && BE_ICON=":white_check_mark:"; [ "$BE_QG" = "ERROR" ] && BE_ICON=":x:"
-          FE_ICON=":grey_question:"; [ "$FE_QG" = "OK" ] && FE_ICON=":white_check_mark:"; [ "$FE_QG" = "ERROR" ] && FE_ICON=":x:"
-          echo "| SonarQube | Backend QG ${BE_ICON} / Frontend QG ${FE_ICON} | ${{ needs.sonarqube-backend.result }}/${{ needs.sonarqube-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Unit Tests | Backend and Frontend unit tests | ${{ needs.backend-unit-tests.result }}/${{ needs.frontend-unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build | Build backend and frontend | ${{ needs.build-and-quality-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Preview Deploy | Deploy PR preview with Surge | ${{ needs.deploy-preview.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Functional Tests | AURA functional tests and video report | ${{ needs.functional-tests-web.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "- backend-unit-test-results" >> $GITHUB_STEP_SUMMARY
-          echo "- frontend-unit-test-results" >> $GITHUB_STEP_SUMMARY
-          echo "- integration-test-results (TRX + logs)" >> $GITHUB_STEP_SUMMARY
-          echo "- security-test-results (OWASP ZAP HTML + JSON + MD + logs)" >> $GITHUB_STEP_SUMMARY
-          echo "- aura-functional-report (HTML + video)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Quick Links" >> $GITHUB_STEP_SUMMARY
-          echo "- Preview App: [Open preview](${{ needs.deploy-preview.outputs.preview_url }})" >> $GITHUB_STEP_SUMMARY
-          echo "- AURA HTML Report: [Open report](${{ env.AURA_REPORT_URL }})" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}" ]; then
-            echo "- Sonar Backend: [Open project](${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}/dashboard?id=applied-ai-team-sai3-backend)" >> $GITHUB_STEP_SUMMARY
-            echo "- Sonar Frontend: [Open project](${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}/dashboard?id=applied-ai-team-sai3-frontend)" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Sonar Backend: SONAR_HOST_URL_APPLIED_AI_TEAM secret not configured" >> $GITHUB_STEP_SUMMARY
-            echo "- Sonar Frontend: SONAR_HOST_URL_APPLIED_AI_TEAM secret not configured" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -n "${{ needs.backend-unit-tests.outputs.backend_report_url }}" ]; then
-            echo "- Backend Unit Report: [Open report](${{ needs.backend-unit-tests.outputs.backend_report_url }})" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Backend Unit Report: not published" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -n "${{ needs.frontend-unit-tests.outputs.frontend_report_url }}" ]; then
-            echo "- Frontend Unit Report: [Open report](${{ needs.frontend-unit-tests.outputs.frontend_report_url }})" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Frontend Unit Report: not published" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -n "${{ needs.build-and-quality-tests.outputs.security_frontend_report_url }}" ]; then
-            echo "- Security Frontend HTML Report: [Open report](${{ needs.build-and-quality-tests.outputs.security_frontend_report_url }})" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Security Frontend HTML Report: not published" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ -n "${{ needs.build-and-quality-tests.outputs.security_api_report_url }}" ]; then
-            echo "- Security API HTML Report: [Open report](${{ needs.build-and-quality-tests.outputs.security_api_report_url }})" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- Security API HTML Report: not published" >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: Comment unit test report URLs on PR
+      - name: Actualizar panel de resultados
         if: always()
         uses: actions/github-script@v8
+        env:
+          REPORT_URL: ${{ steps.publish-report.outputs.functional_report_url }}
         with:
           script: |
-            const backendUrl = `${{ needs.backend-unit-tests.outputs.backend_report_url }}`;
-            const frontendUrl = `${{ needs.frontend-unit-tests.outputs.frontend_report_url }}`;
-            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-            const backendLine = backendUrl ? `[Open backend unit report](${backendUrl})` : 'Backend unit report not published';
-            const frontendLine = frontendUrl ? `[Open frontend unit report](${frontendUrl})` : 'Frontend unit report not published';
-            const body = `### Unit test reports ready\n\n- ${backendLine}\n- ${frontendLine}\n- [Open this CI run](${runUrl})\n\n_Updated on push to this PR. Torn down when PR is closed._`;
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const existing = comments.find(c =>
-              c.user.login === 'github-actions[bot]' && c.body.includes('Unit test reports ready')
-            );
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
+            async function updateDashboard(github, context, sections) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner, repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body,
+              });
+              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+              if (!c) return;
+              let body = c.body;
+              for (const [name, content] of Object.entries(sections)) {
+                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                const si = body.indexOf(s), ei = body.indexOf(e);
+                if (si !== -1 && ei !== -1)
+                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              }
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: c.id, body,
               });
             }
 
+            const url = process.env.REPORT_URL;
+            let content;
+            if (url) {
+              content = [
+                '> \u2705 Pruebas funcionales completadas',
+                '>',
+                `> \u{1F4C4} [Ver reporte de pruebas funcionales](${url})`,
+              ].join('\n');
+            } else {
+              content = '> \u2705 Pruebas funcionales completadas \u00B7 \u{1F4E6} _Reporte disponible en artefactos_';
+            }
+
+            await updateDashboard(github, context, { 'functional': content });
+
   teardown-preview:
-    if: always() && github.event.action == 'closed'
+    if: github.event.action == 'closed'
     runs-on: ubuntu-latest
-    needs: [pipeline-summary]
     permissions:
       contents: read
       pull-requests: write
@@ -1180,31 +1342,77 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Tear down AURA report preview
-        run: npx surge teardown ${{ env.AURA_REPORT_DOMAIN }} || true
+      - name: Tear down functional test report
+        run: npx surge teardown ${{ env.FUNCTIONAL_REPORT_DOMAIN }} || true
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Tear down backend unit report preview
+      - name: Tear down backend unit report
         run: npx surge teardown ${{ env.BACKEND_REPORT_DOMAIN }} || true
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Tear down frontend unit report preview
+      - name: Tear down frontend unit report
         run: npx surge teardown ${{ env.FRONTEND_REPORT_DOMAIN }} || true
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Tear down security report preview
+      - name: Tear down security report
         run: npx surge teardown ${{ env.SECURITY_REPORT_DOMAIN }} || true
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Update PR comment
+      - name: Actualizar panel de resultados
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const marker = '<!-- ci-dashboard -->';
+            const prNumber = context.issue.number;
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const comment = comments.find(c => c.body && c.body.includes(marker));
+            if (comment) {
+              const body = [
+                marker,
+                '',
+                '<div align="center">',
+                '',
+                '# \u{1F680} Panel de Resultados \u2014 CI Pipeline',
+                '',
+                `**Pull Request #${prNumber}** \u00B7 _Cerrado_`,
+                '',
+                '</div>',
+                '',
+                '---',
+                '',
+                '> \u{1F512} **Los sitios de previsualizaci\u00F3n y reportes en l\u00EDnea han sido desactivados** al cerrar este Pull Request.',
+                '>',
+                `> \u{1F4E6} Los artefactos descargables permanecen disponibles en la pesta\u00F1a de [**Actions**](${runUrl}) del repositorio.`,
+                '',
+                '---',
+                '',
+                '<sub>\u{1F916} Generado autom\u00E1ticamente por el pipeline de integraci\u00F3n continua</sub>',
+              ].join('\n');
+
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: comment.id,
+                body,
+              });
+            }
+
+      - name: Update preview PR comment
         uses: actions/github-script@v8
         with:
           script: |
@@ -1215,7 +1423,8 @@ jobs:
             });
 
             const existing = comments.find(c =>
-              c.user.login === 'github-actions[bot]' && c.body.includes('Preview deployment ready')
+              c.user.login === 'github-actions[bot]' &&
+              (c.body.includes('Previsualizaci\u00F3n disponible') || c.body.includes('Preview deployment ready'))
             );
 
             if (existing) {
@@ -1223,6 +1432,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: existing.id,
-                body: "### Preview deployment\n\n~~Torn down after CI pipeline completed.~~",
+                body: "### \u{1F310} Previsualizaci\u00F3n\n\n~~Desactivada al cerrar el Pull Request.~~",
               });
             }
