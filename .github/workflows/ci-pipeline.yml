@@ -2,10 +2,8 @@ name: CI Pipeline
 
 on:
   pull_request:
-    types: [ready_for_review, closed]
+    types: [opened, reopened, synchronize, ready_for_review, closed]
     branches: ["main"]
-    paths-ignore:
-      - "**/*.md"
 
 concurrency:
   group: ci-pr-${{ github.event.pull_request.number || github.ref }}
@@ -20,6 +18,8 @@ env:
   NODE_VERSION: "24"
   PREVIEW_DOMAIN: pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   PREVIEW_URL: https://pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  DOCS_PREVIEW_DOMAIN: docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  DOCS_PREVIEW_URL: https://docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/system-overview.md
   FUNCTIONAL_REPORT_DOMAIN: functional-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   FUNCTIONAL_REPORT_URL: https://functional-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/aura-report.html
   BACKEND_REPORT_DOMAIN: backend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
@@ -69,6 +69,10 @@ jobs:
               '<!-- section:preview -->',
               '> \u23F3 _Deploying preview site..._',
               '<!-- /section:preview -->',
+              '',
+              '<!-- section:docs-preview -->',
+              '> \u23F3 _Publishing documentation preview..._',
+              '<!-- /section:docs-preview -->',
               '',
               '---',
               '',
@@ -1192,6 +1196,85 @@ jobs:
               });
             }
 
+  docs-preview:
+    name: "Docs Preview"
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    needs: [init-dashboard]
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      docs_preview_url: ${{ steps.publish-docs.outputs.docs_preview_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Detect docs directory
+        id: detect-docs
+        shell: bash
+        run: |
+          if [ -d "docs" ] && [ -n "$(ls -A docs)" ]; then
+            echo "has_docs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_docs=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish docs to Surge
+        id: publish-docs
+        if: steps.detect-docs.outputs.has_docs == 'true'
+        run: |
+          npx surge --project docs --domain ${{ env.DOCS_PREVIEW_DOMAIN }}
+          echo "docs_preview_url=${{ env.DOCS_PREVIEW_URL }}" >> "$GITHUB_OUTPUT"
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Update docs section in dashboard
+        if: always()
+        uses: actions/github-script@v8
+        env:
+          HAS_DOCS: ${{ steps.detect-docs.outputs.has_docs }}
+          DOCS_URL: ${{ steps.publish-docs.outputs.docs_preview_url }}
+          EXPECTED_URL: ${{ env.DOCS_PREVIEW_URL }}
+        with:
+          script: |
+            async function updateDashboard(github, context, sections) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+              if (!c) return;
+              let body = c.body;
+              for (const [name, content] of Object.entries(sections)) {
+                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                const si = body.indexOf(s), ei = body.indexOf(e);
+                if (si !== -1 && ei !== -1)
+                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              }
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: c.id, body,
+              });
+            }
+
+            const hasDocs = process.env.HAS_DOCS === 'true';
+            const docsUrl = process.env.DOCS_URL || process.env.EXPECTED_URL;
+            let content;
+            if (hasDocs && docsUrl) {
+              content = [
+                '> \u{1F4D6} **Documentation preview published**',
+                '>',
+                `> \u{1F517} **[Open documentation preview](${docsUrl})**`,
+              ].join('\n');
+            } else if (hasDocs) {
+              content = '> \u274C _Documentation exists but preview publication failed_';
+            } else {
+              content = '> \u26AA _No documentation directory found to publish_';
+            }
+            await updateDashboard(github, context, { 'docs-preview': content });
+
   functional-tests-web:
     name: "Functional Tests"
     if: github.event.action != 'closed'
@@ -1344,6 +1427,12 @@ jobs:
 
       - name: Tear down functional test report
         run: npx surge teardown ${{ env.FUNCTIONAL_REPORT_DOMAIN }} || true
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Tear down docs preview
+        run: npx surge teardown ${{ env.DOCS_PREVIEW_DOMAIN }} || true
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
