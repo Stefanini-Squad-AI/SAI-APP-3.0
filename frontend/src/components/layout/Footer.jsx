@@ -143,6 +143,11 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/legal-info" className="text-gray-400 hover:text-white transition">
+                  {t('footer.legalInfo')}
+                </Link>
+              </li>
+              <li>
                 <a href="/terms" className="text-gray-400 hover:text-white transition">
                   {t('footer.legalNotice')}
                 </a>
