@@ -32,14 +32,14 @@ env:
 
 jobs:
   init-dashboard:
-    name: "\U0001F680 Inicializar Panel de Resultados"
+    name: "\U0001F680 Initialize Results Dashboard"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     steps:
-      - name: Crear panel de resultados en el Pull Request
+      - name: Create results dashboard comment
         uses: actions/github-script@v8
         with:
           script: |
@@ -54,78 +54,78 @@ jobs:
               '',
               '<div align="center">',
               '',
-              '# \u{1F680} Panel de Resultados \u2014 CI Pipeline',
+              '# \u{1F680} Results Dashboard - CI Pipeline',
               '',
-              `**Pull Request #${prNumber}** \u00B7 Ejecuci\u00F3n [**#${runNumber}**](${runUrl})`,
+              `**Pull Request #${prNumber}** - Run [**#${runNumber}**](${runUrl})`,
               '',
-              '_Los resultados se actualizan autom\u00E1ticamente conforme cada fase del pipeline finaliza._',
+              '_Results are automatically updated as each pipeline stage completes._',
               '',
               '</div>',
               '',
               '---',
               '',
-              '### \u{1F310} Sitio Web \u2014 Previsualizaci\u00F3n del Pull Request',
+              '### \u{1F310} Website - Pull Request Preview',
               '',
               '<!-- section:preview -->',
-              '> \u23F3 _Desplegando sitio de previsualizaci\u00F3n..._',
+              '> \u23F3 _Deploying preview site..._',
               '<!-- /section:preview -->',
               '',
               '---',
               '',
-              '### \u{1F50D} An\u00E1lisis de Calidad de C\u00F3digo',
+              '### \u{1F50D} Code Quality Analysis',
               '',
               '<!-- section:sonar-backend -->',
-              '> \u{1F7E6} **Backend** \u00B7 \u23F3 _Analizando c\u00F3digo fuente..._',
+              '> \u{1F7E6} **Backend** - \u23F3 _Analyzing source code..._',
               '<!-- /section:sonar-backend -->',
               '',
               '<!-- section:sonar-frontend -->',
-              '> \u{1F7E6} **Frontend** \u00B7 \u23F3 _Analizando c\u00F3digo fuente..._',
+              '> \u{1F7E6} **Frontend** - \u23F3 _Analyzing source code..._',
               '<!-- /section:sonar-frontend -->',
               '',
               '---',
               '',
-              '### \u{1F4CA} Reportes de Pruebas',
+              '### \u{1F4CA} Test Reports',
               '',
               '<details open>',
-              '<summary><b>\u{1F9EA} Pruebas Unitarias</b></summary>',
+              '<summary><b>\u{1F9EA} Unit Tests</b></summary>',
               '<br>',
               '',
               '<!-- section:unit-backend -->',
-              '> \u{1F7E6} **Backend** \u00B7 \u23F3 _Ejecutando pruebas..._',
+              '> \u{1F7E6} **Backend** - \u23F3 _Running tests..._',
               '<!-- /section:unit-backend -->',
               '',
               '<!-- section:unit-frontend -->',
-              '> \u{1F7E6} **Frontend** \u00B7 \u23F3 _Ejecutando pruebas..._',
+              '> \u{1F7E6} **Frontend** - \u23F3 _Running tests..._',
               '<!-- /section:unit-frontend -->',
               '',
               '</details>',
               '',
               '<details open>',
-              '<summary><b>\u{1F517} Pruebas de Integraci\u00F3n</b></summary>',
+              '<summary><b>\u{1F517} Integration Tests</b></summary>',
               '<br>',
               '',
               '<!-- section:integration -->',
-              '> \u23F3 _Pendiente \u2014 se ejecutar\u00E1n una vez finalicen las pruebas unitarias..._',
+              '> \u23F3 _Pending - will run after unit tests finish..._',
               '<!-- /section:integration -->',
               '',
               '</details>',
               '',
               '<details open>',
-              '<summary><b>\u{1F6E1}\uFE0F Pruebas de Seguridad</b></summary>',
+              '<summary><b>\u{1F6E1}\uFE0F Security Tests</b></summary>',
               '<br>',
               '',
               '<!-- section:security -->',
-              '> \u23F3 _Pendiente \u2014 se ejecutar\u00E1n una vez finalicen las pruebas unitarias..._',
+              '> \u23F3 _Pending - will run after unit tests finish..._',
               '<!-- /section:security -->',
               '',
               '</details>',
               '',
               '<details open>',
-              '<summary><b>\u2705 Pruebas Funcionales</b></summary>',
+              '<summary><b>\u2705 Functional Tests</b></summary>',
               '<br>',
               '',
               '<!-- section:functional -->',
-              '> \u23F3 _Pendiente \u2014 se ejecutar\u00E1n una vez el sitio de previsualizaci\u00F3n est\u00E9 disponible..._',
+              '> \u23F3 _Pending - will run once preview site is available..._',
               '<!-- /section:functional -->',
               '',
               '</details>',
@@ -136,17 +136,17 @@ jobs:
               '',
               '| | Nombre | Descripci\u00F3n |',
               '|:---:|--------|-------------|',
-              '| \u{1F4E6} | `backend-unit-test-report` | Resultados de pruebas unitarias \u2014 Backend |',
-              '| \u{1F4E6} | `frontend-unit-test-report` | Resultados de pruebas unitarias \u2014 Frontend |',
-              '| \u{1F4E6} | `integration-test-report` | Resultados de pruebas de integraci\u00F3n |',
-              '| \u{1F4E6} | `security-test-report` | Resultados de pruebas de seguridad |',
-              '| \u{1F4E6} | `functional-report` | Resultados de pruebas funcionales |',
+              '| \u{1F4E6} | `backend-unit-test-report` | Backend unit test results |',
+              '| \u{1F4E6} | `frontend-unit-test-report` | Frontend unit test results |',
+              '| \u{1F4E6} | `integration-test-report` | Integration test results |',
+              '| \u{1F4E6} | `security-test-report` | Security test results |',
+              '| \u{1F4E6} | `functional-report` | Functional test results |',
               '',
-              `> \u{1F4E5} [**Ir a la p\u00E1gina de artefactos**](${artifactsUrl})`,
+              `> \u{1F4E5} [**Go to artifacts page**](${artifactsUrl})`,
               '',
               '---',
               '',
-              `<sub>\u{1F916} Generado autom\u00E1ticamente por el pipeline de integraci\u00F3n continua \u00B7 <a href="${runUrl}">Ver ejecuci\u00F3n completa</a></sub>`,
+              `<sub>\u{1F916} Automatically generated by CI pipeline - <a href="${runUrl}">View full run</a></sub>`,
             ].join('\n');
 
             const marker = '<!-- ci-dashboard -->';
@@ -174,11 +174,124 @@ jobs:
               });
             }
 
+  docs-coverage-gate:
+    name: "Gate - Documentation Coverage"
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    needs: [init-dashboard]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate documentation changes when source changes
+        shell: bash
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          SOURCE_CHANGED=$(echo "$CHANGED_FILES" | grep -E '^(frontend/src/|backend/)' || true)
+          DOCS_CHANGED=$(echo "$CHANGED_FILES" | grep -E '^(docs/|frontend/README\.md|README\.md)' || true)
+
+          if [ -n "$SOURCE_CHANGED" ] && [ -z "$DOCS_CHANGED" ]; then
+            echo "Source changes detected but no documentation updates found."
+            echo "Please update docs (for example docs/**, frontend/README.md, or README.md)."
+            exit 1
+          fi
+
+          echo "Documentation coverage gate passed."
+
+  test-coverage-gate:
+    name: "Gate - Automated Test Coverage"
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    needs: [init-dashboard]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate test updates for behavior changes
+        shell: bash
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          BEHAVIOR_CHANGED=$(echo "$CHANGED_FILES" | grep -E '^(frontend/src/(pages/|components/|App\.jsx|routes/)|backend/src/)' || true)
+          TEST_CHANGED=$(echo "$CHANGED_FILES" | grep -E '^(frontend/src/.*(test|spec)\.(js|jsx|ts|tsx)$|backend/tests/|automation/frameworks/applied-ai-aura/.*\.(feature|js|ts)|automation/frameworks/applied-ai-aura/.*\.(steps|test)\.(js|ts))' || true)
+
+          if [ -n "$BEHAVIOR_CHANGED" ] && [ -z "$TEST_CHANGED" ]; then
+            echo "Behavior-impacting code changes detected but no automated test updates were found."
+            echo "Please add or update unit/integration/functional tests."
+            exit 1
+          fi
+
+          echo "Automated test coverage gate passed."
+
+  functional-tag-gate:
+    name: "Gate - Functional @preview Tag"
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    needs: [init-dashboard]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate @preview scenarios for frontend behavior changes
+        shell: bash
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+
+          FRONTEND_CHANGED=$(echo "$CHANGED_FILES" | grep -E '^frontend/src/' || true)
+          FEATURE_FILES=$(echo "$CHANGED_FILES" | grep -E '^automation/frameworks/applied-ai-aura/.*\.feature$' || true)
+
+          if [ -z "$FRONTEND_CHANGED" ]; then
+            echo "No frontend behavior changes detected. Skipping @preview validation."
+            exit 0
+          fi
+
+          if [ -z "$FEATURE_FILES" ]; then
+            echo "Frontend behavior changes detected but no updated feature files were found under applied-ai-aura."
+            echo "Add at least one updated feature file with @preview tag."
+            exit 1
+          fi
+
+          PREVIEW_FOUND=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            if grep -q "@preview" "$file"; then
+              PREVIEW_FOUND=1
+              break
+            fi
+          done <<< "$FEATURE_FILES"
+
+          if [ "$PREVIEW_FOUND" -ne 1 ]; then
+            echo "Updated feature files found, but no @preview tag detected."
+            echo "Ensure at least one scenario or feature uses @preview."
+            exit 1
+          fi
+
+          echo "@preview functional tag gate passed."
+
   sonarqube-backend:
     name: "SonarQube \u2014 Backend"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
-    needs: [init-dashboard]
+    needs: [init-dashboard, docs-coverage-gate, test-coverage-gate, functional-tag-gate]
     continue-on-error: true
     permissions:
       contents: read
@@ -364,15 +477,15 @@ jobs:
 
             let content;
             if (canScan !== 'true') {
-              content = '> \u26A0\uFE0F **Backend** \u00B7 _An\u00E1lisis no ejecutado \u2014 verificar configuraci\u00F3n de acceso_';
+              content = '> \u26A0\uFE0F **Backend** - _Analysis not executed; check access configuration_';
             } else if (qg === 'OK') {
-              content = `> \u2705 **Backend** \u00B7 Quality Gate Aprobado \u00B7 \u{1F517} [Ver an\u00E1lisis en detalle](${url})`;
+              content = `> \u2705 **Backend** - Quality Gate Passed - \u{1F517} [View detailed analysis](${url})`;
             } else if (qg === 'ERROR') {
-              content = `> \u274C **Backend** \u00B7 Quality Gate No Aprobado \u00B7 \u{1F517} [Ver an\u00E1lisis en detalle](${url})`;
+              content = `> \u274C **Backend** - Quality Gate Failed - \u{1F517} [View detailed analysis](${url})`;
             } else {
               content = url
-                ? `> \u26A0\uFE0F **Backend** \u00B7 Quality Gate: ${qg || 'Pendiente'} \u00B7 \u{1F517} [Ver resultados](${url})`
-                : `> \u26A0\uFE0F **Backend** \u00B7 Quality Gate: ${qg || 'No disponible'}`;
+                ? `> \u26A0\uFE0F **Backend** - Quality Gate: ${qg || 'Pending'} - \u{1F517} [View results](${url})`
+                : `> \u26A0\uFE0F **Backend** - Quality Gate: ${qg || 'Unavailable'}`;
             }
 
             await updateDashboard(github, context, { 'sonar-backend': content });
@@ -381,7 +494,7 @@ jobs:
     name: "SonarQube \u2014 Frontend"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
-    needs: [init-dashboard]
+    needs: [init-dashboard, docs-coverage-gate, test-coverage-gate, functional-tag-gate]
     continue-on-error: true
     permissions:
       contents: read
@@ -546,24 +659,24 @@ jobs:
 
             let content;
             if (canScan !== 'true') {
-              content = '> \u26A0\uFE0F **Frontend** \u00B7 _An\u00E1lisis no ejecutado \u2014 verificar configuraci\u00F3n de acceso_';
+              content = '> \u26A0\uFE0F **Frontend** - _Analysis not executed; check access configuration_';
             } else if (qg === 'OK') {
-              content = `> \u2705 **Frontend** \u00B7 Quality Gate Aprobado \u00B7 \u{1F517} [Ver an\u00E1lisis en detalle](${url})`;
+              content = `> \u2705 **Frontend** - Quality Gate Passed - \u{1F517} [View detailed analysis](${url})`;
             } else if (qg === 'ERROR') {
-              content = `> \u274C **Frontend** \u00B7 Quality Gate No Aprobado \u00B7 \u{1F517} [Ver an\u00E1lisis en detalle](${url})`;
+              content = `> \u274C **Frontend** - Quality Gate Failed - \u{1F517} [View detailed analysis](${url})`;
             } else {
               content = url
-                ? `> \u26A0\uFE0F **Frontend** \u00B7 Quality Gate: ${qg || 'Pendiente'} \u00B7 \u{1F517} [Ver resultados](${url})`
-                : `> \u26A0\uFE0F **Frontend** \u00B7 Quality Gate: ${qg || 'No disponible'}`;
+                ? `> \u26A0\uFE0F **Frontend** - Quality Gate: ${qg || 'Pending'} - \u{1F517} [View results](${url})`
+                : `> \u26A0\uFE0F **Frontend** - Quality Gate: ${qg || 'Unavailable'}`;
             }
 
             await updateDashboard(github, context, { 'sonar-frontend': content });
 
   backend-unit-tests:
-    name: "Pruebas Unitarias \u2014 Backend"
+    name: "Unit Tests - Backend"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
-    needs: [init-dashboard]
+    needs: [init-dashboard, docs-coverage-gate, test-coverage-gate, functional-tag-gate]
     continue-on-error: true
     permissions:
       contents: read
@@ -677,16 +790,16 @@ jobs:
 
             const url = process.env.REPORT_URL;
             const content = url
-              ? `> \u2705 **Backend** \u00B7 Pruebas completadas \u00B7 \u{1F4C4} [Ver reporte detallado](${url})`
-              : '> \u2705 **Backend** \u00B7 Pruebas completadas \u00B7 \u{1F4E6} _Reporte disponible en artefactos_';
+              ? `> \u2705 **Backend** - Tests completed - \u{1F4C4} [View detailed report](${url})`
+              : '> \u2705 **Backend** - Tests completed - \u{1F4E6} _Report available in artifacts_';
 
             await updateDashboard(github, context, { 'unit-backend': content });
 
   frontend-unit-tests:
-    name: "Pruebas Unitarias \u2014 Frontend"
+    name: "Unit Tests - Frontend"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
-    needs: [init-dashboard]
+    needs: [init-dashboard, docs-coverage-gate, test-coverage-gate, functional-tag-gate]
     continue-on-error: true
     permissions:
       contents: read
@@ -770,13 +883,13 @@ jobs:
 
             const url = process.env.REPORT_URL;
             const content = url
-              ? `> \u2705 **Frontend** \u00B7 Pruebas completadas \u00B7 \u{1F4C4} [Ver reporte detallado](${url})`
-              : '> \u2705 **Frontend** \u00B7 Pruebas completadas \u00B7 \u{1F4E6} _Reporte disponible en artefactos_';
+              ? `> \u2705 **Frontend** - Tests completed - \u{1F4C4} [View detailed report](${url})`
+              : '> \u2705 **Frontend** - Tests completed - \u{1F4E6} _Report available in artifacts_';
 
             await updateDashboard(github, context, { 'unit-frontend': content });
 
   build-and-quality-tests:
-    name: "Pruebas de Integraci\u00F3n & Seguridad"
+    name: "Integration and Security Tests"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     needs: [backend-unit-tests, frontend-unit-tests]
@@ -1046,17 +1159,17 @@ jobs:
             const secApiUrl = process.env.SEC_API_URL;
 
             const integrationIcon = integrationOk ? '\u2705' : '\u274C';
-            const integrationStatus = integrationOk ? 'Pruebas completadas exitosamente' : 'Pruebas finalizadas con errores';
-            const integrationContent = `> ${integrationIcon} ${integrationStatus} \u00B7 \u{1F4E6} _Resultados en artefacto \`integration-test-report\`_`;
+            const integrationStatus = integrationOk ? 'Tests completed successfully' : 'Tests completed with errors';
+            const integrationContent = `> ${integrationIcon} ${integrationStatus} - \u{1F4E6} _Results in artifact \`integration-test-report\`_`;
 
             let securityLines = [];
             if (secFrontendUrl || secApiUrl) {
-              securityLines.push('> \u2705 Pruebas de seguridad completadas');
+              securityLines.push('> \u2705 Security tests completed');
               securityLines.push('>');
-              if (secFrontendUrl) securityLines.push(`> \u{1F4C4} [Reporte de seguridad \u2014 Frontend](${secFrontendUrl})`);
-              if (secApiUrl) securityLines.push(`> \u{1F4C4} [Reporte de seguridad \u2014 API](${secApiUrl})`);
+              if (secFrontendUrl) securityLines.push(`> \u{1F4C4} [Security report - Frontend](${secFrontendUrl})`);
+              if (secApiUrl) securityLines.push(`> \u{1F4C4} [Security report - API](${secApiUrl})`);
             } else {
-              securityLines.push('> \u2705 Pruebas de seguridad completadas \u00B7 \u{1F4E6} _Resultados en artefacto \`security-test-report\`_');
+              securityLines.push('> \u2705 Security tests completed - \u{1F4E6} _Results in artifact \`security-test-report\`_');
             }
             const securityContent = securityLines.join('\n');
 
@@ -1078,10 +1191,10 @@ jobs:
           fi
 
   deploy-preview:
-    name: "Desplegar Previsualizaci\u00F3n"
+    name: "Deploy Preview"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
-    needs: [init-dashboard]
+    needs: [init-dashboard, docs-coverage-gate, test-coverage-gate, functional-tag-gate]
     permissions:
       contents: read
       pull-requests: write
@@ -1149,12 +1262,12 @@ jobs:
             let content;
             if (url) {
               content = [
-                '> \u{1F7E2} **Sitio desplegado exitosamente**',
+                '> \u{1F7E2} **Site deployed successfully**',
                 '>',
-                `> \u{1F517} **[Abrir sitio de previsualizaci\u00F3n](${url})**`,
+                `> \u{1F517} **[Open preview site](${url})**`,
               ].join('\n');
             } else {
-              content = '> \u274C _No se pudo desplegar el sitio de previsualizaci\u00F3n_';
+              content = '> \u274C _Failed to deploy preview site_';
             }
 
             await updateDashboard(github, context, { 'preview': content });
@@ -1164,7 +1277,7 @@ jobs:
         with:
           script: |
             const url = `${{ env.PREVIEW_URL }}`;
-            const body = `### \u{1F310} Previsualizaci\u00F3n disponible\n\n${url}\n\n_Se actualiza con cada push a este PR. Se desactiva al cerrar el PR._`;
+            const body = `### \u{1F310} Preview available\n\n${url}\n\n_This updates on each push to this PR. It is disabled when the PR is closed._`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -1173,7 +1286,7 @@ jobs:
             });
 
             const existing = comments.find(c =>
-              c.user.login === 'github-actions[bot]' && c.body.includes('Previsualizaci\u00F3n disponible')
+              c.user.login === 'github-actions[bot]' && c.body.includes('Preview available')
             );
 
             if (existing) {
@@ -1193,7 +1306,7 @@ jobs:
             }
 
   functional-tests-web:
-    name: "Pruebas Funcionales"
+    name: "Functional Tests"
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     needs: [deploy-preview]
@@ -1319,12 +1432,12 @@ jobs:
             let content;
             if (url) {
               content = [
-                '> \u2705 Pruebas funcionales completadas',
+                '> \u2705 Functional tests completed',
                 '>',
-                `> \u{1F4C4} [Ver reporte de pruebas funcionales](${url})`,
+                `> \u{1F4C4} [View functional test report](${url})`,
               ].join('\n');
             } else {
-              content = '> \u2705 Pruebas funcionales completadas \u00B7 \u{1F4E6} _Reporte disponible en artefactos_';
+              content = '> \u2705 Functional tests completed - \u{1F4E6} _Report available in artifacts_';
             }
 
             await updateDashboard(github, context, { 'functional': content });
@@ -1387,21 +1500,21 @@ jobs:
                 '',
                 '<div align="center">',
                 '',
-                '# \u{1F680} Panel de Resultados \u2014 CI Pipeline',
+                '# \u{1F680} Results Dashboard - CI Pipeline',
                 '',
-                `**Pull Request #${prNumber}** \u00B7 _Cerrado_`,
+                `**Pull Request #${prNumber}** - _Closed_`,
                 '',
                 '</div>',
                 '',
                 '---',
                 '',
-                '> \u{1F512} **Los sitios de previsualizaci\u00F3n y reportes en l\u00EDnea han sido desactivados** al cerrar este Pull Request.',
+                '> \u{1F512} **Preview sites and online reports have been deactivated** because this Pull Request was closed.',
                 '>',
-                `> \u{1F4E6} Los artefactos descargables permanecen disponibles en la pesta\u00F1a de [**Actions**](${runUrl}) del repositorio.`,
+                `> \u{1F4E6} Downloadable artifacts remain available in the repository [**Actions**](${runUrl}) tab.`,
                 '',
                 '---',
                 '',
-                '<sub>\u{1F916} Generado autom\u00E1ticamente por el pipeline de integraci\u00F3n continua</sub>',
+                '<sub>\u{1F916} Automatically generated by the continuous integration pipeline</sub>',
               ].join('\n');
 
               await github.rest.issues.updateComment({
@@ -1432,6 +1545,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: existing.id,
-                body: "### \u{1F310} Previsualizaci\u00F3n\n\n~~Desactivada al cerrar el Pull Request.~~",
+                body: "### \u{1F310} Preview\n\n~~Disabled when the Pull Request was closed.~~",
               });
             }

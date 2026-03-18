@@ -1,4 +1,4 @@
-@preview @demo-sai3
+@preview
 Feature: Validate PR preview deployment
   As a QA team
   I want to validate that the PR preview is available
