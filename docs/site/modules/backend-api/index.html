@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module - Backend API</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 18px 40px; }
+    .head {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: white;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .back { display: inline-block; margin-bottom: 18px; color: #6d28d9; text-decoration: none; font-weight: 600; }
+    .card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    h1 { margin: 0 0 8px; }
+    h2 { margin: 0 0 10px; font-size: 1.1rem; }
+    p, li { line-height: 1.55; color: #374151; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; font-size: 0.95rem; }
+    th { background: #f1f5f9; }
+    code { background: #f5f3ff; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="../../index.html"><- Back to docs hub</a>
+
+    <section class="head">
+      <h1>backend-api</h1>
+      <p>
+        ASP.NET Core Web API responsible for authentication, business operations,
+        and admin domain services used by frontend clients.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Technical foundation</h2>
+      <ul>
+        <li>.NET 8 with ASP.NET Core controllers.</li>
+        <li>JWT authentication and authorization middleware.</li>
+        <li>CORS configured for localhost, GitHub Pages, and Surge previews.</li>
+        <li>Swagger enabled in development for API exploration.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Controller domains</h2>
+      <table>
+        <thead>
+          <tr><th>Controller</th><th>Base Route</th><th>Examples</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>AuthController</td><td><code>/api/auth</code></td><td><code>POST /login</code>, <code>POST /register</code></td></tr>
+          <tr><td>DashboardController</td><td><code>/api/dashboard</code></td><td><code>GET /stats</code>, <code>GET /status-distribution</code></td></tr>
+          <tr><td>CreditRequestsController</td><td><code>/api/creditrequests</code></td><td><code>GET /{id}</code>, <code>POST /{id}/approve</code></td></tr>
+          <tr><td>UsersController</td><td><code>/api/users</code></td><td><code>GET /{id}</code>, <code>POST /change-password</code></td></tr>
+          <tr><td>CreditTypesController</td><td><code>/api/credittypes</code></td><td><code>GET /{id}</code></td></tr>
+          <tr><td>ServicesController</td><td><code>/api/services</code></td><td><code>GET /{id}</code></td></tr>
+          <tr><td>ContactMessagesController</td><td><code>/api/contactmessages</code></td><td><code>GET /pending</code>, <code>GET /stats</code></td></tr>
+          <tr><td>BackupController</td><td><code>/api/backup</code></td><td><code>GET /generate</code>, <code>GET /status</code></td></tr>
+          <tr><td>HealthController</td><td><code>/api/health</code></td><td>Health checks</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Dependencies and integration points</h2>
+      <ul>
+        <li>MongoDB repositories and infrastructure service registration through extension methods.</li>
+        <li>Default admin seeding on startup (idempotent) for local environments.</li>
+        <li>Consumed by frontend admin/public services and CI smoke/functional flows.</li>
+      </ul>
+    </section>
+  </div>
+</body>
+</html>

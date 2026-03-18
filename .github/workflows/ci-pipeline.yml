@@ -19,9 +19,10 @@ env:
   PREVIEW_DOMAIN: pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   PREVIEW_URL: https://pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   DOCS_PREVIEW_DOMAIN: docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
-  DOCS_PREVIEW_URL: https://docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/system-overview.md
+  DOCS_PREVIEW_URL: https://docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/site/index.html
   DOCS_GH_PREVIEW_PATH: pr-docs/pr-${{ github.event.number }}
   DOCS_GH_PREVIEW_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-docs/pr-${{ github.event.number }}/
+  MAIN_DOCS_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/docs/site/index.html
   FUNCTIONAL_REPORT_DOMAIN: functional-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   FUNCTIONAL_REPORT_URL: https://functional-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/aura-report.html
   BACKEND_REPORT_DOMAIN: backend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
@@ -1250,6 +1251,7 @@ jobs:
           HAS_DOCS: ${{ steps.detect-docs.outputs.has_docs }}
           DOCS_SURGE_URL: ${{ steps.publish-docs.outputs.docs_preview_url }}
           DOCS_GH_URL: ${{ env.DOCS_GH_PREVIEW_URL }}
+          MAIN_DOCS_URL: ${{ env.MAIN_DOCS_URL }}
         with:
           script: |
             async function updateDashboard(github, context, sections) {
@@ -1275,15 +1277,24 @@ jobs:
             const hasDocs = process.env.HAS_DOCS === 'true';
             const docsSurgeUrl = process.env.DOCS_SURGE_URL;
             const docsGhUrl = process.env.DOCS_GH_URL;
+            const mainDocsUrl = process.env.MAIN_DOCS_URL;
             let content;
             if (hasDocs) {
               const links = [];
               if (docsSurgeUrl) links.push(`> \u{1F517} **[Open docs preview (Surge)](${docsSurgeUrl})**`);
               if (docsGhUrl) links.push(`> \u{1F517} **[Open docs preview (GitHub Pages)](${docsGhUrl})**`);
+              const compareTarget = docsGhUrl || docsSurgeUrl;
               content = [
                 '> \u{1F4D6} **Documentation preview published**',
                 '>',
+                `> \u{1F517} **[Open current docs on main](${mainDocsUrl})**`,
                 ...links,
+                ...(compareTarget ? [
+                  '>',
+                  '> \u{1F9EA} **Before vs After (no merge required)**',
+                  `> - Main/Baseline: [Docs on main](${mainDocsUrl})`,
+                  `> - PR/Preview: [Docs in this PR](${compareTarget})`,
+                ] : []),
               ].join('\n');
               if (links.length === 0) {
                 content = '> \u274C _Documentation exists but preview publication failed_';
