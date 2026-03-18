@@ -20,6 +20,8 @@ env:
   PREVIEW_URL: https://pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   DOCS_PREVIEW_DOMAIN: docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   DOCS_PREVIEW_URL: https://docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/system-overview.md
+  DOCS_GH_PREVIEW_PATH: pr-docs/pr-${{ github.event.number }}
+  DOCS_GH_PREVIEW_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-docs/pr-${{ github.event.number }}/
   FUNCTIONAL_REPORT_DOMAIN: functional-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   FUNCTIONAL_REPORT_URL: https://functional-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/aura-report.html
   BACKEND_REPORT_DOMAIN: backend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
@@ -1202,7 +1204,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [init-dashboard]
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     outputs:
       docs_preview_url: ${{ steps.publish-docs.outputs.docs_preview_url }}
@@ -1230,13 +1232,24 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
+      - name: Publish docs preview to GitHub Pages path
+        id: publish-docs-gh
+        if: steps.detect-docs.outputs.has_docs == 'true'
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          destination_dir: ${{ env.DOCS_GH_PREVIEW_PATH }}
+          keep_files: true
+
       - name: Update docs section in dashboard
         if: always()
         uses: actions/github-script@v8
         env:
           HAS_DOCS: ${{ steps.detect-docs.outputs.has_docs }}
-          DOCS_URL: ${{ steps.publish-docs.outputs.docs_preview_url }}
-          EXPECTED_URL: ${{ env.DOCS_PREVIEW_URL }}
+          DOCS_SURGE_URL: ${{ steps.publish-docs.outputs.docs_preview_url }}
+          DOCS_GH_URL: ${{ env.DOCS_GH_PREVIEW_URL }}
         with:
           script: |
             async function updateDashboard(github, context, sections) {
@@ -1260,16 +1273,21 @@ jobs:
             }
 
             const hasDocs = process.env.HAS_DOCS === 'true';
-            const docsUrl = process.env.DOCS_URL || process.env.EXPECTED_URL;
+            const docsSurgeUrl = process.env.DOCS_SURGE_URL;
+            const docsGhUrl = process.env.DOCS_GH_URL;
             let content;
-            if (hasDocs && docsUrl) {
+            if (hasDocs) {
+              const links = [];
+              if (docsSurgeUrl) links.push(`> \u{1F517} **[Open docs preview (Surge)](${docsSurgeUrl})**`);
+              if (docsGhUrl) links.push(`> \u{1F517} **[Open docs preview (GitHub Pages)](${docsGhUrl})**`);
               content = [
                 '> \u{1F4D6} **Documentation preview published**',
                 '>',
-                `> \u{1F517} **[Open documentation preview](${docsUrl})**`,
+                ...links,
               ].join('\n');
-            } else if (hasDocs) {
-              content = '> \u274C _Documentation exists but preview publication failed_';
+              if (links.length === 0) {
+                content = '> \u274C _Documentation exists but preview publication failed_';
+              }
             } else {
               content = '> \u26AA _No documentation directory found to publish_';
             }
