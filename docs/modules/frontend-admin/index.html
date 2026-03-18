@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module - Frontend Admin</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; }
+    .wrap { max-width: 1140px; margin: 0 auto; padding: 28px 18px 40px; }
+    .head { background: linear-gradient(135deg, #0f766e, #0d9488); color: white; border-radius: 14px; padding: 24px; margin-bottom: 18px; }
+    .head p { color: rgba(255, 255, 255, 0.94); margin: 0; line-height: 1.55; }
+    .head h1 { margin: 0 0 8px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+    .back { display: inline-block; color: #0f766e; text-decoration: none; font-weight: 600; }
+    .lang { display: flex; align-items: center; gap: 8px; color: #475569; font-size: 0.95rem; font-weight: 600; }
+    .lang select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; background: #fff; color: #0f172a; font-weight: 600; }
+    .card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    h2 { margin: 0 0 10px; font-size: 1.12rem; }
+    p, li { line-height: 1.55; color: #374151; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; font-size: 0.92rem; vertical-align: top; }
+    th { background: #f1f5f9; }
+    code { background: #ecfeff; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <a class="back" href="../../index.html" data-i18n="back"><- Back to docs hub</a>
+      <div class="lang">
+        <label for="lang-select" data-i18n="langLabel">Language:</label>
+        <select id="lang-select">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="pt">Português</option>
+        </select>
+      </div>
+    </div>
+
+    <section class="head">
+      <h1 data-i18n="title">frontend-admin</h1>
+      <p data-i18n="subtitle">
+        JWT-protected operations console for administrators: authentication, request decisions,
+        customer messages, user management, catalogs, and infrastructure tools.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="tech">Technical foundation</h2>
+      <ul>
+        <li data-i18n="tech1">React pages under <code>frontend/src/pages/admin</code> with nested routes in <code>frontend/src/App.jsx</code>.</li>
+        <li data-i18n="tech2">Access control via <code>ProtectedRoute</code>, JWT token storage, and role-validated backend endpoints.</li>
+        <li data-i18n="tech3">Domain services consumed from <code>frontend/src/services/*.js</code> (dashboard, users, credit requests, contact messages, backup).</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="routeMap">Admin route map (source of truth)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thPath">Path</th>
+            <th data-i18n="thView">View</th>
+            <th data-i18n="thAuth">Auth</th>
+            <th data-i18n="thSource">Main source file</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>/admin/login</code></td><td data-i18n="vLogin">Login</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/admin/LoginPage.jsx</code></td></tr>
+          <tr><td><code>/admin/dashboard</code></td><td data-i18n="vDashboard">Dashboard</td><td class="auth-cell" data-auth="yes">Yes</td><td><code>pages/admin/DashboardPage.jsx</code></td></tr>
+          <tr><td><code>/admin/credit-requests</code></td><td data-i18n="vCreditRequests">Credit Requests</td><td class="auth-cell" data-auth="yes">Yes</td><td><code>pages/admin/CreditRequestsPage.jsx</code></td></tr>
+          <tr><td><code>/admin/messages</code></td><td data-i18n="vMessages">Messages</td><td class="auth-cell" data-auth="yes">Yes</td><td><code>pages/admin/MessagesPage.jsx</code></td></tr>
+          <tr><td><code>/admin/users</code></td><td data-i18n="vUsers">Users</td><td class="auth-cell" data-auth="yes">Yes</td><td><code>pages/admin/UsersPage.jsx</code></td></tr>
+          <tr><td><code>/admin/credit-types</code></td><td data-i18n="vCreditTypes">Credit Types</td><td class="auth-cell" data-auth="yes">Yes</td><td><code>pages/admin/CreditTypesPage.jsx</code></td></tr>
+          <tr><td><code>/admin/services</code></td><td data-i18n="vServicesManagement">Services Management</td><td class="auth-cell" data-auth="yes">Yes</td><td><code>pages/admin/ServicesManagementPage.jsx</code></td></tr>
+          <tr><td><code>/admin/reports</code></td><td data-i18n="vReports">Reports</td><td class="auth-cell" data-auth="yes">Yes</td><td><code>pages/admin/ReportsPage.jsx</code></td></tr>
+          <tr><td><code>/admin/settings</code></td><td data-i18n="vSettings">Settings</td><td class="auth-cell" data-auth="yes">Yes</td><td><code>pages/admin/SettingsPage.jsx</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="catalogTitle">Detailed page catalog (what each page has and what it does)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thPath">Path</th>
+            <th data-i18n="thPurpose">Primary purpose</th>
+            <th data-i18n="thContains">What the page contains</th>
+            <th data-i18n="thActions">Main user actions</th>
+            <th data-i18n="thApi">Main API calls</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/admin/login</code></td>
+            <td data-i18n="rLoginPurpose">Authenticate admin users and open secure panel access.</td>
+            <td data-i18n="rLoginContains">Email/password form, validation messages, default credential helper, language selector, and success/error alerts.</td>
+            <td data-i18n="rLoginActions">Submit credentials, auto-fill demo credentials, copy credential values, navigate to dashboard when token is valid.</td>
+            <td><code>POST /api/auth/login</code></td>
+          </tr>
+          <tr>
+            <td><code>/admin/dashboard</code></td>
+            <td data-i18n="rDashPurpose">Provide KPI overview for operations and portfolio health.</td>
+            <td data-i18n="rDashContains">KPI cards (requests/users/amounts), bar chart by month, pie chart by status, and quick summary panel.</td>
+            <td data-i18n="rDashActions">Review volume and status trends, monitor approval/rejection distribution, detect workload spikes.</td>
+            <td><code>GET /api/dashboard/stats</code>, <code>GET /api/dashboard/status-distribution</code></td>
+          </tr>
+          <tr>
+            <td><code>/admin/credit-requests</code></td>
+            <td data-i18n="rCrPurpose">Operate the end-to-end review workflow of loan applications.</td>
+            <td data-i18n="rCrContains">Status counters, filter buttons, request table, detail modal with applicant and financial information, action confirmations.</td>
+            <td data-i18n="rCrActions">Filter by status, open full request details, approve/reject with remarks, refresh data after decision.</td>
+            <td><code>GET /api/creditrequests</code>, <code>POST /api/creditrequests/{id}/approve</code>, <code>POST /api/creditrequests/{id}/reject</code></td>
+          </tr>
+          <tr>
+            <td><code>/admin/messages</code></td>
+            <td data-i18n="rMsgPurpose">Track and resolve customer messages received from contact forms.</td>
+            <td data-i18n="rMsgContains">Message inbox table, status chips, status filters, detail modal with customer text, admin notes, and transition options.</td>
+            <td data-i18n="rMsgActions">Open message detail, move status through workflow (new/in progress/replied/closed), soft-delete records.</td>
+            <td><code>GET /api/contactmessages</code>, <code>PATCH /api/contactmessages/{id}/status</code>, <code>DELETE /api/contactmessages/{id}</code></td>
+          </tr>
+          <tr>
+            <td><code>/admin/users</code></td>
+            <td data-i18n="rUsersPurpose">Manage internal users, roles, and access lifecycle.</td>
+            <td data-i18n="rUsersContains">Search bar, paginated table, role/status badges, create/edit modal, delete confirmation flow.</td>
+            <td data-i18n="rUsersActions">Search users, create account, edit profile/role, delete user, paginate list.</td>
+            <td><code>GET /api/users</code>, <code>POST /api/users</code>, <code>PUT /api/users/{id}</code>, <code>DELETE /api/users/{id}</code></td>
+          </tr>
+          <tr>
+            <td><code>/admin/credit-types</code></td>
+            <td data-i18n="rCtPurpose">Maintain credit product catalog used by calculator and public pages.</td>
+            <td data-i18n="rCtContains">Credit type table with rates/limits/terms/status, create-edit modal, and destructive delete confirmation.</td>
+            <td data-i18n="rCtActions">Add new credit type, edit existing one, activate/deactivate by data update, delete obsolete product.</td>
+            <td><code>GET /api/credittypes</code>, <code>POST /api/credittypes</code>, <code>PUT /api/credittypes/{id}</code>, <code>DELETE /api/credittypes/{id}</code></td>
+          </tr>
+          <tr>
+            <td><code>/admin/services</code></td>
+            <td data-i18n="rSvPurpose">Maintain service cards displayed on the public website.</td>
+            <td data-i18n="rSvContains">Card grid with icon/title/order/status/description, create-edit modal, and delete controls.</td>
+            <td data-i18n="rSvActions">Create service card, edit display order and metadata, remove service entry.</td>
+            <td><code>GET /api/services</code>, <code>POST /api/services</code>, <code>PUT /api/services/{id}</code>, <code>DELETE /api/services/{id}</code></td>
+          </tr>
+          <tr>
+            <td><code>/admin/reports</code></td>
+            <td data-i18n="rRpPurpose">Reserve area for reporting and export features.</td>
+            <td data-i18n="rRpContains">Informational placeholder card with "Coming soon" state.</td>
+            <td data-i18n="rRpActions">No operational actions in current version.</td>
+            <td data-i18n="rRpApi">No backend calls in current implementation.</td>
+          </tr>
+          <tr>
+            <td><code>/admin/settings</code></td>
+            <td data-i18n="rStPurpose">Expose maintenance and infrastructure utilities to admins.</td>
+            <td data-i18n="rStContains">Backup section, retention/info cards, generate-backup button, system information summary, operational recommendations.</td>
+            <td data-i18n="rStActions">Generate and download ZIP backup, review stack metadata, follow backup best practices.</td>
+            <td><code>GET /api/backup/generate</code>, <code>GET /api/backup/status</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <script>
+    const i18n = {
+      en: {
+        back: "<- Back to docs hub",
+        langLabel: "Language:",
+        title: "frontend-admin",
+        subtitle: "JWT-protected operations console for administrators: authentication, request decisions, customer messages, user management, catalogs, and infrastructure tools.",
+        tech: "Technical foundation",
+        tech1: "React pages under <code>frontend/src/pages/admin</code> with nested routes in <code>frontend/src/App.jsx</code>.",
+        tech2: "Access control via <code>ProtectedRoute</code>, JWT token storage, and role-validated backend endpoints.",
+        tech3: "Domain services consumed from <code>frontend/src/services/*.js</code> (dashboard, users, credit requests, contact messages, backup).",
+        routeMap: "Admin route map (source of truth)",
+        catalogTitle: "Detailed page catalog (what each page has and what it does)",
+        thPath: "Path",
+        thView: "View",
+        thAuth: "Auth",
+        thSource: "Main source file",
+        thPurpose: "Primary purpose",
+        thContains: "What the page contains",
+        thActions: "Main user actions",
+        thApi: "Main API calls",
+        vLogin: "Login",
+        vDashboard: "Dashboard",
+        vCreditRequests: "Credit Requests",
+        vMessages: "Messages",
+        vUsers: "Users",
+        vCreditTypes: "Credit Types",
+        vServicesManagement: "Services Management",
+        vReports: "Reports",
+        vSettings: "Settings",
+        rLoginPurpose: "Authenticate admin users and open secure panel access.",
+        rLoginContains: "Email/password form, validation messages, default credential helper, language selector, and success/error alerts.",
+        rLoginActions: "Submit credentials, auto-fill demo credentials, copy credential values, navigate to dashboard when token is valid.",
+        rDashPurpose: "Provide KPI overview for operations and portfolio health.",
+        rDashContains: "KPI cards (requests/users/amounts), bar chart by month, pie chart by status, and quick summary panel.",
+        rDashActions: "Review volume and status trends, monitor approval/rejection distribution, detect workload spikes.",
+        rCrPurpose: "Operate the end-to-end review workflow of loan applications.",
+        rCrContains: "Status counters, filter buttons, request table, detail modal with applicant and financial information, action confirmations.",
+        rCrActions: "Filter by status, open full request details, approve/reject with remarks, refresh data after decision.",
+        rMsgPurpose: "Track and resolve customer messages received from contact forms.",
+        rMsgContains: "Message inbox table, status chips, status filters, detail modal with customer text, admin notes, and transition options.",
+        rMsgActions: "Open message detail, move status through workflow (new/in progress/replied/closed), soft-delete records.",
+        rUsersPurpose: "Manage internal users, roles, and access lifecycle.",
+        rUsersContains: "Search bar, paginated table, role/status badges, create/edit modal, delete confirmation flow.",
+        rUsersActions: "Search users, create account, edit profile/role, delete user, paginate list.",
+        rCtPurpose: "Maintain credit product catalog used by calculator and public pages.",
+        rCtContains: "Credit type table with rates/limits/terms/status, create-edit modal, and destructive delete confirmation.",
+        rCtActions: "Add new credit type, edit existing one, activate/deactivate by data update, delete obsolete product.",
+        rSvPurpose: "Maintain service cards displayed on the public website.",
+        rSvContains: "Card grid with icon/title/order/status/description, create-edit modal, and delete controls.",
+        rSvActions: "Create service card, edit display order and metadata, remove service entry.",
+        rRpPurpose: "Reserve area for reporting and export features.",
+        rRpContains: "Informational placeholder card with \"Coming soon\" state.",
+        rRpActions: "No operational actions in current version.",
+        rRpApi: "No backend calls in current implementation.",
+        rStPurpose: "Expose maintenance and infrastructure utilities to admins.",
+        rStContains: "Backup section, retention/info cards, generate-backup button, system information summary, operational recommendations.",
+        rStActions: "Generate and download ZIP backup, review stack metadata, follow backup best practices.",
+        authYes: "Yes",
+        authNo: "No"
+      },
+      es: {
+        back: "<- Volver al hub de documentación",
+        langLabel: "Idioma:",
+        title: "frontend-admin",
+        subtitle: "Consola operativa protegida con JWT para administradores: autenticación, decisiones de solicitudes, mensajes de clientes, usuarios, catálogos y herramientas de infraestructura.",
+        tech: "Base técnica",
+        tech1: "Páginas React en <code>frontend/src/pages/admin</code> con rutas anidadas en <code>frontend/src/App.jsx</code>.",
+        tech2: "Control de acceso con <code>ProtectedRoute</code>, token JWT y validación de roles en backend.",
+        tech3: "Servicios de dominio desde <code>frontend/src/services/*.js</code> (dashboard, usuarios, solicitudes, mensajes, backup).",
+        routeMap: "Mapa de rutas admin (fuente de verdad)",
+        catalogTitle: "Catálogo detallado de páginas (qué tiene cada página y qué hace)",
+        thPath: "Ruta",
+        thView: "Vista",
+        thAuth: "Auth",
+        thSource: "Archivo fuente principal",
+        thPurpose: "Propósito principal",
+        thContains: "Qué contiene la página",
+        thActions: "Acciones principales del usuario",
+        thApi: "Llamadas API principales",
+        vLogin: "Inicio de sesión",
+        vDashboard: "Panel",
+        vCreditRequests: "Solicitudes de crédito",
+        vMessages: "Mensajes",
+        vUsers: "Usuarios",
+        vCreditTypes: "Tipos de crédito",
+        vServicesManagement: "Gestión de servicios",
+        vReports: "Reportes",
+        vSettings: "Configuración",
+        authYes: "Sí",
+        authNo: "No"
+      },
+      pt: {
+        back: "<- Voltar para o hub de documentação",
+        langLabel: "Idioma:",
+        title: "frontend-admin",
+        subtitle: "Console operacional protegido por JWT para administradores: autenticação, decisões de solicitações, mensagens de clientes, usuários, catálogos e ferramentas de infraestrutura.",
+        tech: "Base técnica",
+        tech1: "Páginas React em <code>frontend/src/pages/admin</code> com rotas aninhadas em <code>frontend/src/App.jsx</code>.",
+        tech2: "Controle de acesso por <code>ProtectedRoute</code>, token JWT e validação de papéis no backend.",
+        tech3: "Serviços de domínio em <code>frontend/src/services/*.js</code> (dashboard, usuários, solicitações, mensagens, backup).",
+        routeMap: "Mapa de rotas admin (fonte de verdade)",
+        catalogTitle: "Catálogo detalhado de páginas (o que cada página tem e o que faz)",
+        thPath: "Rota",
+        thView: "Tela",
+        thAuth: "Auth",
+        thSource: "Arquivo-fonte principal",
+        thPurpose: "Objetivo principal",
+        thContains: "O que a página contém",
+        thActions: "Ações principais do usuário",
+        thApi: "Chamadas de API principais",
+        vLogin: "Login",
+        vDashboard: "Painel",
+        vCreditRequests: "Solicitações de crédito",
+        vMessages: "Mensagens",
+        vUsers: "Usuários",
+        vCreditTypes: "Tipos de crédito",
+        vServicesManagement: "Gestão de serviços",
+        vReports: "Relatórios",
+        vSettings: "Configurações",
+        authYes: "Sim",
+        authNo: "Não"
+      }
+    };
+    const select = document.getElementById("lang-select");
+    const key = "docs-hub-lang";
+    const supported = new Set(["en", "es", "pt"]);
+    const saved = localStorage.getItem(key);
+    const browserLang = (navigator.language || "en").slice(0, 2);
+    let initial = "en";
+    if (supported.has(saved)) {
+      initial = saved;
+    } else if (supported.has(browserLang)) {
+      initial = browserLang;
+    }
+    select.value = initial;
+    function applyLang(lang) {
+      const dict = i18n[lang] || i18n.en;
+      document.documentElement.lang = lang;
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const token = el.dataset.i18n;
+        if (dict[token]) {
+          el.innerHTML = dict[token];
+        } else if (i18n.en[token]) {
+          el.innerHTML = i18n.en[token];
+        }
+      });
+      document.querySelectorAll(".auth-cell").forEach((cell) => {
+        const value = cell.dataset.auth;
+        cell.textContent = value === "yes" ? dict.authYes : dict.authNo;
+      });
+      localStorage.setItem(key, lang);
+    }
+    select.addEventListener("change", (e) => applyLang(e.target.value));
+    applyLang(initial);
+  </script>
+</body>
+</html>
