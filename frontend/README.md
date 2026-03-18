@@ -65,6 +65,9 @@ src/
 │   ├── ContactPage.jsx
 │   ├── AboutPage.jsx
 │   ├── FAQPage.jsx
+│   ├── PrivacyPage.jsx
+│   ├── TermsPage.jsx
+│   ├── LegalInfoPage.jsx   # Legal Information page (/legal)
 │   └── NotFoundPage.jsx
 ├── services/          # Axios service modules (one per API resource)
 └── utils/
