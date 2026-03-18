@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontend Public — Module</title>
+</head>
+<body>
+  <article>
+    <h1>Frontend Public Module</h1>
+
+    <h2>Purpose</h2>
+    <p>
+      The frontend-public module is the React SPA that serves the public-facing site:
+      home, services, about, FAQ, contact, calculator, and static legal pages
+      (Privacy Policy, Terms and Conditions, Legal Information). It does not require
+      authentication and shares the same layout (Header, Footer) and i18n (es, en, pt).
+    </p>
+
+    <h2>Public routes</h2>
+    <ul>
+      <li><code>/</code> — Home</li>
+      <li><code>/services</code> — Services</li>
+      <li><code>/about</code> — About Us</li>
+      <li><code>/faq</code> — FAQ</li>
+      <li><code>/contact</code> — Contact</li>
+      <li><code>/calculator</code> — Calculator</li>
+      <li><code>/privacy</code> — Privacy Policy</li>
+      <li><code>/terms</code> — Terms and Conditions</li>
+      <li><code>/legal</code> — Legal Information (titular, datos registrales, aviso legal)</li>
+    </ul>
+
+    <h2>Technical foundation</h2>
+    <p>
+      React 18, React Router, i18next, Tailwind CSS. Pages under
+      <code>frontend/src/pages/</code>; layout in <code>frontend/src/components/layout/</code>.
+    </p>
+
+    <h2>Dependencies</h2>
+    <p>
+      Depends on <code>AuthContext</code> for optional admin link only; no API calls
+      for static legal pages. i18n locales in <code>frontend/src/i18n/locales/</code>.
+    </p>
+
+    <h2>Reuse patterns</h2>
+    <p>
+      Static legal pages (Privacy, Terms, Legal) follow the same pattern: hero section,
+      <code>max-w-4xl</code> content container, sections with <code>h2</code>/<code>p</code>,
+      and footer links "Contáctanos" (→ <code>/contact</code>) and "Volver al inicio" (→ <code>/</code>).
+    </p>
+
+    <h2>Acceptance criteria examples</h2>
+    <ul>
+      <li>AC1: <code>/legal</code> returns 200 and shows the translated page title.</li>
+      <li>AC2: Header (desktop and mobile) shows "Información legal" link after "Contacto", pointing to <code>/legal</code>.</li>
+      <li>AC3: Footer Legal section includes an link to Legal Information pointing to <code>/legal</code>.</li>
+      <li>AC4: Legal page has hero, at least one content section, and links to Contact and Home.</li>
+      <li>AC5: All labels and page content use i18n keys (<code>legalPage.*</code>, <code>header.legalInfo</code>) in es, en, pt.</li>
+    </ul>
+  </article>
+</body>
+</html>
