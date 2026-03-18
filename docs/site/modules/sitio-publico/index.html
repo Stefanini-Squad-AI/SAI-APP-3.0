@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Módulo Sitio Público — TuCreditoOnline</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.2rem; margin-top: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 0.4rem 0.6rem; text-align: left; }
+    th { background: #f5f5f5; }
+    code { background: #f0f0f0; padding: 0.1rem 0.3rem; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>Módulo: Sitio Público (sitio-publico)</h1>
+  <p><strong>Propósito:</strong> Páginas públicas del sitio TuCreditoOnline: inicio, servicios, nosotros, FAQ, contacto, calculadora, y páginas estáticas legales (Privacidad, Términos, <strong>Información legal</strong>).</p>
+
+  <h2>Base técnica</h2>
+  <ul>
+    <li>React 18, React Router, Vite.</li>
+    <li>Layout: <code>MainLayout</code> (Header + Outlet + Footer).</li>
+    <li>i18n: react-i18next con locales <code>es</code>, <code>en</code>, <code>pt</code>.</li>
+  </ul>
+
+  <h2>Rutas públicas (MainLayout)</h2>
+  <table>
+    <thead>
+      <tr><th>Ruta</th><th>Componente</th><th>Notas</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>/</code></td><td>HomePage</td><td>Inicio</td></tr>
+      <tr><td><code>/services</code></td><td>ServicesPage</td><td>Servicios</td></tr>
+      <tr><td><code>/about</code></td><td>AboutPage</td><td>Nosotros</td></tr>
+      <tr><td><code>/faq</code></td><td>FAQPage</td><td>FAQ</td></tr>
+      <tr><td><code>/contact</code></td><td>ContactPage</td><td>Contacto</td></tr>
+      <tr><td><code>/calculator</code></td><td>CalculatorPage</td><td>Calculadora</td></tr>
+      <tr><td><code>/privacy</code></td><td>PrivacyPage</td><td>Política de Privacidad</td></tr>
+      <tr><td><code>/terms</code></td><td>TermsPage</td><td>Términos y Condiciones</td></tr>
+      <tr><td><code>/legal</code></td><td>LegalInfoPage</td><td><strong>Información legal / Aviso legal (SAIAPP3-14)</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Navegación y flujos afectados</h2>
+  <ul>
+    <li><strong>Header (desktop y móvil):</strong> Enlace “Información legal” (<code>header.legalInfo</code>) situado inmediatamente después de “Contacto”, apuntando a <code>/legal</code>.</li>
+    <li><strong>Footer — sección Legal:</strong> “Aviso Legal” (<code>footer.legalNotice</code>) enlaza a <code>/legal</code> (no a <code>/terms</code>).</li>
+  </ul>
+
+  <h2>Dependencias</h2>
+  <ul>
+    <li><code>react-router-dom</code> (Link, Route, useNavigate).</li>
+    <li><code>react-i18next</code> (useTranslation, claves <code>legalPage.*</code>, <code>header.legalInfo</code>).</li>
+    <li>Sin llamadas a backend para la página Legal; contenido estático vía i18n.</li>
+  </ul>
+
+  <h2>Patrones de reuso</h2>
+  <p>La página <strong>Información legal</strong> sigue el mismo patrón que <code>TermsPage</code> y <code>PrivacyPage</code>:</p>
+  <ul>
+    <li>Hero con gradiente (<code>from-primary-600 to-primary-800</code>).</li>
+    <li>Contenedor centrado <code>max-w-4xl</code>, tarjeta con <code>rounded-2xl shadow-soft</code>.</li>
+    <li>Secciones con <code>h2</code> y párrafo; al menos tres secciones de contenido.</li>
+    <li>Botones/enlaces finales: “Contáctanos” → <code>/contact</code>, “Volver al inicio” → <code>/</code> (reutilizando <code>privacyPage.contactUs</code> y <code>notFoundPage.backHome</code>).</li>
+  </ul>
+
+  <h2>Criterios de aceptación (ejemplos SAIAPP3-14)</h2>
+  <table>
+    <thead>
+      <tr><th>AC</th><th>Ejemplo</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>AC1</td><td>Ruta <code>/legal</code> bajo MainLayout renderiza LegalInfoPage con hero, secciones y enlaces a Contacto y Volver al inicio.</td></tr>
+      <tr><td>AC2</td><td>En header (desktop y móvil) aparece la entrada “Información legal” junto a “Contacto”, con el mismo estilo que el resto de enlaces.</td></tr>
+      <tr><td>AC3</td><td>En la sección Legal del footer, “Aviso Legal” apunta a <code>/legal</code>.</td></tr>
+      <tr><td>AC4</td><td>La página muestra título, última actualización y al menos tres secciones traducidas (es, en, pt) con claves <code>legalPage.*</code>.</td></tr>
+      <tr><td>AC5</td><td>Mismo patrón de layout que TermsPage y PrivacyPage (hero, tarjeta, botones Contáctanos y Volver al inicio).</td></tr>
+    </tbody>
+  </table>
+</body>
+</html>
