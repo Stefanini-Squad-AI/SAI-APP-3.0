@@ -65,6 +65,9 @@ src/
 │   ├── ContactPage.jsx
 │   ├── AboutPage.jsx
 │   ├── FAQPage.jsx
+│   ├── PrivacyPage.jsx
+│   ├── TermsPage.jsx
+│   ├── LegalInfoPage.jsx   # Información legal / Legal Information
 │   └── NotFoundPage.jsx
 ├── services/          # Axios service modules (one per API resource)
 └── utils/
@@ -72,6 +75,20 @@ src/
     ├── jwtDecoder.js      # JWT decode/expiry utilities
     └── secureStorage.js   # localStorage wrapper (allowlist-only keys)
 ```
+
+## Public routes
+
+| Path | Component | Description |
+|------|-----------|-------------|
+| `/` | HomePage | Landing |
+| `/services` | ServicesPage | Credit services |
+| `/about` | AboutPage | About us |
+| `/faq` | FAQPage | FAQ |
+| `/contact` | ContactPage | Contact form |
+| `/calculator` | CalculatorPage | Credit calculator |
+| `/privacy` | PrivacyPage | Privacy policy |
+| `/terms` | TermsPage | Terms and conditions |
+| `/legal-info` | LegalInfoPage | Legal information (aviso legal / corporate info) |
 
 ## Security Notes
 
