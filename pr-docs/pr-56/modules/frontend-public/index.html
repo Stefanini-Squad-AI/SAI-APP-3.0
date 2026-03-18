@@ -75,6 +75,7 @@
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>/legal-info</code></td><td data-i18n="vLegalInfo">Legal Information</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalInfoPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
         </tbody>
       </table>
@@ -150,6 +151,13 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/legal-info</code></td>
+            <td data-i18n="rLegalInfoPurpose">Provide company legal information (name, address, tax ID, registration) and links to Privacy and Terms.</td>
+            <td data-i18n="rLegalInfoContains">Hero, four content sections (company name, address, tax/registration, links to legal docs), plus contact and back-home links.</td>
+            <td data-i18n="rLegalInfoActions">Read legal information and navigate to contact/home or Privacy/Terms pages.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
@@ -190,6 +198,7 @@
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
+        vLegalInfo: "Legal Information",
         vNotFound: "Not found",
         rHomePurpose: "Present brand value and convert visitors into simulation and contact flows.",
         rHomeContains: "Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.",
@@ -215,6 +224,9 @@
         rTermsPurpose: "Describe contract and usage conditions for platform services.",
         rTermsContains: "Five terms sections with update date, plus contact and back-home links.",
         rTermsActions: "Review legal obligations, then navigate to contact/home pages.",
+        rLegalInfoPurpose: "Provide company legal information (name, address, tax ID, registration) and links to Privacy and Terms.",
+        rLegalInfoContains: "Hero, four content sections (company name, address, tax/registration, links to legal docs), plus contact and back-home links.",
+        rLegalInfoActions: "Read legal information and navigate to contact/home or Privacy/Terms pages.",
         r404Purpose: "Handle unknown URLs and recover navigation.",
         r404Contains: "404 code, explanatory text, and CTA back to home.",
         r404Actions: "Return safely to root route.",
@@ -250,6 +262,7 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
+        vLegalInfo: "Información Legal",
         vNotFound: "No encontrado",
         noApi: "Sin llamadas al backend.",
         authYes: "Sí",
@@ -283,6 +296,7 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
+        vLegalInfo: "Informação Legal",
         vNotFound: "Não encontrado",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
