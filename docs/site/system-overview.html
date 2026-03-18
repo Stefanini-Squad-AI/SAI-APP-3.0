@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Overview - SAI APP 3.0</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 18px 42px; }
+    .back { display: inline-block; margin-bottom: 14px; color: #1d4ed8; text-decoration: none; font-weight: 600; }
+    .hero { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; padding: 22px; border-radius: 14px; margin-bottom: 16px; }
+    .hero h1 { margin: 0 0 8px; }
+    .hero p { margin: 0; opacity: 0.95; line-height: 1.5; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .card h2 { margin: 0 0 10px; font-size: 1.05rem; }
+    ul { margin: 0; padding-left: 20px; }
+    li { line-height: 1.5; color: #374151; margin: 4px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; font-size: 0.95rem; }
+    th { background: #f1f5f9; }
+    code { background: #eef2ff; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="./index.html"><- Back to docs hub</a>
+
+    <section class="hero">
+      <h1>System Overview</h1>
+      <p>Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.</p>
+    </section>
+
+    <section class="card">
+      <h2>Architecture and domain</h2>
+      <ul>
+        <li><code>frontend/</code>: React 18 + Vite + Tailwind CSS single-page application.</li>
+        <li><code>backend/</code>: ASP.NET Core Web API (.NET 8) with JWT authentication and MongoDB repositories.</li>
+        <li><code>database/</code>: MongoDB initialization and seed support for local dockerized environments.</li>
+        <li><code>automation/</code>: quality tooling, including <code>applied-ai-aura</code> functional automation.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Module catalog</h2>
+      <table>
+        <thead><tr><th>Module</th><th>Purpose</th><th>Tech</th></tr></thead>
+        <tbody>
+          <tr><td><code>frontend-public</code></td><td>Public web flows and legal/informational pages</td><td>React, Router, i18next</td></tr>
+          <tr><td><code>frontend-admin</code></td><td>JWT-protected administration console</td><td>React, protected routes</td></tr>
+          <tr><td><code>backend-api</code></td><td>REST API for auth and business operations</td><td>ASP.NET Core, JWT, MongoDB</td></tr>
+          <tr><td><code>automation-aura</code></td><td>Functional automation scenarios and reporting</td><td>TypeScript, Cucumber</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Internationalization (strict)</h2>
+      <ul>
+        <li>Supported runtime locales are strictly: <code>en</code>, <code>es</code>, and <code>pt</code>.</li>
+        <li>Language switch is provided in the header selector and persisted with <code>tco-user-language</code>.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Documentation map</h2>
+      <ul>
+        <li><code>docs/site/index.html</code>: documentation hub.</li>
+        <li><code>docs/site/modules/frontend-public/index.html</code>: public frontend details.</li>
+        <li><code>docs/site/modules/frontend-admin/index.html</code>: admin frontend details.</li>
+        <li><code>docs/site/modules/backend-api/index.html</code>: backend API details.</li>
+      </ul>
+    </section>
+  </div>
+</body>
+</html>
