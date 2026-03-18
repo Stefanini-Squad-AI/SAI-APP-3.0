@@ -65,6 +65,9 @@ src/
 │   ├── ContactPage.jsx
 │   ├── AboutPage.jsx
 │   ├── FAQPage.jsx
+│   ├── PrivacyPage.jsx
+│   ├── TermsPage.jsx
+│   ├── LegalPage.jsx
 │   └── NotFoundPage.jsx
 ├── services/          # Axios service modules (one per API resource)
 └── utils/
@@ -72,6 +75,22 @@ src/
     ├── jwtDecoder.js      # JWT decode/expiry utilities
     └── secureStorage.js   # localStorage wrapper (allowlist-only keys)
 ```
+
+## Public Routes
+
+Public pages under the main layout (header and footer):
+
+| Path | Page |
+|------|------|
+| `/` | Home |
+| `/services` | Services |
+| `/about` | About Us |
+| `/faq` | FAQ |
+| `/contact` | Contact |
+| `/calculator` | Credit Calculator |
+| `/privacy` | Privacy Policy |
+| `/terms` | Terms and Conditions |
+| `/legal` | **Legal Information** — company details, regulatory info, jurisdiction. Linked in the main navigation immediately after Contact (header and footer Legal section).
 
 ## Security Notes
 
