@@ -18,6 +18,7 @@ env:
   NODE_VERSION: "24"
   PREVIEW_DOMAIN: pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   PREVIEW_URL: https://pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  MAIN_APP_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
   DOCS_PREVIEW_DOMAIN: docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   DOCS_PREVIEW_URL: https://docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/
   DOCS_GH_PREVIEW_PATH: pr-docs/pr-${{ github.event.number }}
@@ -1255,6 +1256,8 @@ jobs:
           DOCS_SURGE_URL: ${{ steps.publish-docs.outputs.docs_preview_url }}
           DOCS_GH_URL: ${{ env.DOCS_GH_PREVIEW_URL }}
           MAIN_DOCS_URL: ${{ env.MAIN_DOCS_URL }}
+          MAIN_APP_URL: ${{ env.MAIN_APP_URL }}
+          PR_PREVIEW_URL: ${{ env.PREVIEW_URL }}
         with:
           script: |
             async function updateDashboard(github, context, sections) {
@@ -1281,27 +1284,24 @@ jobs:
             const docsSurgeUrl = process.env.DOCS_SURGE_URL;
             const docsGhUrl = process.env.DOCS_GH_URL;
             const mainDocsUrl = process.env.MAIN_DOCS_URL;
+            const mainAppUrl = process.env.MAIN_APP_URL;
+            const prPreviewUrl = process.env.PR_PREVIEW_URL;
             let content;
             if (hasDocs) {
-              const links = [];
-              if (docsSurgeUrl) links.push(`> \u{1F517} **[Open docs preview (Surge)](${docsSurgeUrl})**`);
-              if (docsGhUrl) links.push(`> \u{1F517} **[Open docs preview (GitHub Pages)](${docsGhUrl})**`);
               const compareTarget = docsGhUrl || docsSurgeUrl;
               content = [
                 '> \u{1F4D6} **Documentation preview published**',
                 '>',
-                `> \u{1F517} **[Open current docs on main](${mainDocsUrl})**`,
-                ...links,
+                '> \u{1F517} **Quick access links**',
+                `> - [Current page](${mainAppUrl})`,
+                `> - [Preview page](${prPreviewUrl})`,
+                `> - [Current documentation](${mainDocsUrl})`,
                 ...(compareTarget ? [
-                  '>',
-                  '> \u{1F9EA} **Before vs After (no merge required)**',
-                  `> - Main/Baseline: [Docs on main](${mainDocsUrl})`,
-                  `> - PR/Preview: [Docs in this PR](${compareTarget})`,
-                ] : []),
+                  `> - [New documentation](${compareTarget})`,
+                ] : [
+                  '> - New documentation: Pending CI publish'
+                ])
               ].join('\n');
-              if (links.length === 0) {
-                content = '> \u274C _Documentation exists but preview publication failed_';
-              }
             } else {
               content = '> \u26AA _No documentation directory found to publish_';
             }
