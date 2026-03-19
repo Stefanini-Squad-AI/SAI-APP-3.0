@@ -17,6 +17,7 @@
     "test:regression": "cucumber-js --tags @regression",
     "test:dry": "cucumber-js --dry-run",
     "login": "ts-node src/tests/LoginTest.ts",
+    "legal-info": "ts-node src/tests/LegalInfoTest.ts",
     "report": "ts-node src/core/reporting/TailwindReportEngine.ts",
     "confluence": "ts-node src/core/changelog/ConfluenceExporter.ts",
     "typecheck": "tsc --noEmit",

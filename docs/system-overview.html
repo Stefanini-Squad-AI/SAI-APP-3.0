@@ -58,7 +58,7 @@
       <table>
         <thead><tr><th>Module</th><th>Purpose</th><th>Tech</th></tr></thead>
         <tbody>
-          <tr><td><code>frontend-public</code></td><td>Public web flows and legal/informational pages</td><td>React, Router, i18next</td></tr>
+          <tr><td><code>frontend-public</code></td><td>Public web flows, static legal pages (<code>/privacy</code>, <code>/terms</code>, <code>/legal-info</code>), and customer-facing credit flows</td><td>React, Router, i18next</td></tr>
           <tr><td><code>frontend-admin</code></td><td>JWT-protected administration console</td><td>React, protected routes</td></tr>
           <tr><td><code>backend-api</code></td><td>REST API for auth and business operations</td><td>ASP.NET Core, JWT, MongoDB</td></tr>
           <tr><td><code>automation-aura</code></td><td>Functional automation scenarios and reporting</td><td>TypeScript, Cucumber</td></tr>
@@ -71,6 +71,7 @@
       <ul>
         <li>Supported runtime locales are strictly: <code>en</code>, <code>es</code>, and <code>pt</code>.</li>
         <li>Language switch is provided in the header selector and persisted with <code>tco-user-language</code>.</li>
+        <li>Legal information page <code>/legal-info</code> uses keys <code>legalInfoPage.*</code> and <code>header.legalInfo</code> alongside existing privacy/terms catalogs.</li>
       </ul>
     </section>
 

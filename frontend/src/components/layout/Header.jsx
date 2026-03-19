@@ -36,6 +36,13 @@ const Header = () => {
             <Link to="/faq" className="text-gray-700 hover:text-primary-600 transition font-medium">
               {t('header.faq')}
             </Link>
+            <Link
+              to="/legal-info"
+              className="text-gray-700 hover:text-primary-600 transition font-medium"
+              data-testid="nav-legal-info-desktop"
+            >
+              {t('header.legalInfo')}
+            </Link>
             <Link to="/contact" className="text-gray-700 hover:text-primary-600 transition font-medium">
               {t('header.contact')}
             </Link>
@@ -57,8 +64,12 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <button
+            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? t('header.menuClose') : t('header.menuOpen')}
+            data-testid="mobile-menu-toggle"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {mobileMenuOpen ? (
@@ -91,6 +102,14 @@ const Header = () => {
               </Link>
               <Link to="/faq" className="text-gray-700 hover:text-primary-600 transition font-medium" onClick={() => setMobileMenuOpen(false)}>
                 {t('header.faq')}
+              </Link>
+              <Link
+                to="/legal-info"
+                className="text-gray-700 hover:text-primary-600 transition font-medium"
+                data-testid="nav-legal-info-mobile"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('header.legalInfo')}
               </Link>
               <Link to="/contact" className="text-gray-700 hover:text-primary-600 transition font-medium" onClick={() => setMobileMenuOpen(false)}>
                 {t('header.contact')}
