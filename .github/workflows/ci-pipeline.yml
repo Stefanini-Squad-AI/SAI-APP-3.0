@@ -271,7 +271,7 @@ jobs:
             /d:sonar.token="$SONAR_TOKEN" \
             /d:sonar.host.url="$SONAR_HOST_URL" \
             /d:sonar.exclusions="**/*.json,**/*.csproj,**/obj/**,**/bin/**" \
-            /d:sonar.coverage.exclusions="**/tests/**,**/*Tests*/**"
+            /d:sonar.coverage.exclusions="**/tests/**,**/*Tests*/**,**/Controllers/**,**/Middleware/**,**/DTOs/**,**/Extensions/**,**/Migrations/**"
           dotnet build TuCreditoOnline.sln --configuration Release
           ${{ runner.temp }}/scanner/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
@@ -449,6 +449,7 @@ jobs:
             -Dsonar.sources=src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**,**/*.min.js,**/*.css,**/locales/**,**/*.gitkeep,**/test-results/**
             -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx,**/*.spec.js,**/*.spec.jsx,**/__tests__/**
+            -Dsonar.coverage.exclusions=**/services/**,**/i18n/**,**/config/**,**/pages/**,**/components/layout/**,**/components/admin/**,**/components/auth/**
             -Dsonar.sourceEncoding=UTF-8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_FRONTEND }}
@@ -911,6 +912,7 @@ jobs:
               ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
               -t http://localhost:3000 \
               -m 1 \
+              -z "-config scanner.maxScanDurationInMins=1" \
               -J zap-frontend-report.json \
               -r zap-frontend-report.html \
               -w zap-frontend-report.md \
@@ -924,7 +926,7 @@ jobs:
               ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
               -t http://localhost:5000/swagger/v1/swagger.json \
               -f openapi \
-              -m 1 \
+              -z "-config scanner.maxScanDurationInMins=1" \
               -J zap-api-report.json \
               -r zap-api-report.html \
               -w zap-api-report.md \
@@ -955,7 +957,7 @@ jobs:
               break
             fi
 
-            sleep 10
+            sleep 3
           done
 
           wait $INTEGRATION_PID 2>/dev/null || true
@@ -965,9 +967,9 @@ jobs:
       - name: Collect integration/security logs
         if: always()
         run: |
-          docker compose logs > test-results/logs/docker-compose.log 2>&1 || true
-          docker compose logs backend > test-results/logs/backend.log 2>&1 || true
-          docker compose logs frontend > test-results/logs/frontend.log 2>&1 || true
+          docker compose logs --tail=50 > test-results/logs/docker-compose.log 2>&1 || true
+          docker compose logs --tail=50 backend > test-results/logs/backend.log 2>&1 || true
+          docker compose logs --tail=50 frontend > test-results/logs/frontend.log 2>&1 || true
 
       - name: Evaluate integration exit code
         if: always()

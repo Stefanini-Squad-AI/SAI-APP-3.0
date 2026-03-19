@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
 
@@ -9,38 +10,66 @@ const LANGUAGES = [
 
 const LanguageSelector = () => {
   const { t, i18n } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const handleLanguageChange = (e) => {
-    i18n.changeLanguage(e.target.value);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLanguageChange = (code) => {
+    i18n.changeLanguage(code);
+    setIsOpen(false);
   };
 
-  const currentCode = LANGUAGES.some((l) => l.code === i18n.language) ? i18n.language : 'en';
+  const currentLanguage = LANGUAGES.find((l) => l.code === i18n.language) || LANGUAGES[0];
 
   return (
-    <div className="relative flex items-center space-x-2 px-4 py-2 rounded-lg border-2 border-primary-600 text-primary-600 hover:bg-primary-50 transition font-medium">
-      <Globe className="w-5 h-5 pointer-events-none" />
-      <label htmlFor="language-select" className="sr-only">{t('language.select')}</label>
-      <select
-        id="language-select"
-        value={currentCode}
-        onChange={handleLanguageChange}
-        className="appearance-none bg-transparent cursor-pointer focus:outline-none text-primary-600 font-medium pr-5"
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center space-x-2 px-4 py-2 rounded-lg border-2 border-primary-600 text-primary-600 hover:bg-primary-50 transition font-medium"
+        aria-haspopup="true"
+        aria-expanded={isOpen}
+        aria-label={t('language.select')}
       >
-        {LANGUAGES.map((lang) => (
-          <option key={lang.code} value={lang.code}>
-            {t(lang.labelKey)}
-          </option>
-        ))}
-      </select>
-      <svg
-        className="w-4 h-4 pointer-events-none absolute right-3"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
+        <Globe className="w-5 h-5" />
+        <span>{t(currentLanguage.labelKey)}</span>
+        <svg
+          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <ul className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+          {LANGUAGES.map((lang) => (
+            <li key={lang.code}>
+              <button
+                onClick={() => handleLanguageChange(lang.code)}
+                className={`w-full px-4 py-2 text-left hover:bg-primary-50 transition ${
+                  i18n.language === lang.code
+                    ? 'bg-primary-50 text-primary-700 font-semibold'
+                    : 'text-gray-700'
+                }`}
+              >
+                {t(lang.labelKey)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
