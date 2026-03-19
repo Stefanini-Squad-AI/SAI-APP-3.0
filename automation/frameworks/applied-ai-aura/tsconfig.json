@@ -38,6 +38,6 @@
       "@aura/types": ["./src/types/index.ts"]
     }
   },
-  "include": ["src/**/*", "features/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "reports"]
 }

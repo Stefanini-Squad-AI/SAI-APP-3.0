@@ -965,6 +965,11 @@ jobs:
           docker compose logs backend > test-results/logs/backend.log 2>&1 || true
           docker compose logs frontend > test-results/logs/frontend.log 2>&1 || true
 
+      - name: Generate Tailwind security dashboard v2 (ZAP JSON → AURA-style HTML)
+        if: always()
+        run: |
+          node scripts/generate-security-tailwind-report.cjs || echo "Security dashboard v2: skipped or failed (non-blocking)"
+
       - name: Evaluate integration exit code
         if: always()
         run: |

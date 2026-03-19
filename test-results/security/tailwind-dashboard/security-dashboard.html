@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="es" class="">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OWASP ZAP — Security Dashboard v2 · TuCreditoOnline</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        aura: {50:'#eef2ff',100:'#e0e7ff',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3'},
+      },
+      fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','Segoe UI','Roboto','sans-serif'] },
+    }
+  }
+};
+</script>
+<style>
+.tab-btn.active{border-color:#6366f1;color:#6366f1;background:rgba(99,102,241,.08)}
+.dark .tab-btn.active{color:#a5b4fc;background:rgba(99,102,241,.15)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.search-input:focus{outline:none;border-color:#6366f1}
+.acc-i.open{transform:rotate(180deg)}
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-zinc-950 dark:text-zinc-100 min-h-screen font-sans transition-colors duration-300">
+
+<header class="bg-gradient-to-r from-aura-600 to-indigo-900 dark:from-zinc-900 dark:to-zinc-950 border-b border-indigo-800 dark:border-zinc-800 sticky top-0 z-40">
+  <div class="max-w-[1600px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center font-bold text-white text-[10px]">SAI</div>
+      <div>
+        <h1 class="text-lg font-bold text-white leading-tight" data-i18n="reportTitle">OWASP ZAP — Panel de Seguridad v2</h1>
+        <p class="text-xs text-white/70">TuCreditoOnline · JSON → Tailwind · 19/3/2026, 17:41:47</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="px-3 py-1 rounded-full text-xs font-bold border bg-emerald-500/20 text-emerald-100 border-emerald-400/50">LOW RISK PROFILE</span>
+      <select id="lang-select" onchange="switchLang(this.value)" class="bg-white/10 border border-white/20 text-white text-xs rounded-lg px-2 py-1.5 cursor-pointer">
+        <option value="es">🇪🇸 Español</option><option value="en">🇺🇸 English</option><option value="pt">🇧🇷 Português</option>
+      </select>
+      <button type="button" onclick="toggleTheme()" class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white hover:bg-white/20" title="Theme">
+        <i class="bi bi-moon-fill text-sm" id="theme-icon"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="bg-slate-200/60 dark:bg-zinc-900/50 border-b border-slate-300 dark:border-zinc-800 overflow-x-auto">
+  <div class="max-w-[1600px] mx-auto px-2 flex gap-1">
+    <button type="button" data-tab="executive" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-aura-500 text-aura-700 dark:text-aura-300 whitespace-nowrap active"><i class="bi bi-stars"></i><span data-i18n="tabExec">Resumen ejecutivo</span></button>
+    <button type="button" data-tab="overview" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 whitespace-nowrap"><i class="bi bi-speedometer2"></i><span data-i18n="tabOverview">Vista general</span></button>
+    <button type="button" data-tab="charts" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 whitespace-nowrap"><i class="bi bi-bar-chart-steps"></i><span data-i18n="tabCharts">Gráficos</span></button>
+    <button type="button" data-tab="scans" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 whitespace-nowrap"><i class="bi bi-shield-check"></i><span data-i18n="tabScans">Escaneos</span></button>
+    <button type="button" data-tab="findings" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 whitespace-nowrap"><i class="bi bi-list-ul"></i><span data-i18n="tabFindings">Hallazgos</span></button>
+    <button type="button" data-tab="insights" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 whitespace-nowrap"><i class="bi bi-lightning"></i><span data-i18n="tabInsights">Insights ZAP</span></button>
+    <button type="button" data-tab="refs" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 whitespace-nowrap"><i class="bi bi-link-45deg"></i><span data-i18n="tabRefs">Referencias</span></button>
+  </div>
+</nav>
+
+<main class="max-w-[1600px] mx-auto px-4 py-6 space-y-6">
+
+<section id="tab-executive" class="tab-panel active">
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 rounded-lg bg-aura-100 dark:bg-aura-600/20 flex items-center justify-center"><i class="bi bi-stars text-aura-600 dark:text-aura-400 text-xl"></i></div>
+      <div>
+        <h2 class="text-xl font-bold text-slate-800 dark:text-white" data-i18n="execTitle">Resumen ejecutivo</h2>
+        <p class="text-xs text-slate-500 dark:text-gray-400" data-i18n="execSub">Generado con IA a partir de los JSON de ZAP (Perplexity / .env)</p>
+      </div>
+    </div>
+    <div id="executive-summary-content" class="prose max-w-none text-slate-600 dark:text-slate-300">
+      <p class="mb-3">```json
+{
+  &quot;en&quot;: &quot;<strong class="text-slate-900 dark:text-white">Overall Security Posture</strong>: TuCreditoOnline&#039;s current scan shows a <strong class="text-slate-900 dark:text-white">low-risk profile</strong> with no high or medium severity findings—a positive baseline for a development environment. However, the assessment reveals <strong class="text-slate-900 dark:text-white">8 distinct vulnerability types across 129 instances</strong>, indicating systematic gaps in HTTP security headers and content handling rather than isolated issues. The absence of critical vulnerabilities should not create complacency; these findings represent foundational security controls that must be addressed before production deployment.\n\n<strong class="text-slate-900 dark:text-white">Key Themes &amp; Risk Areas</strong>: Three primary patterns emerge: (1) <strong class="text-slate-900 dark:text-white">Missing HTTP security headers</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) that fail to prevent browser-based attacks; (2) <strong class="text-slate-900 dark:text-white">Caching and content-type misconfigurations</strong> affecting 8+ instances, which could expose sensitive data or enable cache poisoning; (3) <strong class="text-slate-900 dark:text-white">Client error handling</strong> generating 110 instances of error responses, suggesting incomplete API error management that may leak information or degrade user experience. These are not exotic vulnerabilities—they reflect incomplete implementation of baseline security standards.\n\n<strong class="text-slate-900 dark:text-white">Prioritization Framework</strong>: Address findings in this order: (1) <strong class="text-slate-900 dark:text-white">Immediate</strong> – Add X-Content-Type-Options and Cross-Origin-Resource-Policy headers across all endpoints to prevent MIME-type attacks and unauthorized cross-origin requests; (2) <strong class="text-slate-900 dark:text-white">Short-term</strong> – Audit and standardize HTTP response codes and error messages to eliminate information leakage from the 110 client error instances; (3) <strong class="text-slate-900 dark:text-white">Ongoing</strong> – Review caching policies to ensure sensitive endpoints (authentication, financial data) are explicitly marked non-cacheable. The informational findings (5 instances) are lower priority but should inform your API documentation and response standards.\n\n<strong class="text-slate-900 dark:text-white">Actionable Recommendations</strong>: (1) <strong class="text-slate-900 dark:text-white">Implement security header policy</strong> – Add missing headers (X-Content-Type-Options: nosniff, Cross-Origin-Resource-Policy: same-origin) at the application or reverse-proxy layer; apply to all 129 affected instances within 2 weeks. (2) <strong class="text-slate-900 dark:text-white">Standardize error responses</strong> – Audit the 110 client error instances; ensure error messages do not expose system details, database structure, or authentication mechanisms. (3) <strong class="text-slate-900 dark:text-white">Define caching rules</strong> – Mark all authentication and financial endpoints with Cache-Control: no-store, no-cache; document caching strategy in API guidelines. (4) <strong class="text-slate-900 dark:text-white">Automate scanning in CI/CD</strong> – Integrate ZAP scanning into your development pipeline to catch header and configuration issues before staging; use passive scanning to avoid test data corruption. (5) <strong class="text-slate-900 dark:text-white">Establish remediation SLA</strong> – Set a target to eliminate all low-severity findings before production; treat informational findings as technical debt to address in the next release cycle.&quot;,
+  &quot;es&quot;: &quot;<strong class="text-slate-900 dark:text-white">Postura General de Seguridad</strong>: El escaneo actual de TuCreditoOnline muestra un <strong class="text-slate-900 dark:text-white">perfil de bajo riesgo</strong> sin hallazgos de severidad alta o media—una línea base positiva para un entorno de desarrollo. Sin embargo, la evaluación revela <strong class="text-slate-900 dark:text-white">8 tipos de vulnerabilidad distintos en 129 instancias</strong>, indicando brechas sistemáticas en encabezados de seguridad HTTP y manejo de contenido en lugar de problemas aislados. La ausencia de vulnerabilidades críticas no debe generar complacencia; estos hallazgos representan controles de seguridad fundamentales que deben abordarse antes del despliegue en producción.\n\n<strong class="text-slate-900 dark:text-white">Temas Clave y Áreas de Riesgo</strong>: Emergen tres patrones principales: (1) <strong class="text-slate-900 dark:text-white">Encabezados HTTP de seguridad faltantes</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) que no previenen ataques basados en navegador; (2) <strong class="text-slate-900 dark:text-white">Configuraciones incorrectas de almacenamiento en caché y tipo de contenido</strong> que afectan 8+ instancias, que podrían exponer datos sensibles o permitir envenenamiento de caché; (3) <strong class="text-slate-900 dark:text-white">Manejo de errores del cliente</strong> generando 110 instancias de respuestas de error, sugiriendo gestión incompleta de errores de API que puede filtrar información o degradar la experiencia del usuario. Estas no son vulnerabilidades exóticas—reflejan implementación incompleta de estándares de seguridad básicos.\n\n<strong class="text-slate-900 dark:text-white">Marco de Priorización</strong>: Aborde los hallazgos en este orden: (1) <strong class="text-slate-900 dark:text-white">Inmediato</strong> – Agregue encabezados X-Content-Type-Options y Cross-Origin-Resource-Policy en todos los puntos finales para prevenir ataques de tipo MIME y solicitudes no autorizadas entre orígenes; (2) <strong class="text-slate-900 dark:text-white">Corto plazo</strong> – Audite y estandarice códigos de respuesta HTTP y mensajes de error para eliminar fugas de información de las 110 instancias de error del cliente; (3) <strong class="text-slate-900 dark:text-white">Continuo</strong> – Revise políticas de almacenamiento en caché para asegurar que los puntos finales sensibles (autenticación, datos financieros) estén explícitamente marcados como no almacenables. Los hallazgos informativos (5 instancias) son de menor prioridad pero deben informar su documentación de API y estándares de respuesta.\n\n<strong class="text-slate-900 dark:text-white">Recomendaciones Accionables</strong>: (1) <strong class="text-slate-900 dark:text-white">Implementar política de encabezados de seguridad</strong> – Agregue encabezados faltantes (X-Content-Type-Options: nosniff, Cross-Origin-Resource-Policy: same-origin) en la capa de aplicación o proxy inverso; aplique a las 129 instancias afectadas dentro de 2 semanas. (2) <strong class="text-slate-900 dark:text-white">Estandarizar respuestas de error</strong> – Audite las 110 instancias de error del cliente; asegúrese de que los mensajes de error no expongan detalles del sistema, estructura de base de datos o mecanismos de autenticación. (3) <strong class="text-slate-900 dark:text-white">Definir reglas de almacenamiento en caché</strong> – Marque todos los puntos finales de autenticación y financieros con Cache-Control: no-store, no-cache; documente la estrategia de almacenamiento en caché en las directrices de API. (4) <strong class="text-slate-900 dark:text-white">Automatizar escaneo en CI/CD</strong> – Integre escaneo ZAP en su canalización de desarrollo para detectar problemas de encabezados y configuración antes de staging; use escaneo pasivo para evitar corrupción de datos de prueba. (5) <strong class="text-slate-900 dark:text-white">Establecer SLA de remediación</strong> – Establezca un objetivo para eliminar todos los hallazgos de baja severidad antes de producción; trate los hallazgos informativos como deuda técnica a abordar en el próximo ciclo de lanzamiento.&quot;,
+  &quot;pt&quot;: &quot;<strong class="text-slate-900 dark:text-white">Postura Geral de Segurança</strong>: O escaneo atual do TuCreditoOnline mostra um <strong class="text-slate-900 dark:text-white">perfil de baixo risco</strong> sem descobertas de severidade alta ou média—uma linha de base positiva para um ambiente de desenvolvimento. No entanto, a avaliação revela <strong class="text-slate-900 dark:text-white">8 tipos distintos de vulnerabilidade em 129 instâncias</strong>, indicando lacunas sistemáticas em cabeçalhos de segurança HTTP e manipulação de conteúdo em vez de problemas isolados. A ausência de vulnerabilidades críticas não deve criar complacência; essas descobertas representam controles de segurança fundamentais que devem ser abordados antes da implantação em produção.\n\n<strong class="text-slate-900 dark:text-white">Temas Principais e Áreas de Risco</strong>: Três padrões principais emergem: (1) <strong class="text-slate-900 dark:text-white">Cabeçalhos de segurança HTTP ausentes</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) que falham em prevenir ataques baseados em navegador; (2) <strong class="text-slate-900 dark:text-white">Configurações incorretas de cache e tipo de conteúdo</strong> afetando 8+ instâncias, que podem expor dados sensíveis ou permitir envenenamento de cache; (3) <strong class="text-slate-900 dark:text-white">Manipulação de erros do cliente</strong> gerando 110 instâncias de respostas de erro, sugerindo gerenciamento incompleto de erros de API que pode vazar informações ou degradar a experiência do usuário. Estas não são vulnerabilidades exóticas—refletem implementação incompleta de padrões de segurança básicos.\n\n<strong class="text-slate-900 dark:text-white">Estrutura de Priorização</strong>: Aborde as descobertas nesta ordem: (1) <strong class="text-slate-900 dark:text-white">Imediato</strong> – Adicione cabeçalhos X-Content-Type-Options e Cross-Origin-Resource-Policy em todos os endpoints para prevenir ataques de tipo MIME e solicitações não autorizadas entre origens; (2) <strong class="text-slate-900 dark:text-white">Curto prazo</strong> – Audite e padronize códigos de resposta HTTP e mensagens de erro para eliminar vazamento de informações das 110 instâncias de erro do cliente; (3) <strong class="text-slate-900 dark:text-white">Contínuo</strong> – Revise políticas de cache para garantir que endpoints sensíveis (autenticação, dados financeiros) sejam explicitamente marcados como não armazenáveis. As descobertas informativas (5 instâncias) são de menor prioridade,</p>
+    </div>
+  </div>
+</section>
+
+<section id="tab-overview" class="tab-panel">
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+    <div class="rounded-xl border p-4 bg-aura-50 dark:bg-aura-900/20 border-aura-200 dark:border-aura-800/40">
+      <p class="text-[10px] font-semibold text-aura-700 dark:text-aura-300 uppercase tracking-wide" data-i18n="kpiFindingTypes">Tipos de hallazgo</p>
+      <p class="text-2xl font-bold text-slate-900 dark:text-white">8</p>
+    </div>
+    <div class="rounded-xl border p-4 bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/50">
+      <p class="text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide" data-i18n="kpiInstances">Instancias / URLs</p>
+      <p class="text-2xl font-bold text-slate-900 dark:text-white">129</p>
+    </div>
+    <div class="rounded-xl border p-4 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/40">
+      <p class="text-[10px] font-semibold text-red-700 dark:text-red-300 uppercase tracking-wide" data-i18n="kpiHigh">Alto</p>
+      <p class="text-2xl font-bold">0</p>
+    </div>
+    <div class="rounded-xl border p-4 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/40">
+      <p class="text-[10px] font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wide" data-i18n="kpiMedium">Medio</p>
+      <p class="text-2xl font-bold">0</p>
+    </div>
+    <div class="rounded-xl border p-4 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/40">
+      <p class="text-[10px] font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide" data-i18n="kpiLow">Bajo</p>
+      <p class="text-2xl font-bold">3</p>
+    </div>
+    <div class="rounded-xl border p-4 bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-700">
+      <p class="text-[10px] font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide" data-i18n="kpiInfo">Informativo</p>
+      <p class="text-2xl font-bold">5</p>
+    </div>
+  </div>
+  <div class="grid md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm">
+      <h3 class="text-xs font-bold text-slate-500 dark:text-gray-400 mb-3 flex items-center gap-2"><i class="bi bi-window"></i> <span data-i18n="widgetFe">Frontend baseline</span></h3>
+      <p class="text-3xl font-bold text-slate-800 dark:text-white">1</p>
+      <p class="text-xs text-slate-500 mt-1"><span data-i18n="widgetAlerts">alertas</span> · 2 <span data-i18n="lblInst">inst.</span></p>
+      <p class="text-[10px] font-mono text-slate-400 mt-2 truncate">2.17.0</p>
+    </div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm">
+      <h3 class="text-xs font-bold text-slate-500 dark:text-gray-400 mb-3 flex items-center gap-2"><i class="bi bi-hdd-network"></i> <span data-i18n="widgetApi">API OpenAPI</span></h3>
+      <p class="text-3xl font-bold text-slate-800 dark:text-white">7</p>
+      <p class="text-xs text-slate-500 mt-1"><span data-i18n="widgetAlerts">alertas</span> · 127 <span data-i18n="lblInst">inst.</span></p>
+      <p class="text-[10px] font-mono text-slate-400 mt-2 truncate">2.17.0</p>
+    </div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm">
+      <h3 class="text-xs font-bold text-slate-500 dark:text-gray-400 mb-3 flex items-center gap-2"><i class="bi bi-bug"></i> CWE <span data-i18n="widgetTop">top</span></h3>
+      <ul class="text-xs space-y-1 max-h-28 overflow-y-auto">
+        <li class="flex justify-between"><span class="font-mono">CWE-388</span><span class="font-bold">110</span></li><li class="flex justify-between"><span class="font-mono">CWE-524</span><span class="font-bold">8</span></li><li class="flex justify-between"><span class="font-mono">CWE-693</span><span class="font-bold">6</span></li><li class="flex justify-between"><span class="font-mono">CWE--1</span><span class="font-bold">5</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+    <h3 class="text-sm font-semibold mb-4 text-slate-600 dark:text-gray-300" data-i18n="riskBarTitle">Distribución de severidad (tipos de hallazgo)</h3>
+    <div class="flex h-4 rounded-full overflow-hidden bg-slate-200 dark:bg-zinc-800">
+      <div class="bg-blue-500 h-full transition-all" style="width:37.50%" title="Low: 3"></div><div class="bg-slate-400 h-full transition-all" style="width:62.50%" title="Informational: 5"></div>
+    </div>
+    <div class="flex flex-wrap gap-4 mt-3 text-[10px] text-slate-500">
+      <span><span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-1"></span><span data-i18n="riskHigh">High</span> 0</span>
+      <span><span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1"></span><span data-i18n="riskMedium">Medium</span> 0</span>
+      <span><span class="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1"></span><span data-i18n="riskLow">Low</span> 3</span>
+      <span><span class="inline-block w-2 h-2 rounded-full bg-slate-400 mr-1"></span><span data-i18n="riskInfo">Info</span> 5</span>
+    </div>
+  </div>
+</section>
+
+<section id="tab-charts" class="tab-panel">
+  <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm">
+      <h3 class="text-xs font-semibold text-slate-500 dark:text-gray-400 mb-2" data-i18n="chartFindingsRisk">Hallazgos por severidad</h3>
+      <div class="flex justify-center"><canvas id="c-doughnut-findings" height="220"></canvas></div>
+    </div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm">
+      <h3 class="text-xs font-semibold text-slate-500 dark:text-gray-400 mb-2" data-i18n="chartInstancesRisk">Instancias por severidad</h3>
+      <div class="flex justify-center"><canvas id="c-doughnut-instances" height="220"></canvas></div>
+    </div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm md:col-span-2 xl:col-span-1">
+      <h3 class="text-xs font-semibold text-slate-500 dark:text-gray-400 mb-2" data-i18n="chartCompareScans">Comparativa escaneos (tipos)</h3>
+      <canvas id="c-bar-compare" height="240"></canvas>
+    </div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm md:col-span-2">
+      <h3 class="text-xs font-semibold text-slate-500 dark:text-gray-400 mb-2" data-i18n="chartTopFindings">Top hallazgos por instancias</h3>
+      <canvas id="c-bar-top" height="280"></canvas>
+    </div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm">
+      <h3 class="text-xs font-semibold text-slate-500 dark:text-gray-400 mb-2" data-i18n="chartInstancesScan">Instancias por escaneo</h3>
+      <canvas id="c-pie-instances-scan" height="240"></canvas></div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm">
+      <h3 class="text-xs font-semibold text-slate-500 dark:text-gray-400 mb-2" data-i18n="chartCwe">Top CWE (instancias)</h3>
+      <canvas id="c-bar-cwe" height="240"></canvas></div>
+  </div>
+</section>
+
+<section id="tab-scans" class="tab-panel">
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+      <h2 class="text-lg font-bold mb-4 text-slate-800 dark:text-white" data-i18n="scanFeTitle">Escaneo — Frontend</h2>
+      <table class="w-full text-xs">
+        <tr><td class="py-1 text-slate-500" data-i18n="lblTool">Herramienta</td><td class="font-mono">ZAP 2.17.0</td></tr>
+        <tr><td class="py-1 text-slate-500" data-i18n="lblGenerated">Generado</td><td>Thu, 19 Mar 2026 21:23:37</td></tr>
+        <tr><td class="py-1 text-slate-500" data-i18n="lblJson">JSON fuente</td><td class="font-mono break-all text-[10px]">zap-frontend-report.json</td></tr>
+      </table>
+      <div class="mt-4 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/40 text-xs" data-i18n="scanFeHint">Baseline pasivo/activo contra la SPA en el puerto configurado.</div>
+    </div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+      <h2 class="text-lg font-bold mb-4 text-slate-800 dark:text-white" data-i18n="scanApiTitle">Escaneo — API</h2>
+      <table class="w-full text-xs">
+        <tr><td class="py-1 text-slate-500" data-i18n="lblTool">Herramienta</td><td class="font-mono">ZAP 2.17.0</td></tr>
+        <tr><td class="py-1 text-slate-500" data-i18n="lblGenerated">Generado</td><td>Thu, 19 Mar 2026 21:28:42</td></tr>
+        <tr><td class="py-1 text-slate-500" data-i18n="lblJson">JSON fuente</td><td class="font-mono break-all text-[10px]">zap-api-report.json</td></tr>
+      </table>
+      <div class="mt-4 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/40 text-xs" data-i18n="scanApiHint">Importación OpenAPI + reglas API de ZAP.</div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-findings" class="tab-panel">
+  <div class="flex flex-wrap gap-3 mb-4">
+    <input type="search" id="finding-search" class="search-input flex-1 min-w-[200px] bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm" placeholder="Buscar…" data-i18n-placeholder="phSearch" oninput="filterFindings(this.value)">
+    <select id="filter-scan" onchange="filterFindings(document.getElementById('finding-search').value)" class="bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs">
+      <option value="" data-i18n="optAllScans">Todos los escaneos</option>
+      <option value="frontend">frontend</option>
+      <option value="api">api</option>
+    </select>
+    <select id="filter-risk" onchange="filterFindings(document.getElementById('finding-search').value)" class="bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-2 text-xs">
+      <option value="" data-i18n="optAllRisk">Todas severidades</option>
+      <option value="3">High</option>
+      <option value="2">Medium</option>
+      <option value="1">Low</option>
+      <option value="0">Info</option>
+    </select>
+  </div>
+  <p class="text-xs text-slate-500 mb-3">8 <span data-i18n="findingTypesTotal">tipos de hallazgo</span> · 129 <span data-i18n="instancesTotal">instancias</span></p>
+  <div id="findings-list">
+    <div class="bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-3 alert-card" data-scan="api" data-risk="1" data-q="cross-origin-resource-policy header missing or invalid 90004 693">
+      <button type="button" onclick="toggleAcc(this)" class="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800">Low</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-800 dark:text-white break-words">Cross-Origin-Resource-Policy Header Missing or Invalid</p>
+          <p class="text-[10px] text-slate-400 dark:text-gray-500 font-mono mt-0.5">api · plugin 90004 · CWE 693 · 5 <span data-i18n="lblUrls">URLs</span></p>
+        </div>
+        <i class="bi bi-chevron-down acc-i transition-transform text-slate-400"></i>
+      </button>
+      <div class="acc-panel hidden border-t border-slate-100 dark:border-zinc-800">
+        <div class="p-4 grid md:grid-cols-2 gap-4 text-xs">
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblDesc">Description</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">Cross-Origin-Resource-Policy header is an opt-in header designed to counter side-channels attacks like Spectre. Resource should be specifically set as shareable amongst different origins.</p></div>
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblSolution">Solution</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">Ensure that the application/web server sets the Cross-Origin-Resource-Policy header appropriately, and that it sets the Cross-Origin-Resource-Policy header to &#039;same-origin&#039; for all web pages. &#039;same-site&#039; is considered as less secured and should be avoided. If resources must be shared, set the header to &#039;cross-origin&#039;. If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Resource-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-resource-policy).</p></div>
+        </div>
+        <div class="px-4 pb-4 overflow-x-auto">
+          <table class="w-full text-[11px]">
+            <thead><tr class="bg-slate-50 dark:bg-zinc-800/60 text-left">
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colMethod">Method</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colUri">URI</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colParam">Param</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+              
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/CreditTypes?isActive=true</td><td class="px-2 py-1">Cross-Origin-Resource-Policy</td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Health</td><td class="px-2 py-1">Cross-Origin-Resource-Policy</td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Services?isActive=true</td><td class="px-2 py-1">Cross-Origin-Resource-Policy</td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/swagger/v1/swagger.json</td><td class="px-2 py-1">Cross-Origin-Resource-Policy</td></tr>
+              <tr><td class="px-2 py-1 font-mono">POST</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/ContactMessages</td><td class="px-2 py-1">Cross-Origin-Resource-Policy</td></tr>
+            </tbody>
+          </table>
+          
+        </div>
+      </div>
+    </div>
+    <div class="bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-3 alert-card" data-scan="api" data-risk="1" data-q="unexpected content-type was returned 100001 -1">
+      <button type="button" onclick="toggleAcc(this)" class="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800">Low</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-800 dark:text-white break-words">Unexpected Content-Type was returned</p>
+          <p class="text-[10px] text-slate-400 dark:text-gray-500 font-mono mt-0.5">api · plugin 100001 · CWE -1 · 2 <span data-i18n="lblUrls">URLs</span></p>
+        </div>
+        <i class="bi bi-chevron-down acc-i transition-transform text-slate-400"></i>
+      </button>
+      <div class="acc-panel hidden border-t border-slate-100 dark:border-zinc-800">
+        <div class="p-4 grid md:grid-cols-2 gap-4 text-xs">
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblDesc">Description</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">A Content-Type of text/html was returned by the server. This is not one of the types expected to be returned by an API. Raised by the &#039;Alert on Unexpected Content Types&#039; script</p></div>
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblSolution">Solution</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed"></p></div>
+        </div>
+        <div class="px-4 pb-4 overflow-x-auto">
+          <table class="w-full text-[11px]">
+            <thead><tr class="bg-slate-50 dark:bg-zinc-800/60 text-left">
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colMethod">Method</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colUri">URI</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colParam">Param</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+              
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/swagger/</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/swagger/index.html</td><td class="px-2 py-1"></td></tr>
+            </tbody>
+          </table>
+          
+        </div>
+      </div>
+    </div>
+    <div class="bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-3 alert-card" data-scan="api" data-risk="1" data-q="x-content-type-options header missing 10021 693">
+      <button type="button" onclick="toggleAcc(this)" class="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800">Low</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-800 dark:text-white break-words">X-Content-Type-Options Header Missing</p>
+          <p class="text-[10px] text-slate-400 dark:text-gray-500 font-mono mt-0.5">api · plugin 10021 · CWE 693 · 1 <span data-i18n="lblUrls">URLs</span></p>
+        </div>
+        <i class="bi bi-chevron-down acc-i transition-transform text-slate-400"></i>
+      </button>
+      <div class="acc-panel hidden border-t border-slate-100 dark:border-zinc-800">
+        <div class="p-4 grid md:grid-cols-2 gap-4 text-xs">
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblDesc">Description</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">The Anti-MIME-Sniffing header X-Content-Type-Options was not set to &#039;nosniff&#039;. This allows older versions of Internet Explorer and Chrome to perform MIME-sniffing on the response body, potentially causing the response body to be interpreted and displayed as a content type other than the declared content type. Current (early 2014) and legacy versions of Firefox will use the declared content type (if one is set), rather than performing MIME-sniffing.</p></div>
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblSolution">Solution</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">Ensure that the application/web server sets the Content-Type header appropriately, and that it sets the X-Content-Type-Options header to &#039;nosniff&#039; for all web pages. If possible, ensure that the end user uses a standards-compliant and modern web browser that does not perform MIME-sniffing at all, or that can be directed by the web application/web server to not perform MIME-sniffing.</p></div>
+        </div>
+        <div class="px-4 pb-4 overflow-x-auto">
+          <table class="w-full text-[11px]">
+            <thead><tr class="bg-slate-50 dark:bg-zinc-800/60 text-left">
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colMethod">Method</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colUri">URI</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colParam">Param</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+              
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/swagger/v1/swagger.json</td><td class="px-2 py-1">x-content-type-options</td></tr>
+            </tbody>
+          </table>
+          
+        </div>
+      </div>
+    </div>
+    <div class="bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-3 alert-card" data-scan="api" data-risk="0" data-q="a client error response code was returned by the server 100000 388">
+      <button type="button" onclick="toggleAcc(this)" class="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700">Informational</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-800 dark:text-white break-words">A Client Error response code was returned by the server</p>
+          <p class="text-[10px] text-slate-400 dark:text-gray-500 font-mono mt-0.5">api · plugin 100000 · CWE 388 · 110 <span data-i18n="lblUrls">URLs</span></p>
+        </div>
+        <i class="bi bi-chevron-down acc-i transition-transform text-slate-400"></i>
+      </button>
+      <div class="acc-panel hidden border-t border-slate-100 dark:border-zinc-800">
+        <div class="p-4 grid md:grid-cols-2 gap-4 text-xs">
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblDesc">Description</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">A response code of 401 was returned by the server. This may indicate that the application is failing to handle unexpected input correctly. Raised by the &#039;Alert on HTTP Response Code Error&#039; script</p></div>
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblSolution">Solution</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed"></p></div>
+        </div>
+        <div class="px-4 pb-4 overflow-x-auto">
+          <table class="w-full text-[11px]">
+            <thead><tr class="bg-slate-50 dark:bg-zinc-800/60 text-left">
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colMethod">Method</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colUri">URI</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colParam">Param</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+              
+              <tr><td class="px-2 py-1 font-mono">DELETE</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/ContactMessages/id</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">DELETE</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/ContactMessages/id/</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">DELETE</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/CreditTypes/id</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">DELETE</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/CreditTypes/id/</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">DELETE</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Services/id</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">DELETE</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Services/id/</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">DELETE</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Users/id</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">DELETE</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Users/id/</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/7497255458037251885</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api</td><td class="px-2 py-1"></td></tr>
+            </tbody>
+          </table>
+          <p class="text-[10px] text-slate-400 mt-2 italic"><span data-i18n="lblMoreInstances">Additional instances in source JSON</span>: +98</p>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-3 alert-card" data-scan="api" data-risk="0" data-q="non-storable content 10049 524">
+      <button type="button" onclick="toggleAcc(this)" class="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700">Informational</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-800 dark:text-white break-words">Non-Storable Content</p>
+          <p class="text-[10px] text-slate-400 dark:text-gray-500 font-mono mt-0.5">api · plugin 10049 · CWE 524 · 5 <span data-i18n="lblUrls">URLs</span></p>
+        </div>
+        <i class="bi bi-chevron-down acc-i transition-transform text-slate-400"></i>
+      </button>
+      <div class="acc-panel hidden border-t border-slate-100 dark:border-zinc-800">
+        <div class="p-4 grid md:grid-cols-2 gap-4 text-xs">
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblDesc">Description</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.</p></div>
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblSolution">Solution</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">The content may be marked as storable by ensuring that the following conditions are satisfied: The request method must be understood by the cache and defined as being cacheable (&quot;GET&quot;, &quot;HEAD&quot;, and &quot;POST&quot; are currently defined as cacheable) The response status code must be understood by the cache (one of the 1XX, 2XX, 3XX, 4XX, or 5XX response classes are generally understood) The &quot;no-store&quot; cache directive must not appear in the request or response header fields For caching by &quot;shared&quot; caches such as &quot;proxy&quot; caches, the &quot;private&quot; response directive must not appear in the response For caching by &quot;shared&quot; caches such as &quot;proxy&quot; caches, the &quot;Authorization&quot; header field must not appear in the request, unless the response explicitly allows it (using one of the &quot;must-revalidate&quot;, &quot;public&quot;, or &quot;s-maxage&quot; Cache-Control response directives) In addition to the conditions above, at least one of the following conditions must also be satisfied by the response: It must contain an &quot;Expires&quot; header field It must contain a &quot;max-age&quot; response directive For &quot;shared&quot; caches such as &quot;proxy&quot; caches, it must contain a &quot;s-maxage&quot; response directive It must contain a &quot;Cache Control Extension&quot; that allows i…</p></div>
+        </div>
+        <div class="px-4 pb-4 overflow-x-auto">
+          <table class="w-full text-[11px]">
+            <thead><tr class="bg-slate-50 dark:bg-zinc-800/60 text-left">
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colMethod">Method</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colUri">URI</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colParam">Param</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+              
+              <tr><td class="px-2 py-1 font-mono">DELETE</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/ContactMessages/id</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/ContactMessages/id</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/ContactMessages/stats</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">POST</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Auth/login</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">POST</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Auth/register</td><td class="px-2 py-1"></td></tr>
+            </tbody>
+          </table>
+          
+        </div>
+      </div>
+    </div>
+    <div class="bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-3 alert-card" data-scan="api" data-risk="0" data-q="authentication request identified 10111 -1">
+      <button type="button" onclick="toggleAcc(this)" class="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700">Informational</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-800 dark:text-white break-words">Authentication Request Identified</p>
+          <p class="text-[10px] text-slate-400 dark:text-gray-500 font-mono mt-0.5">api · plugin 10111 · CWE -1 · 3 <span data-i18n="lblUrls">URLs</span></p>
+        </div>
+        <i class="bi bi-chevron-down acc-i transition-transform text-slate-400"></i>
+      </button>
+      <div class="acc-panel hidden border-t border-slate-100 dark:border-zinc-800">
+        <div class="p-4 grid md:grid-cols-2 gap-4 text-xs">
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblDesc">Description</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">The given request has been identified as an authentication request. The &#039;Other Info&#039; field contains a set of key=value lines which identify any relevant fields. If the request is in a context which has an Authentication Method set to &quot;Auto-Detect&quot; then this rule will change the authentication to match the request identified.</p></div>
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblSolution">Solution</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">This is an informational alert rather than a vulnerability and so there is nothing to fix.</p></div>
+        </div>
+        <div class="px-4 pb-4 overflow-x-auto">
+          <table class="w-full text-[11px]">
+            <thead><tr class="bg-slate-50 dark:bg-zinc-800/60 text-left">
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colMethod">Method</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colUri">URI</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colParam">Param</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+              
+              <tr><td class="px-2 py-1 font-mono">POST</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Users</td><td class="px-2 py-1">email</td></tr>
+              <tr><td class="px-2 py-1 font-mono">POST</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Users/change-password</td><td class="px-2 py-1">userId</td></tr>
+              <tr><td class="px-2 py-1 font-mono">POST</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/Auth/login</td><td class="px-2 py-1">email</td></tr>
+            </tbody>
+          </table>
+          
+        </div>
+      </div>
+    </div>
+    <div class="bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-3 alert-card" data-scan="frontend" data-risk="0" data-q="non-storable content 10049 524">
+      <button type="button" onclick="toggleAcc(this)" class="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700">Informational</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-800 dark:text-white break-words">Non-Storable Content</p>
+          <p class="text-[10px] text-slate-400 dark:text-gray-500 font-mono mt-0.5">frontend · plugin 10049 · CWE 524 · 2 <span data-i18n="lblUrls">URLs</span></p>
+        </div>
+        <i class="bi bi-chevron-down acc-i transition-transform text-slate-400"></i>
+      </button>
+      <div class="acc-panel hidden border-t border-slate-100 dark:border-zinc-800">
+        <div class="p-4 grid md:grid-cols-2 gap-4 text-xs">
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblDesc">Description</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.</p></div>
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblSolution">Solution</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">The content may be marked as storable by ensuring that the following conditions are satisfied: The request method must be understood by the cache and defined as being cacheable (&quot;GET&quot;, &quot;HEAD&quot;, and &quot;POST&quot; are currently defined as cacheable) The response status code must be understood by the cache (one of the 1XX, 2XX, 3XX, 4XX, or 5XX response classes are generally understood) The &quot;no-store&quot; cache directive must not appear in the request or response header fields For caching by &quot;shared&quot; caches such as &quot;proxy&quot; caches, the &quot;private&quot; response directive must not appear in the response For caching by &quot;shared&quot; caches such as &quot;proxy&quot; caches, the &quot;Authorization&quot; header field must not appear in the request, unless the response explicitly allows it (using one of the &quot;must-revalidate&quot;, &quot;public&quot;, or &quot;s-maxage&quot; Cache-Control response directives) In addition to the conditions above, at least one of the following conditions must also be satisfied by the response: It must contain an &quot;Expires&quot; header field It must contain a &quot;max-age&quot; response directive For &quot;shared&quot; caches such as &quot;proxy&quot; caches, it must contain a &quot;s-maxage&quot; response directive It must contain a &quot;Cache Control Extension&quot; that allows i…</p></div>
+        </div>
+        <div class="px-4 pb-4 overflow-x-auto">
+          <table class="w-full text-[11px]">
+            <thead><tr class="bg-slate-50 dark:bg-zinc-800/60 text-left">
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colMethod">Method</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colUri">URI</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colParam">Param</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+              
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:3000</td><td class="px-2 py-1"></td></tr>
+              <tr><td class="px-2 py-1 font-mono">GET</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:3000/robots.txt</td><td class="px-2 py-1"></td></tr>
+            </tbody>
+          </table>
+          
+        </div>
+      </div>
+    </div>
+    <div class="bg-white/80 dark:bg-zinc-900/80 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-3 alert-card" data-scan="api" data-risk="0" data-q="storable and cacheable content 10049 524">
+      <button type="button" onclick="toggleAcc(this)" class="w-full px-4 py-3 flex items-start gap-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700">Informational</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-800 dark:text-white break-words">Storable and Cacheable Content</p>
+          <p class="text-[10px] text-slate-400 dark:text-gray-500 font-mono mt-0.5">api · plugin 10049 · CWE 524 · 1 <span data-i18n="lblUrls">URLs</span></p>
+        </div>
+        <i class="bi bi-chevron-down acc-i transition-transform text-slate-400"></i>
+      </button>
+      <div class="acc-panel hidden border-t border-slate-100 dark:border-zinc-800">
+        <div class="p-4 grid md:grid-cols-2 gap-4 text-xs">
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblDesc">Description</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">The response contents are storable by caching components such as proxy servers, and may be retrieved directly from the cache, rather than from the origin server by the caching servers, in response to similar requests from other users. If the response data is sensitive, personal or user-specific, this may result in sensitive information being leaked. In some cases, this may even result in a user gaining complete control of the session of another user, depending on the configuration of the caching components in use in their environment. This is primarily an issue where &quot;shared&quot; caching servers such as &quot;proxy&quot; caches are configured on the local network. This configuration is typically found in corporate or educational environments, for instance.</p></div>
+          <div><span class="font-semibold text-slate-600 dark:text-gray-400" data-i18n="lblSolution">Solution</span><p class="mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">Validate that the response does not contain sensitive, personal or user-specific information. If it does, consider the use of the following HTTP response headers, to limit, or prevent the content being stored and retrieved from the cache by another user: Cache-Control: no-cache, no-store, must-revalidate, private Pragma: no-cache Expires: 0 This configuration directs both HTTP 1.0 and HTTP 1.1 compliant caching servers to not store the response, and to not retrieve the response (without validation) from the cache, in response to a similar request.</p></div>
+        </div>
+        <div class="px-4 pb-4 overflow-x-auto">
+          <table class="w-full text-[11px]">
+            <thead><tr class="bg-slate-50 dark:bg-zinc-800/60 text-left">
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colMethod">Method</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colUri">URI</th>
+              <th class="px-2 py-1.5 font-semibold text-slate-500" data-i18n="colParam">Param</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-zinc-800">
+              
+              <tr><td class="px-2 py-1 font-mono">POST</td><td class="px-2 py-1 font-mono break-all max-w-md">http://host.docker.internal:5000/api/ContactMessages</td><td class="px-2 py-1"></td></tr>
+            </tbody>
+          </table>
+          
+        </div>
+      </div>
+    </div></div>
+</section>
+
+<section id="tab-insights" class="tab-panel">
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-zinc-800 font-semibold text-sm" data-i18n="insightsZapTitle">Estadísticas automáticas ZAP (insights)</div>
+    <div class="overflow-x-auto max-h-[70vh]">
+      <table class="w-full text-left">
+        <thead class="bg-slate-50 dark:bg-zinc-800/80 sticky top-0 text-[10px] uppercase text-slate-500">
+          <tr><th class="px-3 py-2" data-i18n="colScan">Scan</th><th class="px-3 py-2" data-i18n="colMetric">Métrica</th><th class="px-3 py-2" data-i18n="colLevel">Nivel</th><th class="px-3 py-2 text-right" data-i18n="colValue">Valor</th></tr>
+        </thead>
+        <tbody class="text-slate-700 dark:text-slate-300">
+          
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">frontend</td>
+      <td class="px-3 py-2 text-xs">Percentage of responses with status code 4xx</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">100</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">frontend</td>
+      <td class="px-3 py-2 text-xs">Percentage of endpoints with content type text/plain</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">100</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">frontend</td>
+      <td class="px-3 py-2 text-xs">Percentage of endpoints with method GET</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">100</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">frontend</td>
+      <td class="px-3 py-2 text-xs">Count of total endpoints</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">2</td>
+    </tr>
+          
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">api</td>
+      <td class="px-3 py-2 text-xs">Percentage of responses with status code 4xx</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Low / Exceeded High</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">95</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">api</td>
+      <td class="px-3 py-2 text-xs">Percentage of responses with status code 2xx</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">4</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">api</td>
+      <td class="px-3 py-2 text-xs">Percentage of endpoints with content type application/json</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">15</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">api</td>
+      <td class="px-3 py-2 text-xs">Percentage of endpoints with content type text/html</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">1</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">api</td>
+      <td class="px-3 py-2 text-xs">Percentage of endpoints with method DELETE</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">7</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">api</td>
+      <td class="px-3 py-2 text-xs">Percentage of endpoints with method GET</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">60</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">api</td>
+      <td class="px-3 py-2 text-xs">Percentage of endpoints with method PATCH</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">3</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">api</td>
+      <td class="px-3 py-2 text-xs">Percentage of endpoints with method POST</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">23</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">api</td>
+      <td class="px-3 py-2 text-xs">Percentage of endpoints with method PUT</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">5</td>
+    </tr>
+    <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800/50">
+      <td class="px-3 py-2 text-xs font-mono text-aura-600 dark:text-aura-400">api</td>
+      <td class="px-3 py-2 text-xs">Count of total endpoints</td>
+      <td class="px-3 py-2 text-xs text-slate-500">Info / Informational</td>
+      <td class="px-3 py-2 text-xs font-bold text-right">111</td>
+    </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="tab-refs" class="tab-panel">
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+    <h2 class="text-lg font-bold mb-4 text-slate-800 dark:text-white" data-i18n="refsTitle">Referencias extraídas</h2>
+    <ul class="text-xs space-y-2 break-all">
+      <li><a href="https://datatracker.ietf.org/doc/html/rfc7234" class="text-aura-600 dark:text-aura-400 hover:underline" target="_blank" rel="noopener">https://datatracker.ietf.org/doc/html/rfc7234</a></li><li><a href="https://datatracker.ietf.org/doc/html/rfc7231" class="text-aura-600 dark:text-aura-400 hover:underline" target="_blank" rel="noopener">https://datatracker.ietf.org/doc/html/rfc7231</a></li><li><a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html" class="text-aura-600 dark:text-aura-400 hover:underline" target="_blank" rel="noopener">https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</a></li><li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy" class="text-aura-600 dark:text-aura-400 hover:underline" target="_blank" rel="noopener">https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy</a></li><li><a href="https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85" class="text-aura-600 dark:text-aura-400 hover:underline" target="_blank" rel="noopener">https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85</a></li><li><a href="https://owasp.org/www-community/Security_Headers" class="text-aura-600 dark:text-aura-400 hover:underline" target="_blank" rel="noopener">https://owasp.org/www-community/Security_Headers</a></li><li><a href="https://www.zaproxy.org/docs/desktop/addons/authentication-helper/auth-req-id/" class="text-aura-600 dark:text-aura-400 hover:underline" target="_blank" rel="noopener">https://www.zaproxy.org/docs/desktop/addons/authentication-helper/auth-req-id/</a></li>
+    </ul>
+  </div>
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm mt-6">
+    <h2 class="text-lg font-bold mb-4 text-slate-800 dark:text-white" data-i18n="cweFullTitle">CWE — recuento completo (top 20)</h2>
+    <table class="w-full text-xs">
+      <thead><tr class="text-left text-slate-500"><th class="py-2" data-i18n="colCwe">CWE</th><th class="py-2" data-i18n="colInstances">Instancias</th></tr></thead>
+      <tbody>
+        <tr class="border-t border-slate-100 dark:border-zinc-800"><td class="py-2 font-mono">388</td><td class="py-2 font-bold">110</td></tr><tr class="border-t border-slate-100 dark:border-zinc-800"><td class="py-2 font-mono">524</td><td class="py-2 font-bold">8</td></tr><tr class="border-t border-slate-100 dark:border-zinc-800"><td class="py-2 font-mono">693</td><td class="py-2 font-bold">6</td></tr><tr class="border-t border-slate-100 dark:border-zinc-800"><td class="py-2 font-mono">-1</td><td class="py-2 font-bold">5</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer class="border-t border-slate-200 dark:border-zinc-800 mt-8 py-6 text-center text-xs text-slate-400">
+  <p data-i18n="footerTeam">Applied AI Team — Stefanini · Panel v2 homologado con reportes unitarios/funcionales</p>
+  <p class="mt-1" data-i18n="footerNote">Fuente: reportes JSON oficiales OWASP ZAP en test-results/security/</p>
+</footer>
+
+<script>
+const SUMMARY_HTML = {"en":"<p class=\"mb-3\">```json\n{\n  &quot;en&quot;: &quot;<strong class=\"text-slate-900 dark:text-white\">Overall Security Posture</strong>: TuCreditoOnline&#039;s current scan shows a <strong class=\"text-slate-900 dark:text-white\">low-risk profile</strong> with no high or medium severity findings—a positive baseline for a development environment. However, the assessment reveals <strong class=\"text-slate-900 dark:text-white\">8 distinct vulnerability types across 129 instances</strong>, indicating systematic gaps in HTTP security headers and content handling rather than isolated issues. The absence of critical vulnerabilities should not create complacency; these findings represent foundational security controls that must be addressed before production deployment.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Key Themes &amp; Risk Areas</strong>: Three primary patterns emerge: (1) <strong class=\"text-slate-900 dark:text-white\">Missing HTTP security headers</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) that fail to prevent browser-based attacks; (2) <strong class=\"text-slate-900 dark:text-white\">Caching and content-type misconfigurations</strong> affecting 8+ instances, which could expose sensitive data or enable cache poisoning; (3) <strong class=\"text-slate-900 dark:text-white\">Client error handling</strong> generating 110 instances of error responses, suggesting incomplete API error management that may leak information or degrade user experience. These are not exotic vulnerabilities—they reflect incomplete implementation of baseline security standards.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Prioritization Framework</strong>: Address findings in this order: (1) <strong class=\"text-slate-900 dark:text-white\">Immediate</strong> – Add X-Content-Type-Options and Cross-Origin-Resource-Policy headers across all endpoints to prevent MIME-type attacks and unauthorized cross-origin requests; (2) <strong class=\"text-slate-900 dark:text-white\">Short-term</strong> – Audit and standardize HTTP response codes and error messages to eliminate information leakage from the 110 client error instances; (3) <strong class=\"text-slate-900 dark:text-white\">Ongoing</strong> – Review caching policies to ensure sensitive endpoints (authentication, financial data) are explicitly marked non-cacheable. The informational findings (5 instances) are lower priority but should inform your API documentation and response standards.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Actionable Recommendations</strong>: (1) <strong class=\"text-slate-900 dark:text-white\">Implement security header policy</strong> – Add missing headers (X-Content-Type-Options: nosniff, Cross-Origin-Resource-Policy: same-origin) at the application or reverse-proxy layer; apply to all 129 affected instances within 2 weeks. (2) <strong class=\"text-slate-900 dark:text-white\">Standardize error responses</strong> – Audit the 110 client error instances; ensure error messages do not expose system details, database structure, or authentication mechanisms. (3) <strong class=\"text-slate-900 dark:text-white\">Define caching rules</strong> – Mark all authentication and financial endpoints with Cache-Control: no-store, no-cache; document caching strategy in API guidelines. (4) <strong class=\"text-slate-900 dark:text-white\">Automate scanning in CI/CD</strong> – Integrate ZAP scanning into your development pipeline to catch header and configuration issues before staging; use passive scanning to avoid test data corruption. (5) <strong class=\"text-slate-900 dark:text-white\">Establish remediation SLA</strong> – Set a target to eliminate all low-severity findings before production; treat informational findings as technical debt to address in the next release cycle.&quot;,\n  &quot;es&quot;: &quot;<strong class=\"text-slate-900 dark:text-white\">Postura General de Seguridad</strong>: El escaneo actual de TuCreditoOnline muestra un <strong class=\"text-slate-900 dark:text-white\">perfil de bajo riesgo</strong> sin hallazgos de severidad alta o media—una línea base positiva para un entorno de desarrollo. Sin embargo, la evaluación revela <strong class=\"text-slate-900 dark:text-white\">8 tipos de vulnerabilidad distintos en 129 instancias</strong>, indicando brechas sistemáticas en encabezados de seguridad HTTP y manejo de contenido en lugar de problemas aislados. La ausencia de vulnerabilidades críticas no debe generar complacencia; estos hallazgos representan controles de seguridad fundamentales que deben abordarse antes del despliegue en producción.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Temas Clave y Áreas de Riesgo</strong>: Emergen tres patrones principales: (1) <strong class=\"text-slate-900 dark:text-white\">Encabezados HTTP de seguridad faltantes</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) que no previenen ataques basados en navegador; (2) <strong class=\"text-slate-900 dark:text-white\">Configuraciones incorrectas de almacenamiento en caché y tipo de contenido</strong> que afectan 8+ instancias, que podrían exponer datos sensibles o permitir envenenamiento de caché; (3) <strong class=\"text-slate-900 dark:text-white\">Manejo de errores del cliente</strong> generando 110 instancias de respuestas de error, sugiriendo gestión incompleta de errores de API que puede filtrar información o degradar la experiencia del usuario. Estas no son vulnerabilidades exóticas—reflejan implementación incompleta de estándares de seguridad básicos.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Marco de Priorización</strong>: Aborde los hallazgos en este orden: (1) <strong class=\"text-slate-900 dark:text-white\">Inmediato</strong> – Agregue encabezados X-Content-Type-Options y Cross-Origin-Resource-Policy en todos los puntos finales para prevenir ataques de tipo MIME y solicitudes no autorizadas entre orígenes; (2) <strong class=\"text-slate-900 dark:text-white\">Corto plazo</strong> – Audite y estandarice códigos de respuesta HTTP y mensajes de error para eliminar fugas de información de las 110 instancias de error del cliente; (3) <strong class=\"text-slate-900 dark:text-white\">Continuo</strong> – Revise políticas de almacenamiento en caché para asegurar que los puntos finales sensibles (autenticación, datos financieros) estén explícitamente marcados como no almacenables. Los hallazgos informativos (5 instancias) son de menor prioridad pero deben informar su documentación de API y estándares de respuesta.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Recomendaciones Accionables</strong>: (1) <strong class=\"text-slate-900 dark:text-white\">Implementar política de encabezados de seguridad</strong> – Agregue encabezados faltantes (X-Content-Type-Options: nosniff, Cross-Origin-Resource-Policy: same-origin) en la capa de aplicación o proxy inverso; aplique a las 129 instancias afectadas dentro de 2 semanas. (2) <strong class=\"text-slate-900 dark:text-white\">Estandarizar respuestas de error</strong> – Audite las 110 instancias de error del cliente; asegúrese de que los mensajes de error no expongan detalles del sistema, estructura de base de datos o mecanismos de autenticación. (3) <strong class=\"text-slate-900 dark:text-white\">Definir reglas de almacenamiento en caché</strong> – Marque todos los puntos finales de autenticación y financieros con Cache-Control: no-store, no-cache; documente la estrategia de almacenamiento en caché en las directrices de API. (4) <strong class=\"text-slate-900 dark:text-white\">Automatizar escaneo en CI/CD</strong> – Integre escaneo ZAP en su canalización de desarrollo para detectar problemas de encabezados y configuración antes de staging; use escaneo pasivo para evitar corrupción de datos de prueba. (5) <strong class=\"text-slate-900 dark:text-white\">Establecer SLA de remediación</strong> – Establezca un objetivo para eliminar todos los hallazgos de baja severidad antes de producción; trate los hallazgos informativos como deuda técnica a abordar en el próximo ciclo de lanzamiento.&quot;,\n  &quot;pt&quot;: &quot;<strong class=\"text-slate-900 dark:text-white\">Postura Geral de Segurança</strong>: O escaneo atual do TuCreditoOnline mostra um <strong class=\"text-slate-900 dark:text-white\">perfil de baixo risco</strong> sem descobertas de severidade alta ou média—uma linha de base positiva para um ambiente de desenvolvimento. No entanto, a avaliação revela <strong class=\"text-slate-900 dark:text-white\">8 tipos distintos de vulnerabilidade em 129 instâncias</strong>, indicando lacunas sistemáticas em cabeçalhos de segurança HTTP e manipulação de conteúdo em vez de problemas isolados. A ausência de vulnerabilidades críticas não deve criar complacência; essas descobertas representam controles de segurança fundamentais que devem ser abordados antes da implantação em produção.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Temas Principais e Áreas de Risco</strong>: Três padrões principais emergem: (1) <strong class=\"text-slate-900 dark:text-white\">Cabeçalhos de segurança HTTP ausentes</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) que falham em prevenir ataques baseados em navegador; (2) <strong class=\"text-slate-900 dark:text-white\">Configurações incorretas de cache e tipo de conteúdo</strong> afetando 8+ instâncias, que podem expor dados sensíveis ou permitir envenenamento de cache; (3) <strong class=\"text-slate-900 dark:text-white\">Manipulação de erros do cliente</strong> gerando 110 instâncias de respostas de erro, sugerindo gerenciamento incompleto de erros de API que pode vazar informações ou degradar a experiência do usuário. Estas não são vulnerabilidades exóticas—refletem implementação incompleta de padrões de segurança básicos.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Estrutura de Priorização</strong>: Aborde as descobertas nesta ordem: (1) <strong class=\"text-slate-900 dark:text-white\">Imediato</strong> – Adicione cabeçalhos X-Content-Type-Options e Cross-Origin-Resource-Policy em todos os endpoints para prevenir ataques de tipo MIME e solicitações não autorizadas entre origens; (2) <strong class=\"text-slate-900 dark:text-white\">Curto prazo</strong> – Audite e padronize códigos de resposta HTTP e mensagens de erro para eliminar vazamento de informações das 110 instâncias de erro do cliente; (3) <strong class=\"text-slate-900 dark:text-white\">Contínuo</strong> – Revise políticas de cache para garantir que endpoints sensíveis (autenticação, dados financeiros) sejam explicitamente marcados como não armazenáveis. As descobertas informativas (5 instâncias) são de menor prioridade,</p>","es":"<p class=\"mb-3\">```json\n{\n  &quot;en&quot;: &quot;<strong class=\"text-slate-900 dark:text-white\">Overall Security Posture</strong>: TuCreditoOnline&#039;s current scan shows a <strong class=\"text-slate-900 dark:text-white\">low-risk profile</strong> with no high or medium severity findings—a positive baseline for a development environment. However, the assessment reveals <strong class=\"text-slate-900 dark:text-white\">8 distinct vulnerability types across 129 instances</strong>, indicating systematic gaps in HTTP security headers and content handling rather than isolated issues. The absence of critical vulnerabilities should not create complacency; these findings represent foundational security controls that must be addressed before production deployment.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Key Themes &amp; Risk Areas</strong>: Three primary patterns emerge: (1) <strong class=\"text-slate-900 dark:text-white\">Missing HTTP security headers</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) that fail to prevent browser-based attacks; (2) <strong class=\"text-slate-900 dark:text-white\">Caching and content-type misconfigurations</strong> affecting 8+ instances, which could expose sensitive data or enable cache poisoning; (3) <strong class=\"text-slate-900 dark:text-white\">Client error handling</strong> generating 110 instances of error responses, suggesting incomplete API error management that may leak information or degrade user experience. These are not exotic vulnerabilities—they reflect incomplete implementation of baseline security standards.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Prioritization Framework</strong>: Address findings in this order: (1) <strong class=\"text-slate-900 dark:text-white\">Immediate</strong> – Add X-Content-Type-Options and Cross-Origin-Resource-Policy headers across all endpoints to prevent MIME-type attacks and unauthorized cross-origin requests; (2) <strong class=\"text-slate-900 dark:text-white\">Short-term</strong> – Audit and standardize HTTP response codes and error messages to eliminate information leakage from the 110 client error instances; (3) <strong class=\"text-slate-900 dark:text-white\">Ongoing</strong> – Review caching policies to ensure sensitive endpoints (authentication, financial data) are explicitly marked non-cacheable. The informational findings (5 instances) are lower priority but should inform your API documentation and response standards.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Actionable Recommendations</strong>: (1) <strong class=\"text-slate-900 dark:text-white\">Implement security header policy</strong> – Add missing headers (X-Content-Type-Options: nosniff, Cross-Origin-Resource-Policy: same-origin) at the application or reverse-proxy layer; apply to all 129 affected instances within 2 weeks. (2) <strong class=\"text-slate-900 dark:text-white\">Standardize error responses</strong> – Audit the 110 client error instances; ensure error messages do not expose system details, database structure, or authentication mechanisms. (3) <strong class=\"text-slate-900 dark:text-white\">Define caching rules</strong> – Mark all authentication and financial endpoints with Cache-Control: no-store, no-cache; document caching strategy in API guidelines. (4) <strong class=\"text-slate-900 dark:text-white\">Automate scanning in CI/CD</strong> – Integrate ZAP scanning into your development pipeline to catch header and configuration issues before staging; use passive scanning to avoid test data corruption. (5) <strong class=\"text-slate-900 dark:text-white\">Establish remediation SLA</strong> – Set a target to eliminate all low-severity findings before production; treat informational findings as technical debt to address in the next release cycle.&quot;,\n  &quot;es&quot;: &quot;<strong class=\"text-slate-900 dark:text-white\">Postura General de Seguridad</strong>: El escaneo actual de TuCreditoOnline muestra un <strong class=\"text-slate-900 dark:text-white\">perfil de bajo riesgo</strong> sin hallazgos de severidad alta o media—una línea base positiva para un entorno de desarrollo. Sin embargo, la evaluación revela <strong class=\"text-slate-900 dark:text-white\">8 tipos de vulnerabilidad distintos en 129 instancias</strong>, indicando brechas sistemáticas en encabezados de seguridad HTTP y manejo de contenido en lugar de problemas aislados. La ausencia de vulnerabilidades críticas no debe generar complacencia; estos hallazgos representan controles de seguridad fundamentales que deben abordarse antes del despliegue en producción.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Temas Clave y Áreas de Riesgo</strong>: Emergen tres patrones principales: (1) <strong class=\"text-slate-900 dark:text-white\">Encabezados HTTP de seguridad faltantes</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) que no previenen ataques basados en navegador; (2) <strong class=\"text-slate-900 dark:text-white\">Configuraciones incorrectas de almacenamiento en caché y tipo de contenido</strong> que afectan 8+ instancias, que podrían exponer datos sensibles o permitir envenenamiento de caché; (3) <strong class=\"text-slate-900 dark:text-white\">Manejo de errores del cliente</strong> generando 110 instancias de respuestas de error, sugiriendo gestión incompleta de errores de API que puede filtrar información o degradar la experiencia del usuario. Estas no son vulnerabilidades exóticas—reflejan implementación incompleta de estándares de seguridad básicos.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Marco de Priorización</strong>: Aborde los hallazgos en este orden: (1) <strong class=\"text-slate-900 dark:text-white\">Inmediato</strong> – Agregue encabezados X-Content-Type-Options y Cross-Origin-Resource-Policy en todos los puntos finales para prevenir ataques de tipo MIME y solicitudes no autorizadas entre orígenes; (2) <strong class=\"text-slate-900 dark:text-white\">Corto plazo</strong> – Audite y estandarice códigos de respuesta HTTP y mensajes de error para eliminar fugas de información de las 110 instancias de error del cliente; (3) <strong class=\"text-slate-900 dark:text-white\">Continuo</strong> – Revise políticas de almacenamiento en caché para asegurar que los puntos finales sensibles (autenticación, datos financieros) estén explícitamente marcados como no almacenables. Los hallazgos informativos (5 instancias) son de menor prioridad pero deben informar su documentación de API y estándares de respuesta.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Recomendaciones Accionables</strong>: (1) <strong class=\"text-slate-900 dark:text-white\">Implementar política de encabezados de seguridad</strong> – Agregue encabezados faltantes (X-Content-Type-Options: nosniff, Cross-Origin-Resource-Policy: same-origin) en la capa de aplicación o proxy inverso; aplique a las 129 instancias afectadas dentro de 2 semanas. (2) <strong class=\"text-slate-900 dark:text-white\">Estandarizar respuestas de error</strong> – Audite las 110 instancias de error del cliente; asegúrese de que los mensajes de error no expongan detalles del sistema, estructura de base de datos o mecanismos de autenticación. (3) <strong class=\"text-slate-900 dark:text-white\">Definir reglas de almacenamiento en caché</strong> – Marque todos los puntos finales de autenticación y financieros con Cache-Control: no-store, no-cache; documente la estrategia de almacenamiento en caché en las directrices de API. (4) <strong class=\"text-slate-900 dark:text-white\">Automatizar escaneo en CI/CD</strong> – Integre escaneo ZAP en su canalización de desarrollo para detectar problemas de encabezados y configuración antes de staging; use escaneo pasivo para evitar corrupción de datos de prueba. (5) <strong class=\"text-slate-900 dark:text-white\">Establecer SLA de remediación</strong> – Establezca un objetivo para eliminar todos los hallazgos de baja severidad antes de producción; trate los hallazgos informativos como deuda técnica a abordar en el próximo ciclo de lanzamiento.&quot;,\n  &quot;pt&quot;: &quot;<strong class=\"text-slate-900 dark:text-white\">Postura Geral de Segurança</strong>: O escaneo atual do TuCreditoOnline mostra um <strong class=\"text-slate-900 dark:text-white\">perfil de baixo risco</strong> sem descobertas de severidade alta ou média—uma linha de base positiva para um ambiente de desenvolvimento. No entanto, a avaliação revela <strong class=\"text-slate-900 dark:text-white\">8 tipos distintos de vulnerabilidade em 129 instâncias</strong>, indicando lacunas sistemáticas em cabeçalhos de segurança HTTP e manipulação de conteúdo em vez de problemas isolados. A ausência de vulnerabilidades críticas não deve criar complacência; essas descobertas representam controles de segurança fundamentais que devem ser abordados antes da implantação em produção.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Temas Principais e Áreas de Risco</strong>: Três padrões principais emergem: (1) <strong class=\"text-slate-900 dark:text-white\">Cabeçalhos de segurança HTTP ausentes</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) que falham em prevenir ataques baseados em navegador; (2) <strong class=\"text-slate-900 dark:text-white\">Configurações incorretas de cache e tipo de conteúdo</strong> afetando 8+ instâncias, que podem expor dados sensíveis ou permitir envenenamento de cache; (3) <strong class=\"text-slate-900 dark:text-white\">Manipulação de erros do cliente</strong> gerando 110 instâncias de respostas de erro, sugerindo gerenciamento incompleto de erros de API que pode vazar informações ou degradar a experiência do usuário. Estas não são vulnerabilidades exóticas—refletem implementação incompleta de padrões de segurança básicos.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Estrutura de Priorização</strong>: Aborde as descobertas nesta ordem: (1) <strong class=\"text-slate-900 dark:text-white\">Imediato</strong> – Adicione cabeçalhos X-Content-Type-Options e Cross-Origin-Resource-Policy em todos os endpoints para prevenir ataques de tipo MIME e solicitações não autorizadas entre origens; (2) <strong class=\"text-slate-900 dark:text-white\">Curto prazo</strong> – Audite e padronize códigos de resposta HTTP e mensagens de erro para eliminar vazamento de informações das 110 instâncias de erro do cliente; (3) <strong class=\"text-slate-900 dark:text-white\">Contínuo</strong> – Revise políticas de cache para garantir que endpoints sensíveis (autenticação, dados financeiros) sejam explicitamente marcados como não armazenáveis. As descobertas informativas (5 instâncias) são de menor prioridade,</p>","pt":"<p class=\"mb-3\">```json\n{\n  &quot;en&quot;: &quot;<strong class=\"text-slate-900 dark:text-white\">Overall Security Posture</strong>: TuCreditoOnline&#039;s current scan shows a <strong class=\"text-slate-900 dark:text-white\">low-risk profile</strong> with no high or medium severity findings—a positive baseline for a development environment. However, the assessment reveals <strong class=\"text-slate-900 dark:text-white\">8 distinct vulnerability types across 129 instances</strong>, indicating systematic gaps in HTTP security headers and content handling rather than isolated issues. The absence of critical vulnerabilities should not create complacency; these findings represent foundational security controls that must be addressed before production deployment.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Key Themes &amp; Risk Areas</strong>: Three primary patterns emerge: (1) <strong class=\"text-slate-900 dark:text-white\">Missing HTTP security headers</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) that fail to prevent browser-based attacks; (2) <strong class=\"text-slate-900 dark:text-white\">Caching and content-type misconfigurations</strong> affecting 8+ instances, which could expose sensitive data or enable cache poisoning; (3) <strong class=\"text-slate-900 dark:text-white\">Client error handling</strong> generating 110 instances of error responses, suggesting incomplete API error management that may leak information or degrade user experience. These are not exotic vulnerabilities—they reflect incomplete implementation of baseline security standards.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Prioritization Framework</strong>: Address findings in this order: (1) <strong class=\"text-slate-900 dark:text-white\">Immediate</strong> – Add X-Content-Type-Options and Cross-Origin-Resource-Policy headers across all endpoints to prevent MIME-type attacks and unauthorized cross-origin requests; (2) <strong class=\"text-slate-900 dark:text-white\">Short-term</strong> – Audit and standardize HTTP response codes and error messages to eliminate information leakage from the 110 client error instances; (3) <strong class=\"text-slate-900 dark:text-white\">Ongoing</strong> – Review caching policies to ensure sensitive endpoints (authentication, financial data) are explicitly marked non-cacheable. The informational findings (5 instances) are lower priority but should inform your API documentation and response standards.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Actionable Recommendations</strong>: (1) <strong class=\"text-slate-900 dark:text-white\">Implement security header policy</strong> – Add missing headers (X-Content-Type-Options: nosniff, Cross-Origin-Resource-Policy: same-origin) at the application or reverse-proxy layer; apply to all 129 affected instances within 2 weeks. (2) <strong class=\"text-slate-900 dark:text-white\">Standardize error responses</strong> – Audit the 110 client error instances; ensure error messages do not expose system details, database structure, or authentication mechanisms. (3) <strong class=\"text-slate-900 dark:text-white\">Define caching rules</strong> – Mark all authentication and financial endpoints with Cache-Control: no-store, no-cache; document caching strategy in API guidelines. (4) <strong class=\"text-slate-900 dark:text-white\">Automate scanning in CI/CD</strong> – Integrate ZAP scanning into your development pipeline to catch header and configuration issues before staging; use passive scanning to avoid test data corruption. (5) <strong class=\"text-slate-900 dark:text-white\">Establish remediation SLA</strong> – Set a target to eliminate all low-severity findings before production; treat informational findings as technical debt to address in the next release cycle.&quot;,\n  &quot;es&quot;: &quot;<strong class=\"text-slate-900 dark:text-white\">Postura General de Seguridad</strong>: El escaneo actual de TuCreditoOnline muestra un <strong class=\"text-slate-900 dark:text-white\">perfil de bajo riesgo</strong> sin hallazgos de severidad alta o media—una línea base positiva para un entorno de desarrollo. Sin embargo, la evaluación revela <strong class=\"text-slate-900 dark:text-white\">8 tipos de vulnerabilidad distintos en 129 instancias</strong>, indicando brechas sistemáticas en encabezados de seguridad HTTP y manejo de contenido en lugar de problemas aislados. La ausencia de vulnerabilidades críticas no debe generar complacencia; estos hallazgos representan controles de seguridad fundamentales que deben abordarse antes del despliegue en producción.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Temas Clave y Áreas de Riesgo</strong>: Emergen tres patrones principales: (1) <strong class=\"text-slate-900 dark:text-white\">Encabezados HTTP de seguridad faltantes</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) que no previenen ataques basados en navegador; (2) <strong class=\"text-slate-900 dark:text-white\">Configuraciones incorrectas de almacenamiento en caché y tipo de contenido</strong> que afectan 8+ instancias, que podrían exponer datos sensibles o permitir envenenamiento de caché; (3) <strong class=\"text-slate-900 dark:text-white\">Manejo de errores del cliente</strong> generando 110 instancias de respuestas de error, sugiriendo gestión incompleta de errores de API que puede filtrar información o degradar la experiencia del usuario. Estas no son vulnerabilidades exóticas—reflejan implementación incompleta de estándares de seguridad básicos.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Marco de Priorización</strong>: Aborde los hallazgos en este orden: (1) <strong class=\"text-slate-900 dark:text-white\">Inmediato</strong> – Agregue encabezados X-Content-Type-Options y Cross-Origin-Resource-Policy en todos los puntos finales para prevenir ataques de tipo MIME y solicitudes no autorizadas entre orígenes; (2) <strong class=\"text-slate-900 dark:text-white\">Corto plazo</strong> – Audite y estandarice códigos de respuesta HTTP y mensajes de error para eliminar fugas de información de las 110 instancias de error del cliente; (3) <strong class=\"text-slate-900 dark:text-white\">Continuo</strong> – Revise políticas de almacenamiento en caché para asegurar que los puntos finales sensibles (autenticación, datos financieros) estén explícitamente marcados como no almacenables. Los hallazgos informativos (5 instancias) son de menor prioridad pero deben informar su documentación de API y estándares de respuesta.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Recomendaciones Accionables</strong>: (1) <strong class=\"text-slate-900 dark:text-white\">Implementar política de encabezados de seguridad</strong> – Agregue encabezados faltantes (X-Content-Type-Options: nosniff, Cross-Origin-Resource-Policy: same-origin) en la capa de aplicación o proxy inverso; aplique a las 129 instancias afectadas dentro de 2 semanas. (2) <strong class=\"text-slate-900 dark:text-white\">Estandarizar respuestas de error</strong> – Audite las 110 instancias de error del cliente; asegúrese de que los mensajes de error no expongan detalles del sistema, estructura de base de datos o mecanismos de autenticación. (3) <strong class=\"text-slate-900 dark:text-white\">Definir reglas de almacenamiento en caché</strong> – Marque todos los puntos finales de autenticación y financieros con Cache-Control: no-store, no-cache; documente la estrategia de almacenamiento en caché en las directrices de API. (4) <strong class=\"text-slate-900 dark:text-white\">Automatizar escaneo en CI/CD</strong> – Integre escaneo ZAP en su canalización de desarrollo para detectar problemas de encabezados y configuración antes de staging; use escaneo pasivo para evitar corrupción de datos de prueba. (5) <strong class=\"text-slate-900 dark:text-white\">Establecer SLA de remediación</strong> – Establezca un objetivo para eliminar todos los hallazgos de baja severidad antes de producción; trate los hallazgos informativos como deuda técnica a abordar en el próximo ciclo de lanzamiento.&quot;,\n  &quot;pt&quot;: &quot;<strong class=\"text-slate-900 dark:text-white\">Postura Geral de Segurança</strong>: O escaneo atual do TuCreditoOnline mostra um <strong class=\"text-slate-900 dark:text-white\">perfil de baixo risco</strong> sem descobertas de severidade alta ou média—uma linha de base positiva para um ambiente de desenvolvimento. No entanto, a avaliação revela <strong class=\"text-slate-900 dark:text-white\">8 tipos distintos de vulnerabilidade em 129 instâncias</strong>, indicando lacunas sistemáticas em cabeçalhos de segurança HTTP e manipulação de conteúdo em vez de problemas isolados. A ausência de vulnerabilidades críticas não deve criar complacência; essas descobertas representam controles de segurança fundamentais que devem ser abordados antes da implantação em produção.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Temas Principais e Áreas de Risco</strong>: Três padrões principais emergem: (1) <strong class=\"text-slate-900 dark:text-white\">Cabeçalhos de segurança HTTP ausentes</strong> (Cross-Origin-Resource-Policy, X-Content-Type-Options) que falham em prevenir ataques baseados em navegador; (2) <strong class=\"text-slate-900 dark:text-white\">Configurações incorretas de cache e tipo de conteúdo</strong> afetando 8+ instâncias, que podem expor dados sensíveis ou permitir envenenamento de cache; (3) <strong class=\"text-slate-900 dark:text-white\">Manipulação de erros do cliente</strong> gerando 110 instâncias de respostas de erro, sugerindo gerenciamento incompleto de erros de API que pode vazar informações ou degradar a experiência do usuário. Estas não são vulnerabilidades exóticas—refletem implementação incompleta de padrões de segurança básicos.\\n\\n<strong class=\"text-slate-900 dark:text-white\">Estrutura de Priorização</strong>: Aborde as descobertas nesta ordem: (1) <strong class=\"text-slate-900 dark:text-white\">Imediato</strong> – Adicione cabeçalhos X-Content-Type-Options e Cross-Origin-Resource-Policy em todos os endpoints para prevenir ataques de tipo MIME e solicitações não autorizadas entre origens; (2) <strong class=\"text-slate-900 dark:text-white\">Curto prazo</strong> – Audite e padronize códigos de resposta HTTP e mensagens de erro para eliminar vazamento de informações das 110 instâncias de erro do cliente; (3) <strong class=\"text-slate-900 dark:text-white\">Contínuo</strong> – Revise políticas de cache para garantir que endpoints sensíveis (autenticação, dados financeiros) sejam explicitamente marcados como não armazenáveis. As descobertas informativas (5 instâncias) são de menor prioridade,</p>"};
+const CHART_DATA = {"byRiskFindings":{"0":5,"1":3,"2":0,"3":0},"byRiskInstances":{"0":121,"1":8,"2":0,"3":0},"feRisk":{"0":1,"1":0,"2":0,"3":0},"apiRisk":{"0":4,"1":3,"2":0,"3":0},"topLabels":["A Client Error response code was return…","Cross-Origin-Resource-Policy Header Mis…","Non-Storable Content","Authentication Request Identified","Non-Storable Content","Unexpected Content-Type was returned","X-Content-Type-Options Header Missing","Storable and Cacheable Content"],"topData":[110,5,5,3,2,2,1,1],"feAlerts":1,"apiAlerts":7,"feInstances":2,"apiInstances":127};
+const CWE_LABELS = ["CWE-388","CWE-524","CWE-693","CWE--1"];
+const CWE_VALUES = [110,8,6,5];
+
+document.querySelectorAll('.tab-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+  });
+});
+
+function toggleTheme() {
+  document.documentElement.classList.toggle('dark');
+  const icon = document.getElementById('theme-icon');
+  if (document.documentElement.classList.contains('dark')) {
+    icon.className = 'bi bi-sun-fill text-sm';
+    localStorage.setItem('sec-theme', 'dark');
+  } else {
+    icon.className = 'bi bi-moon-fill text-sm';
+    localStorage.setItem('sec-theme', 'grey');
+  }
+  updateAllCharts();
+}
+(function(){
+  if (localStorage.getItem('sec-theme') === 'dark') {
+    document.documentElement.classList.add('dark');
+    document.getElementById('theme-icon').className = 'bi bi-sun-fill text-sm';
+  }
+})();
+
+function toggleAcc(btn) {
+  const panel = btn.nextElementSibling;
+  const i = btn.querySelector('.acc-i');
+  panel.classList.toggle('hidden');
+  if (i) i.classList.toggle('open');
+}
+
+function filterFindings(q) {
+  q = (q || '').toLowerCase();
+  const scan = document.getElementById('filter-scan').value;
+  const risk = document.getElementById('filter-risk').value;
+  document.querySelectorAll('.alert-card').forEach(card => {
+    const okQ = !q || card.dataset.q.includes(q);
+    const okS = !scan || card.dataset.scan === scan;
+    const okR = !risk || card.dataset.risk === risk;
+    card.style.display = (okQ && okS && okR) ? '' : 'none';
+  });
+}
+
+const i18n = {
+  es:{reportTitle:'OWASP ZAP — Panel de Seguridad v2',tabExec:'Resumen ejecutivo',tabOverview:'Vista general',tabCharts:'Gráficos',tabScans:'Escaneos',tabFindings:'Hallazgos',tabInsights:'Insights ZAP',tabRefs:'Referencias',execTitle:'Resumen ejecutivo',execSub:'IA (Perplexity) · datos JSON ZAP',noSummary:'Configure PERPLEXITY_API_KEY en .env del proyecto.',kpiFindingTypes:'Tipos',kpiInstances:'Instancias',kpiHigh:'Alto',kpiMedium:'Medio',kpiLow:'Bajo',kpiInfo:'Info',widgetFe:'Frontend',widgetApi:'API',widgetUi:'Interfaz',widgetAlerts:'alertas',widgetTop:'Top',lblInst:'inst.',lblUrls:'URLs',lblDesc:'Descripción',lblSolution:'Solución',lblMoreInstances:'Más instancias en JSON',colMethod:'Método',colUri:'URI',colParam:'Parámetro',riskBarTitle:'Severidad (tipos)',riskHigh:'Alto',riskMedium:'Medio',riskLow:'Bajo',riskInfo:'Info',chartFindingsRisk:'Hallazgos por severidad',chartInstancesRisk:'Instancias por severidad',chartCompareScans:'Frontend vs API (tipos)',chartTopFindings:'Top por instancias',chartInstancesScan:'Instancias por escaneo',chartCwe:'CWE',scanFeTitle:'Frontend',scanApiTitle:'API',lblTool:'Herramienta',lblGenerated:'Generado',lblJson:'JSON',scanFeHint:'Baseline contra la aplicación web.',scanApiHint:'Escaneo OpenAPI.',findingTypesTotal:'tipos',instancesTotal:'instancias',insightsZapTitle:'Insights',colScan:'Scan',colMetric:'Métrica',colLevel:'Nivel',colValue:'Valor',refsTitle:'Referencias',cweFullTitle:'CWE',colCwe:'CWE',colInstances:'Instancias',footerTeam:'Applied AI Team — Stefanini',footerNote:'Fuente: JSON ZAP en test-results/security/',phSearch:'Buscar hallazgos…',optAllScans:'Todos',optAllRisk:'Todas severidades',lblFeShort:'Front',lblApiShort:'API'},
+  en:{reportTitle:'OWASP ZAP — Security Dashboard v2',tabExec:'Executive summary',tabOverview:'Overview',tabCharts:'Charts',tabScans:'Scans',tabFindings:'Findings',tabInsights:'ZAP insights',tabRefs:'References',execTitle:'Executive summary',execSub:'AI (Perplexity) · ZAP JSON data',noSummary:'Set PERPLEXITY_API_KEY in project .env.',kpiFindingTypes:'Finding types',kpiInstances:'Instances',kpiHigh:'High',kpiMedium:'Medium',kpiLow:'Low',kpiInfo:'Info',widgetFe:'Frontend',widgetApi:'API',widgetUi:'UI',widgetAlerts:'alerts',widgetTop:'Top',lblInst:'inst.',lblUrls:'URLs',lblDesc:'Description',lblSolution:'Solution',lblMoreInstances:'More instances in JSON',colMethod:'Method',colUri:'URI',colParam:'Param',riskBarTitle:'Severity (finding types)',riskHigh:'High',riskMedium:'Medium',riskLow:'Low',riskInfo:'Info',chartFindingsRisk:'Findings by severity',chartInstancesRisk:'Instances by severity',chartCompareScans:'Frontend vs API (types)',chartTopFindings:'Top by instances',chartInstancesScan:'Instances by scan',chartCwe:'CWE',scanFeTitle:'Frontend scan',scanApiTitle:'API scan',lblTool:'Tool',lblGenerated:'Generated',lblJson:'JSON',scanFeHint:'Baseline against the web app.',scanApiHint:'OpenAPI-driven scan.',findingTypesTotal:'types',instancesTotal:'instances',insightsZapTitle:'ZAP statistics',colScan:'Scan',colMetric:'Metric',colLevel:'Level',colValue:'Value',refsTitle:'Extracted references',cweFullTitle:'CWE counts',colCwe:'CWE',colInstances:'Instances',footerTeam:'Applied AI Team — Stefanini',footerNote:'Source: ZAP JSON in test-results/security/',phSearch:'Search findings…',optAllScans:'All scans',optAllRisk:'All severities',lblFeShort:'Front',lblApiShort:'API'},
+  pt:{reportTitle:'OWASP ZAP — Painel de Segurança v2',tabExec:'Resumo executivo',tabOverview:'Visão geral',tabCharts:'Gráficos',tabScans:'Escaneamentos',tabFindings:'Achados',tabInsights:'Insights ZAP',tabRefs:'Referências',execTitle:'Resumo executivo',execSub:'IA (Perplexity) · dados JSON ZAP',noSummary:'Configure PERPLEXITY_API_KEY no .env.',kpiFindingTypes:'Tipos',kpiInstances:'Instâncias',kpiHigh:'Alto',kpiMedium:'Médio',kpiLow:'Baixo',kpiInfo:'Info',widgetFe:'Frontend',widgetApi:'API',widgetUi:'UI',widgetAlerts:'alertas',widgetTop:'Top',lblInst:'inst.',lblUrls:'URLs',lblDesc:'Descrição',lblSolution:'Solução',lblMoreInstances:'Mais instâncias no JSON',colMethod:'Método',colUri:'URI',colParam:'Parâm.',riskBarTitle:'Severidade (tipos)',riskHigh:'Alto',riskMedium:'Médio',riskLow:'Baixo',riskInfo:'Info',chartFindingsRisk:'Achados por severidade',chartInstancesRisk:'Instâncias por severidade',chartCompareScans:'Front vs API (tipos)',chartTopFindings:'Top por instâncias',chartInstancesScan:'Instâncias por scan',chartCwe:'CWE',scanFeTitle:'Frontend',scanApiTitle:'API',lblTool:'Ferramenta',lblGenerated:'Gerado',lblJson:'JSON',scanFeHint:'Baseline na aplicação web.',scanApiHint:'Scan OpenAPI.',findingTypesTotal:'tipos',instancesTotal:'instâncias',insightsZapTitle:'Insights',colScan:'Scan',colMetric:'Métrica',colLevel:'Nível',colValue:'Valor',refsTitle:'Referências',cweFullTitle:'CWE',colCwe:'CWE',colInstances:'Instâncias',footerTeam:'Applied AI Team — Stefanini',footerNote:'Fonte: JSON ZAP em test-results/security/',phSearch:'Buscar…',optAllScans:'Todos',optAllRisk:'Todas',lblFeShort:'Front',lblApiShort:'API'}
+};
+
+function riskLbl(lang, code) {
+  const t = i18n[lang] || i18n.es;
+  return [t.riskInfo, t.riskLow, t.riskMedium, t.riskHigh][code] || code;
+}
+
+function renderExecutive(lang) {
+  const el = document.getElementById('executive-summary-content');
+  const h = SUMMARY_HTML[lang] || SUMMARY_HTML.en;
+  el.innerHTML = h && h.trim() ? h : '<p class="italic text-slate-400">' + (i18n[lang]?.noSummary||'') + '</p>';
+}
+
+function switchLang(l) {
+  const t = i18n[l] || i18n.es;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (t[k]) el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const k = el.getAttribute('data-i18n-placeholder');
+    if (t[k]) el.placeholder = t[k];
+  });
+  document.documentElement.lang = l;
+  renderExecutive(l);
+  updateAllCharts(l);
+}
+
+function tickC(){return document.documentElement.classList.contains('dark')?'#9ca3af':'#64748b';}
+function gridC(){return document.documentElement.classList.contains('dark')?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';}
+
+window._charts = [];
+function mkChart(id, cfg) {
+  const c = document.getElementById(id);
+  if (!c) return null;
+  const ch = new Chart(c, cfg);
+  window._charts.push(ch);
+  return ch;
+}
+
+function updateAllCharts(lang) {
+  const l = lang || document.getElementById('lang-select').value || 'es';
+  const t = i18n[l] || i18n.es;
+  const R = CHART_DATA.byRiskFindings;
+  const Ri = CHART_DATA.byRiskInstances;
+  const labels = [t.riskInfo, t.riskLow, t.riskMedium, t.riskHigh];
+  const colors = ['#94a3b8','#3b82f6','#f59e0b','#ef4444'];
+
+  window._charts.forEach(ch => ch.destroy());
+  window._charts = [];
+
+  mkChart('c-doughnut-findings', {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: [R[0],R[1],R[2],R[3]], backgroundColor: colors, borderWidth: 0 }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: tickC() } } } }
+  });
+  mkChart('c-doughnut-instances', {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: [Ri[0],Ri[1],Ri[2],Ri[3]], backgroundColor: colors, borderWidth: 0 }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: tickC() } } } }
+  });
+  mkChart('c-bar-compare', {
+    type: 'bar',
+    data: {
+      labels: [t.lblFeShort, t.lblApiShort],
+      datasets: [
+        { label: t.riskHigh, data: [CHART_DATA.feRisk[3], CHART_DATA.apiRisk[3]], backgroundColor: '#ef4444', borderRadius: 4 },
+        { label: t.riskMedium, data: [CHART_DATA.feRisk[2], CHART_DATA.apiRisk[2]], backgroundColor: '#f59e0b', borderRadius: 4 },
+        { label: t.riskLow, data: [CHART_DATA.feRisk[1], CHART_DATA.apiRisk[1]], backgroundColor: '#3b82f6', borderRadius: 4 },
+        { label: t.riskInfo, data: [CHART_DATA.feRisk[0], CHART_DATA.apiRisk[0]], backgroundColor: '#94a3b8', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { color: tickC(), boxWidth: 12 } } },
+      scales: {
+        x: { stacked: true, ticks: { color: tickC() }, grid: { display: false } },
+        y: { stacked: true, ticks: { color: tickC() }, grid: { color: gridC() } }
+      }
+    }
+  });
+  mkChart('c-bar-top', {
+    type: 'bar',
+    data: {
+      labels: CHART_DATA.topLabels,
+      datasets: [{ label: t.colInstances, data: CHART_DATA.topData, backgroundColor: '#6366f1', borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: tickC() }, grid: { color: gridC() } },
+        y: { ticks: { color: tickC(), font: { size: 9 } }, grid: { display: false } }
+      }
+    }
+  });
+  mkChart('c-pie-instances-scan', {
+    type: 'pie',
+    data: {
+      labels: [t.lblFeShort + ' ('+CHART_DATA.feInstances+')', t.lblApiShort + ' ('+CHART_DATA.apiInstances+')'],
+      datasets: [{ data: [CHART_DATA.feInstances, CHART_DATA.apiInstances], backgroundColor: ['#6366f1','#0ea5e9'], borderWidth: 0 }]
+    },
+    options: { plugins: { legend: { position: 'bottom', labels: { color: tickC() } } } }
+  });
+  mkChart('c-bar-cwe', {
+    type: 'bar',
+    data: {
+      labels: CWE_LABELS,
+      datasets: [{ label: t.colInstances, data: CWE_VALUES, backgroundColor: '#8b5cf6', borderRadius: 4 }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: tickC(), maxRotation: 45, minRotation: 45, font: { size: 9 } }, grid: { display: false } },
+        y: { ticks: { color: tickC() }, grid: { color: gridC() } }
+      }
+    }
+  });
+}
+
+(function initSecDash() {
+  const run = () => switchLang(document.getElementById('lang-select').value || 'es');
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+})();
+</script>
+</body>
+</html>

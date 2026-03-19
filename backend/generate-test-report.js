@@ -1,991 +1,899 @@
+#!/usr/bin/env node
+
+/**
+ * Backend Unit Test Report Generator — AURA Style
+ *
+ * Reads TRX + Cobertura XML and produces:
+ *   - test-report.html  (TailwindCSS, i18n ES/EN/PT, Dark/Grey Mode, Perplexity AI Executive Summary)
+ *   - test-report.md    (Markdown summary)
+ *
+ * Environment variables (optional):
+ *   PERPLEXITY_API_KEY  — enables AI executive summary
+ *   PERPLEXITY_MODEL    — model to use (default: sonar)
+ */
+
 const fs = require('fs');
 const path = require('path');
 const xml2js = require('xml2js');
+
+try { require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') }); } catch {}
+try { require('dotenv').config({ path: path.resolve(__dirname, '.env') }); } catch {}
 
 const TRX_PATH = path.join(__dirname, 'TestResults', 'test-results.trx');
 const TEST_RESULTS_DIR = path.join(__dirname, 'TestResults');
 const HTML_REPORT_PATH = path.join(__dirname, 'TestResults', 'test-report.html');
 const MARKDOWN_REPORT_PATH = path.join(__dirname, 'TestResults', 'test-report.md');
 
-// Find coverage file recursively
+// ─── XML Parsing ──────────────────────────────────────────────────────────────
+
 function findCoberturaFile(dir) {
-    const files = fs.readdirSync(dir);
-    
-    for (const file of files) {
-        const fullPath = path.join(dir, file);
-        const stat = fs.statSync(fullPath);
-        
-        if (stat.isDirectory()) {
-            const found = findCoberturaFile(fullPath);
-            if (found) return found;
-        } else if (file === 'coverage.cobertura.xml') {
-            return fullPath;
-        }
+  const files = fs.readdirSync(dir);
+  for (const file of files) {
+    const fullPath = path.join(dir, file);
+    const stat = fs.statSync(fullPath);
+    if (stat.isDirectory()) {
+      const found = findCoberturaFile(fullPath);
+      if (found) return found;
+    } else if (file === 'coverage.cobertura.xml') {
+      return fullPath;
     }
-    
-    return null;
+  }
+  return null;
 }
 
-// Parse TRX file
 async function parseTrxFile() {
-    if (!fs.existsSync(TRX_PATH)) {
-        console.error(`TRX file not found: ${TRX_PATH}`);
-        process.exit(1);
-    }
-
-    const trxContent = fs.readFileSync(TRX_PATH, 'utf-8');
-    const parser = new xml2js.Parser();
-    return await parser.parseStringPromise(trxContent);
+  if (!fs.existsSync(TRX_PATH)) {
+    console.error(`TRX file not found: ${TRX_PATH}`);
+    process.exit(1);
+  }
+  const trxContent = fs.readFileSync(TRX_PATH, 'utf-8');
+  const parser = new xml2js.Parser();
+  return parser.parseStringPromise(trxContent);
 }
 
-// Parse Cobertura file
 async function parseCoberturaFile() {
-    const COBERTURA_PATH = findCoberturaFile(TEST_RESULTS_DIR);
-    
-    if (!COBERTURA_PATH) {
-        console.warn(`Coverage file not found in: ${TEST_RESULTS_DIR}`);
-        return null;
+  const cobPath = findCoberturaFile(TEST_RESULTS_DIR);
+  if (!cobPath) {
+    console.warn(`  Coverage file not found in: ${TEST_RESULTS_DIR}`);
+    return null;
+  }
+  console.log(`  Coverage file found: ${cobPath}`);
+  const content = fs.readFileSync(cobPath, 'utf-8');
+  const parser = new xml2js.Parser();
+  return parser.parseStringPromise(content);
+}
+
+function extractTestInfo(trxData) {
+  const testRun = trxData.TestRun;
+  const results = testRun.Results?.[0]?.UnitTestResult || [];
+  const counters = testRun.ResultSummary?.[0]?.Counters?.[0]?.$;
+  const definitions = testRun.TestDefinitions?.[0]?.UnitTest || [];
+
+  const defsMap = {};
+  definitions.forEach(def => {
+    const id = def.$.id;
+    const method = def.TestMethod?.[0]?.$;
+    defsMap[id] = { className: method?.className || 'Unknown', fullName: (method?.className || '') + '.' + (method?.name || '') };
+  });
+
+  const tests = results.map(test => {
+    const a = test.$;
+    const def = defsMap[a.testId] || {};
+    return {
+      name: a.testName || 'Unknown Test',
+      outcome: a.outcome || 'Unknown',
+      duration: a.duration || '00:00:00',
+      className: def.className,
+      fullName: def.fullName,
+      errorMessage: test.Output?.[0]?.ErrorInfo?.[0]?.Message?.[0] || null,
+      stackTrace: test.Output?.[0]?.ErrorInfo?.[0]?.StackTrace?.[0] || null,
+    };
+  });
+
+  return {
+    total: parseInt(counters?.total || 0),
+    passed: parseInt(counters?.passed || 0),
+    failed: parseInt(counters?.failed || 0),
+    skipped: parseInt(counters?.inconclusive || 0),
+    tests,
+  };
+}
+
+function extractCoverageInfo(coberturaData) {
+  if (!coberturaData) return null;
+  const cov = coberturaData.coverage;
+  const packages = cov.packages?.[0]?.package || [];
+  const lineRate = parseFloat(cov.$['line-rate'] || 0) * 100;
+  const branchRate = parseFloat(cov.$['branch-rate'] || 0) * 100;
+
+  const packageDetails = packages.map(pkg => {
+    const pkgLineRate = parseFloat(pkg.$['line-rate'] || 0) * 100;
+    const pkgBranchRate = parseFloat(pkg.$['branch-rate'] || 0) * 100;
+    const classes = (pkg.classes?.[0]?.class || []).map(cls => {
+      const lines = cls.lines?.[0]?.line || [];
+      const totalLines = lines.length;
+      const coveredLines = lines.filter(l => parseInt(l.$.hits) > 0).length;
+      return {
+        name: cls.$.name || 'Unknown',
+        filename: cls.$.filename || '',
+        lineRate: parseFloat(cls.$['line-rate'] || 0) * 100,
+        branchRate: parseFloat(cls.$['branch-rate'] || 0) * 100,
+        totalLines, coveredLines, uncoveredLines: totalLines - coveredLines,
+      };
+    });
+    return { name: pkg.$.name || 'Unknown', lineRate: pkgLineRate, branchRate: pkgBranchRate, classes };
+  });
+
+  return { lineRate, branchRate, packages: packageDetails };
+}
+
+// ─── Perplexity AI Executive Summary ──────────────────────────────────────────
+
+async function generateExecutiveSummary(testInfo, coverageInfo) {
+  const apiKey = process.env.PERPLEXITY_API_KEY;
+  if (!apiKey || apiKey.startsWith('your_')) {
+    console.log('  PERPLEXITY_API_KEY not set — skipping AI executive summary.');
+    return { en: '', es: '', pt: '' };
+  }
+
+  const model = process.env.PERPLEXITY_MODEL || 'sonar';
+  const passRate = testInfo.total > 0 ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) : '0';
+
+  const testsByClass = {};
+  testInfo.tests.forEach(t => {
+    const cls = t.className || 'Unknown';
+    if (!testsByClass[cls]) testsByClass[cls] = [];
+    testsByClass[cls].push(t);
+  });
+
+  const systemPrompt = `You are a senior QA manager writing executive test summaries for stakeholders.
+Write concise executive summaries (3-5 short paragraphs each), non-technical and business-oriented.
+Include: overall result, key findings, risk assessment, and recommendation.
+Do NOT include code, selectors, stack traces, or low-level technical details.
+Return ONLY valid JSON with this exact schema:
+{"en":"...","es":"...","pt":"..."}
+Where "en" is English, "es" is Spanish, "pt" is Portuguese.
+Use markdown formatting (**bold**, *italic*, bullet points) within each summary.
+Do not add markdown code fences or extra keys.`;
+
+  const classSummary = Object.entries(testsByClass).map(([cls, tests]) => {
+    const p = tests.filter(t => t.outcome === 'Passed').length;
+    const f = tests.filter(t => t.outcome === 'Failed').length;
+    return `  - ${cls}: ${tests.length} tests, ${p} passed, ${f} failed`;
+  }).join('\n');
+
+  const failedTests = testInfo.tests.filter(t => t.outcome === 'Failed')
+    .map(t => `  - [${t.className}] ${t.name}: ${t.errorMessage || 'No message'}`)
+    .join('\n');
+
+  const coverageSummary = coverageInfo
+    ? `\nCode Coverage:\n  Line Coverage: ${coverageInfo.lineRate.toFixed(2)}%\n  Branch Coverage: ${coverageInfo.branchRate.toFixed(2)}%`
+    : '';
+
+  const userPrompt = `Analyze these Backend unit test results and generate an executive summary:
+
+Project: TuCreditoOnline — Backend (.NET 8, xUnit, Clean Architecture)
+Total Tests: ${testInfo.total}
+Passed: ${testInfo.passed}
+Failed: ${testInfo.failed}
+Skipped: ${testInfo.skipped}
+Pass Rate: ${passRate}%
+Date: ${new Date().toISOString()}
+${coverageSummary}
+
+Test Classes:
+${classSummary}
+
+${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`;
+
+  try {
+    console.log(`  Calling Perplexity API (model: ${model})...`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1800,
+        temperature: 0.4,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      console.warn(`  Perplexity API error: ${response.status} ${response.statusText} — ${errText}`);
+      return { en: '', es: '', pt: '' };
     }
 
-    console.log(`   📁 Archivo encontrado: ${COBERTURA_PATH}`);
-    const coberturaContent = fs.readFileSync(COBERTURA_PATH, 'utf-8');
-    const parser = new xml2js.Parser();
-    return await parser.parseStringPromise(coberturaContent);
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content ?? '';
+    console.log(`  AI response received (${data.usage?.total_tokens ?? '?'} tokens).`);
+
+    return parseSummaryJson(content) || { en: content.trim(), es: content.trim(), pt: content.trim() };
+  } catch (err) {
+    console.warn(`  Perplexity API call failed: ${err && err.message ? err.message : String(err)}`);
+    return { en: '', es: '', pt: '' };
+  }
 }
 
-// Extract test info from TRX
-function extractTestInfo(trxData) {
-    const testRun = trxData.TestRun;
-    const results = testRun.Results?.[0]?.UnitTestResult || [];
-    const counters = testRun.ResultSummary?.[0]?.Counters?.[0]?.$;
-    const definitions = testRun.TestDefinitions?.[0]?.UnitTest || [];
-
-    const definitionsMap = {};
-    definitions.forEach(def => {
-        const testId = def.$.id;
-        const testMethod = def.TestMethod?.[0]?.$;
-        definitionsMap[testId] = {
-            className: testMethod?.className || 'Unknown',
-            fullName: testMethod?.className + '.' + (testMethod?.name || 'Unknown')
-        };
-    });
-
-    const tests = results.map(test => {
-        const attrs = test.$;
-        const testId = attrs.testId;
-        const definition = definitionsMap[testId] || {};
-        
-        return {
-            name: attrs.testName || 'Unknown Test',
-            outcome: attrs.outcome || 'Unknown',
-            duration: attrs.duration || '00:00:00',
-            className: definition.className,
-            fullName: definition.fullName,
-            errorMessage: test.Output?.[0]?.ErrorInfo?.[0]?.Message?.[0] || null,
-            stackTrace: test.Output?.[0]?.ErrorInfo?.[0]?.StackTrace?.[0] || null
-        };
-    });
-
-    return {
-        total: parseInt(counters?.total || 0),
-        passed: parseInt(counters?.passed || 0),
-        failed: parseInt(counters?.failed || 0),
-        skipped: parseInt(counters?.inconclusive || 0),
-        tests
-    };
+function parseSummaryJson(raw) {
+  const tryParse = (str) => {
+    try {
+      const p = JSON.parse(str.trim());
+      const en = typeof p.en === 'string' ? p.en.trim() : '';
+      const es = typeof p.es === 'string' ? p.es.trim() : '';
+      const pt = typeof p.pt === 'string' ? p.pt.trim() : '';
+      if (!en && !es && !pt) return null;
+      return { en: en || es || pt, es: es || en || pt, pt: pt || en || es };
+    } catch { return null; }
+  };
+  const direct = tryParse(raw);
+  if (direct) return direct;
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  return fenced?.[1] ? tryParse(fenced[1]) : null;
 }
 
-// Extract coverage info
-function extractCoverageInfo(coberturaData) {
-    if (!coberturaData) return null;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-    const coverage = coberturaData.coverage;
-    const packages = coverage.packages?.[0]?.package || [];
-    
-    const lineRate = parseFloat(coverage.$['line-rate'] || 0) * 100;
-    const branchRate = parseFloat(coverage.$['branch-rate'] || 0) * 100;
-    
-    const packageDetails = packages.map(pkg => {
-        const pkgName = pkg.$.name || 'Unknown';
-        const pkgLineRate = parseFloat(pkg.$['line-rate'] || 0) * 100;
-        const pkgBranchRate = parseFloat(pkg.$['branch-rate'] || 0) * 100;
-        
-        const classes = pkg.classes?.[0]?.class || [];
-        const classDetails = classes.map(cls => {
-            const className = cls.$.name || 'Unknown';
-            const filename = cls.$.filename || '';
-            const clsLineRate = parseFloat(cls.$['line-rate'] || 0) * 100;
-            const clsBranchRate = parseFloat(cls.$['branch-rate'] || 0) * 100;
-            
-            const lines = cls.lines?.[0]?.line || [];
-            const totalLines = lines.length;
-            const coveredLines = lines.filter(l => parseInt(l.$.hits) > 0).length;
-            
-            return {
-                name: className,
-                filename,
-                lineRate: clsLineRate,
-                branchRate: clsBranchRate,
-                totalLines,
-                coveredLines,
-                uncoveredLines: totalLines - coveredLines
-            };
-        });
-        
-        return {
-            name: pkgName,
-            lineRate: pkgLineRate,
-            branchRate: pkgBranchRate,
-            classes: classDetails
-        };
-    });
-    
-    return {
-        lineRate,
-        branchRate,
-        packages: packageDetails
-    };
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
-// Generate rich HTML report
-function generateHtmlReport(testInfo, coverageInfo) {
-    const passRate = testInfo.total > 0 
-        ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) 
-        : 0;
-
-    const testsByClass = {};
-    testInfo.tests.forEach(test => {
-        const className = test.className || 'Unknown';
-        if (!testsByClass[className]) {
-            testsByClass[className] = [];
-        }
-        testsByClass[className].push(test);
-    });
-
-    const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backend Unit Tests Report</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
-            text-align: center;
-        }
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        /* Summary Cards */
-        .summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            padding: 40px;
-            background: #f8f9fa;
-        }
-        .summary-card {
-            background: white;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            text-align: center;
-            border-left: 4px solid #667eea;
-        }
-        .summary-card.passed { border-left-color: #10b981; }
-        .summary-card.failed { border-left-color: #ef4444; }
-        .summary-card.skipped { border-left-color: #f59e0b; }
-        .summary-card .value {
-            font-size: 3em;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        .summary-card .label {
-            font-size: 0.9em;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .summary-card.passed .value { color: #10b981; }
-        .summary-card.failed .value { color: #ef4444; }
-        .summary-card.skipped .value { color: #f59e0b; }
-        
-        /* Charts Section */
-        .charts-section {
-            padding: 40px;
-            background: #f8f9fa;
-            border-top: 1px solid #e5e7eb;
-        }
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 20px;
-        }
-        .chart-card {
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .chart-title {
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .chart-canvas {
-            max-height: 300px;
-        }
-        
-        /* Coverage Tables */
-        .coverage-section {
-            padding: 40px;
-            background: white;
-        }
-        .section-title {
-            font-size: 1.8em;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid #667eea;
-        }
-        .coverage-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .coverage-table thead {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .coverage-table th {
-            padding: 16px;
-            text-align: left;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.85em;
-            letter-spacing: 0.5px;
-        }
-        .coverage-table td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .coverage-table tbody tr:hover {
-            background: #f9fafb;
-        }
-        .coverage-bar-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .coverage-bar {
-            flex: 1;
-            height: 20px;
-            background: #e5e7eb;
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-        .coverage-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-            transition: width 0.5s ease;
-        }
-        .coverage-bar-fill.medium {
-            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
-        }
-        .coverage-bar-fill.low {
-            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
-        }
-        .coverage-percentage {
-            min-width: 50px;
-            text-align: right;
-            font-weight: 600;
-            font-size: 0.9em;
-        }
-        
-        /* Accordion Tests */
-        .tests-section {
-            padding: 40px;
-            background: white;
-            border-top: 1px solid #e5e7eb;
-        }
-        .accordion {
-            margin-bottom: 16px;
-        }
-        .accordion-header {
-            background: #f9fafb;
-            padding: 16px 20px;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: all 0.2s;
-        }
-        .accordion-header:hover {
-            background: #f3f4f6;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .accordion-header.active {
-            background: white;
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-            border-bottom-color: transparent;
-        }
-        .accordion-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-        .accordion-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.85em;
-            transition: transform 0.2s;
-        }
-        .accordion-icon.passed {
-            background: #10b981;
-            color: white;
-        }
-        .accordion-icon.failed {
-            background: #ef4444;
-            color: white;
-        }
-        .accordion-name {
-            font-weight: 600;
-            color: #1f2937;
-        }
-        .accordion-stats {
-            display: flex;
-            gap: 16px;
-            color: #6b7280;
-            font-size: 0.9em;
-        }
-        .accordion-arrow {
-            transition: transform 0.2s;
-        }
-        .accordion-header.active .accordion-arrow {
-            transform: rotate(180deg);
-        }
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-            border: 1px solid #e5e7eb;
-            border-top: none;
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
-        }
-        .accordion-content.show {
-            max-height: 2000px;
-        }
-        .accordion-body {
-            padding: 20px;
-            background: white;
-        }
-        .test-item {
-            background: #f9fafb;
-            margin-bottom: 12px;
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-        }
-        .test-header {
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .test-header:hover {
-            background: #f3f4f6;
-        }
-        .test-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-        .test-status {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.75em;
-        }
-        .test-status.passed {
-            background: #10b981;
-            color: white;
-        }
-        .test-status.failed {
-            background: #ef4444;
-            color: white;
-        }
-        .test-name {
-            font-weight: 500;
-            color: #374151;
-            font-size: 0.9em;
-        }
-        .test-duration {
-            color: #6b7280;
-            font-size: 0.85em;
-            padding: 4px 10px;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
-        }
-        .test-details {
-            padding: 16px;
-            background: white;
-            border-top: 1px solid #e5e7eb;
-            display: none;
-        }
-        .test-item.expanded .test-details {
-            display: block;
-        }
-        .error-message {
-            background: #fef2f2;
-            border-left: 4px solid #ef4444;
-            padding: 16px;
-            border-radius: 4px;
-            margin-bottom: 12px;
-        }
-        .error-title {
-            font-weight: 600;
-            color: #991b1b;
-            margin-bottom: 8px;
-        }
-        .error-content {
-            color: #7f1d1d;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85em;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-        .stack-trace {
-            background: #f3f4f6;
-            border-left: 4px solid #6b7280;
-            padding: 16px;
-            border-radius: 4px;
-        }
-        .stack-trace-title {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 8px;
-        }
-        .stack-trace-content {
-            color: #4b5563;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8em;
-            white-space: pre-wrap;
-            word-break: break-word;
-            overflow-x: auto;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .footer {
-            background: #f8f9fa;
-            padding: 24px;
-            text-align: center;
-            color: #6b7280;
-            font-size: 0.9em;
-            border-top: 1px solid #e5e7eb;
-        }
-        .timestamp {
-            font-weight: 600;
-            color: #374151;
-        }
-        
-        @media (max-width: 768px) {
-            .summary {
-                grid-template-columns: 1fr;
-            }
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-            .header h1 {
-                font-size: 1.8em;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🧪 Backend Unit Tests Report</h1>
-            <p>.NET 8 | xUnit | Moq | FluentAssertions | Coverlet</p>
-        </div>
-
-        <!-- Summary Cards -->
-        <div class="summary">
-            <div class="summary-card">
-                <div class="value">${testInfo.total}</div>
-                <div class="label">Total Tests</div>
-            </div>
-            <div class="summary-card passed">
-                <div class="value">${testInfo.passed}</div>
-                <div class="label">Passed</div>
-            </div>
-            <div class="summary-card failed">
-                <div class="value">${testInfo.failed}</div>
-                <div class="label">Failed</div>
-            </div>
-            <div class="summary-card skipped">
-                <div class="value">${testInfo.skipped}</div>
-                <div class="label">Skipped</div>
-            </div>
-        </div>
-
-        <!-- Charts Section -->
-        <div class="charts-section">
-            <h2 class="section-title">📊 Test Results Overview</h2>
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <h3 class="chart-title">Test Distribution</h3>
-                    <canvas id="testsPieChart" class="chart-canvas"></canvas>
-                </div>
-                ${coverageInfo ? `
-                <div class="chart-card">
-                    <h3 class="chart-title">Code Coverage</h3>
-                    <canvas id="coverageChart" class="chart-canvas"></canvas>
-                </div>
-                ` : ''}
-            </div>
-        </div>
-
-        ${coverageInfo ? generateCoverageSections(coverageInfo) : ''}
-
-        <!-- Tests Section with Accordion -->
-        <div class="tests-section">
-            <h2 class="section-title">📝 Test Details by Class</h2>
-            ${Object.keys(testsByClass).map((className, idx) => {
-                const classTests = testsByClass[className];
-                const classPassed = classTests.filter(t => t.outcome === 'Passed').length;
-                const classFailed = classTests.filter(t => t.outcome === 'Failed').length;
-                const classPassRate = ((classPassed / classTests.length) * 100).toFixed(1);
-                
-                return `
-                <div class="accordion">
-                    <div class="accordion-header" onclick="toggleAccordion(${idx})">
-                        <div class="accordion-title">
-                            <div class="accordion-icon ${classFailed > 0 ? 'failed' : 'passed'}">
-                                ${classFailed > 0 ? '✗' : '✓'}
-                            </div>
-                            <div class="accordion-name">${className}</div>
-                        </div>
-                        <div class="accordion-stats">
-                            <span>✅ ${classPassed}</span>
-                            <span>❌ ${classFailed}</span>
-                            <span>📈 ${classPassRate}%</span>
-                            <span>${classTests.length} tests</span>
-                        </div>
-                        <div class="accordion-arrow">▼</div>
-                    </div>
-                    <div class="accordion-content" id="accordion-${idx}">
-                        <div class="accordion-body">
-                            ${classTests.map((test, testIdx) => `
-                                <div class="test-item ${test.errorMessage ? 'expanded' : ''}" onclick="event.stopPropagation(); this.classList.toggle('expanded')">
-                                    <div class="test-header">
-                                        <div class="test-info">
-                                            <div class="test-status ${test.outcome.toLowerCase()}">
-                                                ${test.outcome === 'Passed' ? '✓' : '✗'}
-                                            </div>
-                                            <div class="test-name">${test.name}</div>
-                                        </div>
-                                        <div class="test-duration">${formatDuration(test.duration)}</div>
-                                    </div>
-                                    ${test.errorMessage || test.stackTrace ? `
-                                        <div class="test-details">
-                                            ${test.errorMessage ? `
-                                                <div class="error-message">
-                                                    <div class="error-title">❌ Error Message</div>
-                                                    <div class="error-content">${escapeHtml(test.errorMessage)}</div>
-                                                </div>
-                                            ` : ''}
-                                            ${test.stackTrace ? `
-                                                <div class="stack-trace">
-                                                    <div class="stack-trace-title">📋 Stack Trace</div>
-                                                    <div class="stack-trace-content">${escapeHtml(test.stackTrace)}</div>
-                                                </div>
-                                            ` : ''}
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-                `;
-            }).join('')}
-        </div>
-
-        <div class="footer">
-            <div class="timestamp">Generated on ${new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'long' })}</div>
-        </div>
-    </div>
-
-    <script>
-        // Toggle accordion
-        function toggleAccordion(index) {
-            const header = document.querySelectorAll('.accordion-header')[index];
-            const content = document.getElementById('accordion-' + index);
-            
-            header.classList.toggle('active');
-            content.classList.toggle('show');
-        }
-
-        // Pie Chart for Tests
-        const testsPieCtx = document.getElementById('testsPieChart');
-        if (testsPieCtx) {
-            new Chart(testsPieCtx, {
-                type: 'pie',
-                data: {
-                    labels: ['Passed', 'Failed', 'Skipped'],
-                    datasets: [{
-                        data: [${testInfo.passed}, ${testInfo.failed}, ${testInfo.skipped}],
-                        backgroundColor: [
-                            'rgba(16, 185, 129, 0.8)',
-                            'rgba(239, 68, 68, 0.8)',
-                            'rgba(245, 158, 11, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgba(16, 185, 129, 1)',
-                            'rgba(239, 68, 68, 1)',
-                            'rgba(245, 158, 11, 1)'
-                        ],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 12,
-                                    weight: '600'
-                                },
-                                padding: 15
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.parsed || 0;
-                                    const total = ${testInfo.total};
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return label + ': ' + value + ' (' + percentage + '%)';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        ${coverageInfo ? `
-        // Coverage Chart
-        const coverageCtx = document.getElementById('coverageChart');
-        if (coverageCtx) {
-            new Chart(coverageCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Line Coverage', 'Branch Coverage', 'Uncovered'],
-                    datasets: [{
-                        data: [${coverageInfo.lineRate.toFixed(2)}, ${coverageInfo.branchRate.toFixed(2)}, ${(100 - (coverageInfo.lineRate + coverageInfo.branchRate) / 2).toFixed(2)}],
-                        backgroundColor: [
-                            'rgba(16, 185, 129, 0.8)',
-                            'rgba(59, 130, 246, 0.8)',
-                            'rgba(156, 163, 175, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgba(16, 185, 129, 1)',
-                            'rgba(59, 130, 246, 1)',
-                            'rgba(156, 163, 175, 1)'
-                        ],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 12,
-                                    weight: '600'
-                                },
-                                padding: 15
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.parsed || 0;
-                                    return label + ': ' + value.toFixed(2) + '%';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        ` : ''}
-    </script>
-</body>
-</html>
-    `.trim();
-
-    return html;
+function mdToHtml(md) {
+  if (!md) return '';
+  return md.split('\n\n').map(block => {
+    block = block.trim();
+    if (!block) return '';
+    if (block.startsWith('### ')) return `<h4 class="text-base font-semibold text-slate-700 dark:text-gray-200 mt-3 mb-1">${esc(block.slice(4))}</h4>`;
+    if (block.startsWith('## '))  return `<h3 class="text-lg font-semibold text-slate-800 dark:text-white mt-3 mb-2">${esc(block.slice(3))}</h3>`;
+    if (block.startsWith('# '))   return `<h2 class="text-xl font-bold text-slate-800 dark:text-white mt-4 mb-2">${esc(block.slice(2))}</h2>`;
+    let h = esc(block);
+    h = h.replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 dark:text-white">$1</strong>');
+    h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    h = h.replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
+    if (h.includes('<li')) h = `<ul class="space-y-1 mb-3">${h}</ul>`;
+    else h = `<p class="mb-3">${h}</p>`;
+    return h;
+  }).join('\n');
 }
 
-function generateCoverageSections(coverageInfo) {
-    return `
-        <!-- Coverage Summary -->
-        <div class="coverage-section">
-            <h2 class="section-title">📈 Coverage Summary</h2>
-            <table class="coverage-table">
-                <thead>
-                    <tr>
-                        <th>Module</th>
-                        <th>Line Coverage</th>
-                        <th>Branch Coverage</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${coverageInfo.packages.map(pkg => `
-                        <tr>
-                            <td><strong>${pkg.name}</strong></td>
-                            <td>
-                                <div class="coverage-bar-container">
-                                    <div class="coverage-bar">
-                                        <div class="coverage-bar-fill ${getCoverageClass(pkg.lineRate)}" style="width: ${pkg.lineRate}%"></div>
-                                    </div>
-                                    <div class="coverage-percentage">${pkg.lineRate.toFixed(2)}%</div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="coverage-bar-container">
-                                    <div class="coverage-bar">
-                                        <div class="coverage-bar-fill ${getCoverageClass(pkg.branchRate)}" style="width: ${pkg.branchRate}%"></div>
-                                    </div>
-                                    <div class="coverage-percentage">${pkg.branchRate.toFixed(2)}%</div>
-                                </div>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Coverage Breakdown by Source File -->
-        <div class="coverage-section">
-            <h2 class="section-title">📄 Coverage Breakdown by Source File</h2>
-            ${coverageInfo.packages.map(pkg => `
-                ${pkg.classes.length > 0 ? `
-                    <h3 style="margin-top: 20px; color: #374151; font-size: 1.2em;">${pkg.name}</h3>
-                    <table class="coverage-table">
-                        <thead>
-                            <tr>
-                                <th>File</th>
-                                <th>Lines</th>
-                                <th>Line Coverage</th>
-                                <th>Branch Coverage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${pkg.classes.map(cls => `
-                                <tr>
-                                    <td><code>${cls.name}</code></td>
-                                    <td>
-                                        <span style="color: #10b981; font-weight: 600;">${cls.coveredLines}</span> / 
-                                        <span style="color: #6b7280;">${cls.totalLines}</span>
-                                    </td>
-                                    <td>
-                                        <div class="coverage-bar-container">
-                                            <div class="coverage-bar">
-                                                <div class="coverage-bar-fill ${getCoverageClass(cls.lineRate)}" style="width: ${cls.lineRate}%"></div>
-                                            </div>
-                                            <div class="coverage-percentage">${cls.lineRate.toFixed(2)}%</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="coverage-bar-container">
-                                            <div class="coverage-bar">
-                                                <div class="coverage-bar-fill ${getCoverageClass(cls.branchRate)}" style="width: ${cls.branchRate}%"></div>
-                                            </div>
-                                            <div class="coverage-percentage">${cls.branchRate.toFixed(2)}%</div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                ` : ''}
-            `).join('')}
-        </div>
-    `;
+function formatDuration(duration) {
+  const parts = duration.split(':');
+  if (parts.length !== 3) return duration;
+  const h = parseInt(parts[0]), m = parseInt(parts[1]), s = parseFloat(parts[2]);
+  if (h > 0) return `${h}h ${m}m ${s.toFixed(2)}s`;
+  if (m > 0) return `${m}m ${s.toFixed(2)}s`;
+  if (s >= 1) return `${s.toFixed(2)}s`;
+  return `${(s * 1000).toFixed(0)}ms`;
 }
 
 function getCoverageClass(rate) {
-    if (rate >= 70) return '';
-    if (rate >= 40) return 'medium';
-    return 'low';
+  if (rate >= 70) return 'bg-emerald-500';
+  if (rate >= 40) return 'bg-amber-500';
+  return 'bg-red-500';
 }
 
-// Generate simplified Markdown summary (without per-test details)
+function getCoverageBadge(rate) {
+  if (rate >= 70) return 'text-emerald-700 dark:text-emerald-400';
+  if (rate >= 40) return 'text-amber-700 dark:text-amber-400';
+  return 'text-red-700 dark:text-red-400';
+}
+
+// ─── HTML Report ──────────────────────────────────────────────────────────────
+
+function generateHtmlReport(testInfo, coverageInfo, summaryByLang) {
+  const passRate = testInfo.total > 0 ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) : '0';
+
+  const summaryHtmlByLang = {
+    en: mdToHtml(summaryByLang.en),
+    es: mdToHtml(summaryByLang.es),
+    pt: mdToHtml(summaryByLang.pt),
+  };
+  const summaryJson = JSON.stringify(summaryHtmlByLang).replace(/<\/script/g, '<\\/script');
+
+  const testsByClass = {};
+  testInfo.tests.forEach(t => {
+    const cls = t.className || 'Unknown';
+    if (!testsByClass[cls]) testsByClass[cls] = [];
+    testsByClass[cls].push(t);
+  });
+  const classEntries = Object.entries(testsByClass);
+
+  const failedTests = testInfo.tests.filter(t => t.outcome === 'Failed');
+
+  return `<!DOCTYPE html>
+<html lang="es" class="">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Backend Unit Test Report — TuCreditoOnline</title>
+<script src="https://cdn.tailwindcss.com"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"><\/script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        aura: {50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4b'},
+        surface: {DEFAULT:'#18181b',card:'#1c1c1f',border:'#27272a'},
+      },
+      fontFamily: {
+        sans: ['-apple-system','BlinkMacSystemFont','Segoe UI','Roboto','sans-serif'],
+        mono: ['Fira Code','Cascadia Code','Consolas','monospace'],
+      },
+    }
+  }
+};
+<\/script>
+<style>
+.tab-btn.active{border-color:#6366f1;color:#6366f1;background:rgba(99,102,241,.08)}
+.dark .tab-btn.active{color:#a5b4fc;background:rgba(99,102,241,.15)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.acc-body.open{max-height:99999px}
+.acc-chevron{transition:transform .2s}.acc-chevron.open{transform:rotate(90deg)}
+.search-input{transition:border-color .2s}
+.search-input:focus{outline:none;border-color:#6366f1}
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-zinc-950 dark:text-zinc-100 min-h-screen font-sans transition-colors duration-300">
+
+<!-- ═══ HEADER ═══ -->
+<header class="bg-gradient-to-r from-aura-600 to-aura-800 dark:from-zinc-900 dark:to-zinc-900 border-b border-aura-700 dark:border-zinc-800 sticky top-0 z-40">
+<div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-lg bg-white/20 dark:bg-aura-600 flex items-center justify-center font-bold text-white text-[10px] tracking-tight">SAI</div>
+    <div>
+      <h1 class="text-lg font-bold text-white leading-tight" data-i18n="reportTitle">Reporte de Pruebas Unitarias — Backend</h1>
+      <p class="text-xs text-white/70">.NET 8 · xUnit · Moq · FluentAssertions · ${new Date().toLocaleDateString('es-ES')}</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="px-3 py-1 rounded-full text-xs font-bold ${testInfo.failed === 0
+      ? 'bg-emerald-500/20 text-emerald-100 border border-emerald-400/50'
+      : 'bg-red-500/20 text-red-100 border border-red-400/50'}">${testInfo.failed === 0 ? 'ALL PASSED' : testInfo.failed + ' FAILED'}</span>
+    <select id="lang-select" onchange="switchLang(this.value)" class="bg-white/10 dark:bg-zinc-800 border border-white/20 dark:border-zinc-700 text-white text-xs rounded-lg px-2 py-1.5 cursor-pointer">
+      <option value="es">🇪🇸 Español</option><option value="en">🇺🇸 English</option><option value="pt">🇧🇷 Português</option>
+    </select>
+    <button onclick="toggleTheme()" id="theme-toggle" class="w-8 h-8 rounded-lg bg-white/10 dark:bg-zinc-800 flex items-center justify-center text-white hover:bg-white/20 dark:hover:bg-zinc-700 transition-colors" title="Toggle Dark/Grey Mode">
+      <i class="bi bi-moon-fill text-sm" id="theme-icon"></i>
+    </button>
+  </div>
+</div>
+</header>
+
+<!-- ═══ TABS ═══ -->
+<nav class="bg-slate-200/60 dark:bg-zinc-900/50 border-b border-slate-300 dark:border-zinc-800 overflow-x-auto">
+<div class="max-w-7xl mx-auto px-4 flex gap-1">
+  <button data-tab="executive" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-aura-500 text-aura-600 bg-aura-500/10 dark:text-aura-300 transition-colors whitespace-nowrap active"><i class="bi bi-file-earmark-text"></i><span data-i18n="tabExecutive">Resumen Ejecutivo</span></button>
+  <button data-tab="overview" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors whitespace-nowrap"><i class="bi bi-graph-up"></i><span data-i18n="tabOverview">Resultados Generales</span></button>
+  <button data-tab="details" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors whitespace-nowrap"><i class="bi bi-list-check"></i><span data-i18n="tabDetails">Detalle de Tests</span></button>
+  ${coverageInfo ? `<button data-tab="coverage" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors whitespace-nowrap"><i class="bi bi-bar-chart-line"></i><span data-i18n="tabCoverage">Cobertura</span></button>` : ''}
+  <button data-tab="errors" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors whitespace-nowrap"><i class="bi bi-exclamation-triangle"></i><span data-i18n="tabErrors">Logs de Error</span></button>
+</div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+<!-- ═══ TAB: EXECUTIVE SUMMARY ═══ -->
+<section id="tab-executive" class="tab-panel active">
+<div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+  <div class="flex items-center gap-3 mb-4">
+    <div class="w-10 h-10 rounded-lg bg-aura-100 dark:bg-aura-600/20 flex items-center justify-center"><i class="bi bi-stars text-aura-600 dark:text-aura-400 text-xl"></i></div>
+    <div>
+      <h2 class="text-xl font-bold text-slate-800 dark:text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2>
+      <p class="text-xs text-slate-500 dark:text-gray-400" data-i18n="executiveSubtitle">Generado con Inteligencia Artificial (Perplexity)</p>
+    </div>
+  </div>
+  <div id="executive-summary-content" class="prose max-w-none text-slate-600 dark:text-slate-300 leading-relaxed">
+    ${summaryHtmlByLang.es || '<p class="text-slate-400 dark:text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidad.</p>'}
+  </div>
+</div>
+</section>
+
+<!-- ═══ TAB: OVERVIEW ═══ -->
+<section id="tab-overview" class="tab-panel">
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="rounded-xl border p-4 bg-aura-50 dark:bg-aura-900/30 border-aura-200 dark:border-aura-800/50">
+      <div class="flex items-center gap-2 mb-2"><i class="bi bi-collection text-aura-600 dark:text-aura-300 text-lg"></i><span class="text-xs font-medium text-aura-700 dark:text-aura-300" data-i18n="kpiTotal">Total</span></div>
+      <p class="text-2xl font-bold text-slate-800 dark:text-white">${testInfo.total}</p>
+    </div>
+    <div class="rounded-xl border p-4 bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800/50">
+      <div class="flex items-center gap-2 mb-2"><i class="bi bi-check-circle-fill text-emerald-600 dark:text-emerald-300 text-lg"></i><span class="text-xs font-medium text-emerald-700 dark:text-emerald-300" data-i18n="kpiPassed">Exitosos</span></div>
+      <p class="text-2xl font-bold text-slate-800 dark:text-white">${testInfo.passed}</p>
+    </div>
+    <div class="rounded-xl border p-4 bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800/50">
+      <div class="flex items-center gap-2 mb-2"><i class="bi bi-x-circle-fill text-red-600 dark:text-red-300 text-lg"></i><span class="text-xs font-medium text-red-700 dark:text-red-300" data-i18n="kpiFailed">Fallidos</span></div>
+      <p class="text-2xl font-bold text-slate-800 dark:text-white">${testInfo.failed}</p>
+    </div>
+    <div class="rounded-xl border p-4 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800/50">
+      <div class="flex items-center gap-2 mb-2"><i class="bi bi-percent text-blue-600 dark:text-blue-300 text-lg"></i><span class="text-xs font-medium text-blue-700 dark:text-blue-300" data-i18n="kpiRate">Tasa de Éxito</span></div>
+      <p class="text-2xl font-bold text-slate-800 dark:text-white">${passRate}%</p>
+    </div>
+    <div class="rounded-xl border p-4 bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800/50">
+      <div class="flex items-center gap-2 mb-2"><i class="bi bi-skip-forward-circle text-amber-600 dark:text-amber-300 text-lg"></i><span class="text-xs font-medium text-amber-700 dark:text-amber-300" data-i18n="kpiSkipped">Omitidos</span></div>
+      <p class="text-2xl font-bold text-slate-800 dark:text-white">${testInfo.skipped}</p>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid md:grid-cols-2 gap-6 mb-6">
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 mb-4" data-i18n="chartDistribution">Distribución de Tests</h3>
+      <div class="flex justify-center"><canvas id="chart-donut" width="280" height="280"></canvas></div>
+    </div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 mb-4" data-i18n="chartClasses">Resultados por Clase</h3>
+      <canvas id="chart-bar" height="280"></canvas>
+    </div>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400" data-i18n="overallProgress">Progreso General</h3>
+      <span class="text-sm font-bold ${parseFloat(passRate) >= 80 ? 'text-emerald-600 dark:text-emerald-400' : parseFloat(passRate) >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}">${passRate}%</span>
+    </div>
+    <div class="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-3 overflow-hidden">
+      <div class="h-full rounded-full transition-all duration-500 ${parseFloat(passRate) >= 80 ? 'bg-emerald-500' : parseFloat(passRate) >= 50 ? 'bg-amber-500' : 'bg-red-500'}" style="width:${passRate}%"></div>
+    </div>
+    <div class="flex justify-between mt-2 text-xs text-slate-400 dark:text-gray-500">
+      <span>${testInfo.passed} <span data-i18n="lblPassed">exitosos</span></span>
+      <span>${testInfo.failed} <span data-i18n="lblFailed">fallidos</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TAB: DETAILS ═══ -->
+<section id="tab-details" class="tab-panel">
+  <div class="space-y-4">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-lg font-bold text-slate-700 dark:text-white"><span data-i18n="testClasses">Clases de Test</span> (${classEntries.length})</h2>
+      <input type="text" id="search-tests" class="search-input bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-slate-700 dark:text-gray-300 w-64" placeholder="Buscar tests..." data-i18n-placeholder="searchTests" oninput="filterTests(this.value)">
+    </div>
+${classEntries.map(([className, tests], idx) => {
+  const classPassed = tests.filter(t => t.outcome === 'Passed').length;
+  const classFailed = tests.filter(t => t.outcome === 'Failed').length;
+  const classRate = ((classPassed / tests.length) * 100).toFixed(1);
+  return `
+    <div class="suite-card bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+      <button onclick="toggleAcc(this)" class="w-full px-5 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg ${classFailed > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30'} flex items-center justify-center">
+            <i class="bi ${classFailed > 0 ? 'bi-x-lg text-red-600 dark:text-red-400' : 'bi-check-lg text-emerald-600 dark:text-emerald-400'} text-lg"></i>
+          </div>
+          <div class="text-left">
+            <p class="text-sm font-semibold text-slate-800 dark:text-white suite-name">${esc(className)}</p>
+            <p class="text-xs text-slate-400 dark:text-gray-500">${tests.length} tests</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">${classPassed} ✓</span>
+          ${classFailed > 0 ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700">${classFailed} ✗</span>` : ''}
+          <span class="text-xs font-mono text-slate-400 dark:text-gray-500">${classRate}%</span>
+          <i class="bi bi-chevron-right acc-chevron text-slate-400 dark:text-gray-500"></i>
+        </div>
+      </button>
+      <div class="acc-body">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colTest">Test</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colStatus">Estado</th>
+            <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colDuration">Duración</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
+${tests.map(t => {
+  const isPassed = t.outcome === 'Passed';
+  return `
+            <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors test-row">
+              <td class="px-4 py-3"><span class="text-slate-700 dark:text-gray-300 test-name-cell">${esc(t.name)}</span></td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold border ${isPassed ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700' : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700'}">${t.outcome.toUpperCase()}</span></td>
+              <td class="px-4 py-3 text-xs text-slate-400 dark:text-gray-500 font-mono">${formatDuration(t.duration)}</td>
+            </tr>
+${t.errorMessage ? `
+            <tr class="bg-red-50 dark:bg-red-950/20">
+              <td colspan="3" class="px-4 py-3">
+                <div class="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 rounded-lg p-3 mb-2">
+                  <p class="text-xs font-semibold text-red-800 dark:text-red-300 mb-1" data-i18n="errorMessage">Error</p>
+                  <p class="text-xs text-red-700 dark:text-red-400 font-mono break-all whitespace-pre-wrap max-h-32 overflow-y-auto">${esc(t.errorMessage)}</p>
+                </div>
+                ${t.stackTrace ? `<details class="mt-2"><summary class="text-xs text-slate-500 dark:text-gray-400 cursor-pointer hover:text-slate-700 dark:hover:text-gray-300" data-i18n="stackTrace">Stack Trace</summary>
+                <pre class="mt-2 text-xs text-slate-500 dark:text-gray-500 font-mono bg-slate-100 dark:bg-zinc-800 rounded-lg p-3 max-h-48 overflow-y-auto whitespace-pre-wrap">${esc(t.stackTrace)}</pre></details>` : ''}
+              </td>
+            </tr>` : ''}`;
+}).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}).join('')}
+  </div>
+</section>
+
+${coverageInfo ? `
+<!-- ═══ TAB: COVERAGE ═══ -->
+<section id="tab-coverage" class="tab-panel">
+  <!-- Coverage KPIs -->
+  <div class="grid grid-cols-2 gap-4 mb-6">
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 mb-3" data-i18n="lineCoverage">Cobertura de Líneas</h3>
+      <div class="flex items-center gap-4">
+        <p class="text-3xl font-bold ${getCoverageBadge(coverageInfo.lineRate)}">${coverageInfo.lineRate.toFixed(2)}%</p>
+        <div class="flex-1">
+          <div class="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-3 overflow-hidden">
+            <div class="h-full rounded-full ${getCoverageClass(coverageInfo.lineRate)}" style="width:${Math.min(coverageInfo.lineRate, 100)}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 mb-3" data-i18n="branchCoverage">Cobertura de Ramas</h3>
+      <div class="flex items-center gap-4">
+        <p class="text-3xl font-bold ${getCoverageBadge(coverageInfo.branchRate)}">${coverageInfo.branchRate.toFixed(2)}%</p>
+        <div class="flex-1">
+          <div class="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-3 overflow-hidden">
+            <div class="h-full rounded-full ${getCoverageClass(coverageInfo.branchRate)}" style="width:${Math.min(coverageInfo.branchRate, 100)}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coverage by Module -->
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-6">
+    <div class="p-4 border-b border-slate-200 dark:border-zinc-800">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 flex items-center gap-2"><i class="bi bi-bar-chart-line"></i><span data-i18n="covByModule">Cobertura por Módulo</span></h3>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colModule">Módulo</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="lineCoverage">Cobertura de Líneas</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="branchCoverage">Cobertura de Ramas</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
+${coverageInfo.packages.map(pkg => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
+          <td class="px-4 py-3 font-medium text-slate-700 dark:text-gray-300">${esc(pkg.name)}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2.5 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(pkg.lineRate)}" style="width:${Math.min(pkg.lineRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(pkg.lineRate)} min-w-[50px] text-right">${pkg.lineRate.toFixed(2)}%</span>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2.5 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(pkg.branchRate)}" style="width:${Math.min(pkg.branchRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(pkg.branchRate)} min-w-[50px] text-right">${pkg.branchRate.toFixed(2)}%</span>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Coverage by File -->
+${coverageInfo.packages.map(pkg => pkg.classes.length > 0 ? `
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-4">
+    <div class="p-4 border-b border-slate-200 dark:border-zinc-800">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 flex items-center gap-2"><i class="bi bi-file-earmark-code"></i> ${esc(pkg.name)}</h3>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colFile">Archivo</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colLines">Líneas</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="lineCoverage">Cobertura de Líneas</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="branchCoverage">Cobertura de Ramas</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
+${pkg.classes.map(cls => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
+          <td class="px-4 py-3"><code class="text-xs text-aura-600 dark:text-aura-400">${esc(cls.name)}</code></td>
+          <td class="px-4 py-3 text-xs"><span class="text-emerald-600 dark:text-emerald-400 font-semibold">${cls.coveredLines}</span><span class="text-slate-400 dark:text-gray-500"> / ${cls.totalLines}</span></td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(cls.lineRate)}" style="width:${Math.min(cls.lineRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(cls.lineRate)} min-w-[50px] text-right">${cls.lineRate.toFixed(2)}%</span>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(cls.branchRate)}" style="width:${Math.min(cls.branchRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(cls.branchRate)} min-w-[50px] text-right">${cls.branchRate.toFixed(2)}%</span>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>` : '').join('')}
+</section>
+` : ''}
+
+<!-- ═══ TAB: ERRORS ═══ -->
+<section id="tab-errors" class="tab-panel">
+${failedTests.length === 0
+  ? `<div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-10 text-center shadow-sm">
+      <i class="bi bi-shield-check text-4xl text-emerald-400 mb-3 block"></i>
+      <p class="text-slate-500 dark:text-gray-500" data-i18n="noErrors">No se registraron errores. ¡Excelente!</p>
+    </div>`
+  : `<div class="space-y-4">
+      <div class="flex items-center gap-2 mb-2">
+        <i class="bi bi-exclamation-triangle text-red-500"></i>
+        <h2 class="text-lg font-bold text-slate-700 dark:text-white"><span data-i18n="errorCount">Tests Fallidos</span> (${failedTests.length})</h2>
+      </div>
+${failedTests.map(t => `
+      <div class="bg-white dark:bg-zinc-900 rounded-xl border border-red-200 dark:border-red-900/50 p-5 shadow-sm">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center"><i class="bi bi-x-lg text-red-600 dark:text-red-400"></i></div>
+          <div>
+            <p class="text-sm font-semibold text-slate-800 dark:text-white">${esc(t.name)}</p>
+            <p class="text-xs text-slate-400 dark:text-gray-500">${esc(t.className)} · ${formatDuration(t.duration)}</p>
+          </div>
+        </div>
+        ${t.errorMessage ? `<div class="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg p-4 mb-3">
+          <p class="text-xs font-semibold text-red-800 dark:text-red-300 mb-1" data-i18n="errorMessage">Error</p>
+          <p class="text-xs text-red-700 dark:text-red-400 font-mono break-all whitespace-pre-wrap max-h-32 overflow-y-auto">${esc(t.errorMessage)}</p>
+        </div>` : ''}
+        ${t.stackTrace ? `<details><summary class="text-xs text-slate-500 dark:text-gray-400 cursor-pointer hover:text-slate-700 dark:hover:text-gray-300" data-i18n="stackTrace">Stack Trace</summary>
+          <pre class="mt-2 text-xs text-slate-500 dark:text-gray-500 font-mono bg-slate-100 dark:bg-zinc-800 rounded-lg p-3 max-h-48 overflow-y-auto whitespace-pre-wrap">${esc(t.stackTrace)}</pre></details>` : ''}
+      </div>`).join('')}
+    </div>`}
+</section>
+
+</main>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="border-t border-slate-200 dark:border-zinc-800 mt-8 py-6 text-center text-xs text-slate-400 dark:text-gray-500">
+  <p class="font-medium text-slate-500 dark:text-gray-400" data-i18n="footerMadeBy">Hecho por Applied AI Team — Stefanini</p>
+  <p class="mt-1"><span data-i18n="generatedAt">Generado</span> ${new Date().toLocaleString('es-ES')}</p>
+</footer>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script>
+const SUMMARY_HTML = ${summaryJson};
+
+// ── Tabs ──
+document.querySelectorAll('.tab-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+  });
+});
+
+// ── Accordion ──
+function toggleAcc(btn) {
+  const body = btn.nextElementSibling;
+  body.classList.toggle('open');
+  btn.querySelector('.acc-chevron').classList.toggle('open');
+}
+
+// ── Theme Toggle ──
+function toggleTheme() {
+  document.documentElement.classList.toggle('dark');
+  const icon = document.getElementById('theme-icon');
+  if (document.documentElement.classList.contains('dark')) {
+    icon.className = 'bi bi-sun-fill text-sm';
+    localStorage.setItem('theme', 'dark');
+  } else {
+    icon.className = 'bi bi-moon-fill text-sm';
+    localStorage.setItem('theme', 'grey');
+  }
+  updateChartColors();
+}
+(function() {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark') {
+    document.documentElement.classList.add('dark');
+    document.getElementById('theme-icon').className = 'bi bi-sun-fill text-sm';
+  }
+})();
+
+// ── Search / Filter ──
+function filterTests(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.suite-card').forEach(card => {
+    const name = card.querySelector('.suite-name')?.textContent?.toLowerCase() || '';
+    const rows = card.querySelectorAll('.test-row');
+    let anyVisible = false;
+    rows.forEach(r => {
+      const txt = r.querySelector('.test-name-cell')?.textContent?.toLowerCase() || '';
+      const show = !q || txt.includes(q) || name.includes(q);
+      r.style.display = show ? '' : 'none';
+      if (show) anyVisible = true;
+    });
+    card.style.display = (!q || anyVisible || name.includes(q)) ? '' : 'none';
+  });
+}
+
+// ── Charts ──
+const isDark = () => document.documentElement.classList.contains('dark');
+const gridColor = () => isDark() ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)';
+const tickColor = () => isDark() ? '#6b7280' : '#94a3b8';
+
+function updateChartColors() {
+  if (window._donutChart) {
+    window._donutChart.options.plugins.legend.labels.color = tickColor();
+    window._donutChart.update();
+  }
+  if (window._barChart) {
+    window._barChart.options.scales.x.ticks.color = tickColor();
+    window._barChart.options.scales.y.ticks.color = tickColor();
+    window._barChart.options.scales.y.grid.color = gridColor();
+    window._barChart.update();
+  }
+}
+
+const donutCtx = document.getElementById('chart-donut');
+if (donutCtx) {
+  window._donutChart = new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Passed', 'Failed', 'Skipped'],
+      datasets: [{
+        data: [${testInfo.passed}, ${testInfo.failed}, ${testInfo.skipped}],
+        backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+        borderWidth: 0, borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: false, cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: tickColor(), padding: 12, font: { size: 11, weight: '600' } } },
+        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' (' + ((ctx.parsed / ${testInfo.total}) * 100).toFixed(1) + '%)' } }
+      }
+    }
+  });
+}
+
+const barCtx = document.getElementById('chart-bar');
+if (barCtx) {
+  const classNames = ${JSON.stringify(classEntries.map(([name]) => name.length > 30 ? '...' + name.slice(-27) : name))};
+  const classPassed = ${JSON.stringify(classEntries.map(([, tests]) => tests.filter(t => t.outcome === 'Passed').length))};
+  const classFailed = ${JSON.stringify(classEntries.map(([, tests]) => tests.filter(t => t.outcome === 'Failed').length))};
+  window._barChart = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: classNames,
+      datasets: [
+        { label: 'Passed', data: classPassed, backgroundColor: '#10b981', borderRadius: 4, barThickness: 20 },
+        { label: 'Failed', data: classFailed, backgroundColor: '#ef4444', borderRadius: 4, barThickness: 20 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { color: tickColor(), font: { size: 11 } } } },
+      scales: {
+        x: { stacked: true, ticks: { color: tickColor(), font: { size: 9 } }, grid: { display: false } },
+        y: { stacked: true, ticks: { color: tickColor() }, grid: { color: gridColor() } }
+      }
+    }
+  });
+}
+
+// ── i18n ──
+const i18n = {
+es:{reportTitle:'Reporte de Pruebas Unitarias — Backend',tabExecutive:'Resumen Ejecutivo',tabOverview:'Resultados Generales',tabDetails:'Detalle de Tests',tabCoverage:'Cobertura',tabErrors:'Logs de Error',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Generado con Inteligencia Artificial (Perplexity)',noSummary:'Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidad.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiSkipped:'Omitidos',chartDistribution:'Distribución de Tests',chartClasses:'Resultados por Clase',overallProgress:'Progreso General',lblPassed:'exitosos',lblFailed:'fallidos',testClasses:'Clases de Test',searchTests:'Buscar tests...',colTest:'Test',colStatus:'Estado',colDuration:'Duración',colModule:'Módulo',colFile:'Archivo',colLines:'Líneas',lineCoverage:'Cobertura de Líneas',branchCoverage:'Cobertura de Ramas',covByModule:'Cobertura por Módulo',noErrors:'No se registraron errores. ¡Excelente!',errorCount:'Tests Fallidos',errorMessage:'Error',stackTrace:'Stack Trace',footerMadeBy:'Hecho por Applied AI Team — Stefanini',generatedAt:'Generado'},
+en:{reportTitle:'Unit Test Report — Backend',tabExecutive:'Executive Summary',tabOverview:'Overall Results',tabDetails:'Test Details',tabCoverage:'Coverage',tabErrors:'Error Logs',executiveTitle:'Executive Summary',executiveSubtitle:'AI-Generated Analysis (Perplexity)',noSummary:'Executive summary not available. Set PERPLEXITY_API_KEY to enable this feature.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Pass Rate',kpiSkipped:'Skipped',chartDistribution:'Test Distribution',chartClasses:'Results by Class',overallProgress:'Overall Progress',lblPassed:'passed',lblFailed:'failed',testClasses:'Test Classes',searchTests:'Search tests...',colTest:'Test',colStatus:'Status',colDuration:'Duration',colModule:'Module',colFile:'File',colLines:'Lines',lineCoverage:'Line Coverage',branchCoverage:'Branch Coverage',covByModule:'Coverage by Module',noErrors:'No errors recorded. Excellent!',errorCount:'Failed Tests',errorMessage:'Error',stackTrace:'Stack Trace',footerMadeBy:'Made by Applied AI Team — Stefanini',generatedAt:'Generated'},
+pt:{reportTitle:'Relatório de Testes Unitários — Backend',tabExecutive:'Resumo Executivo',tabOverview:'Resultados Gerais',tabDetails:'Detalhes dos Testes',tabCoverage:'Cobertura',tabErrors:'Logs de Erro',executiveTitle:'Resumo Executivo',executiveSubtitle:'Gerado com Inteligência Artificial (Perplexity)',noSummary:'Resumo executivo não disponível. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidade.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiSkipped:'Omitidos',chartDistribution:'Distribuição de Testes',chartClasses:'Resultados por Classe',overallProgress:'Progresso Geral',lblPassed:'aprovados',lblFailed:'falhos',testClasses:'Classes de Teste',searchTests:'Buscar testes...',colTest:'Teste',colStatus:'Status',colDuration:'Duração',colModule:'Módulo',colFile:'Arquivo',colLines:'Linhas',lineCoverage:'Cobertura de Linhas',branchCoverage:'Cobertura de Branches',covByModule:'Cobertura por Módulo',noErrors:'Nenhum erro registrado. Excelente!',errorCount:'Testes com Falha',errorMessage:'Erro',stackTrace:'Stack Trace',footerMadeBy:'Feito por Applied AI Team — Stefanini',generatedAt:'Gerado'}
+};
+
+function renderExecutiveSummary(lang) {
+  const container = document.getElementById('executive-summary-content');
+  if (!container) return;
+  const html = SUMMARY_HTML[lang] || SUMMARY_HTML.en || '';
+  if (html && html.trim()) {
+    container.innerHTML = html;
+  } else {
+    const t = i18n[lang] || i18n.es;
+    container.innerHTML = '<p class="text-slate-400 dark:text-gray-500 italic">' + (t.noSummary || 'Summary unavailable') + '</p>';
+  }
+}
+
+function switchLang(l) {
+  const t = i18n[l] || i18n.es;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (t[k]) el.textContent = t[k];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const k = el.getAttribute('data-i18n-placeholder');
+    if (t[k]) el.placeholder = t[k];
+  });
+  document.documentElement.lang = l;
+  renderExecutiveSummary(l);
+}
+switchLang(document.getElementById('lang-select')?.value || 'es');
+<\/script>
+</body>
+</html>`;
+}
+
+// ─── Markdown Report ──────────────────────────────────────────────────────────
+
 function generateMarkdownReport(testInfo, coverageInfo) {
-    const passRate = testInfo.total > 0 
-        ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) 
-        : 0;
+  const passRate = testInfo.total > 0 ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) : '0';
+  let md = `## Backend Unit Tests (.NET 8 / xUnit) Summary\n\n`;
+  md += `| Metric | Value |\n|--------|-------|\n`;
+  md += `| **Total Tests** | ${testInfo.total} |\n`;
+  md += `| **Passed** | ${testInfo.passed} |\n`;
+  md += `| **Failed** | ${testInfo.failed} |\n`;
+  md += `| **Skipped** | ${testInfo.skipped} |\n`;
+  md += `| **Pass Rate** | ${passRate}% |\n\n`;
 
-    let markdown = `## 📊 Test Summary\n\n`;
-    markdown += `| Metric | Value |\n`;
-    markdown += `|--------|-------|\n`;
-    markdown += `| **Total Tests** | ${testInfo.total} |\n`;
-    markdown += `| **✅ Passed** | ${testInfo.passed} |\n`;
-    markdown += `| **❌ Failed** | ${testInfo.failed} |\n`;
-    markdown += `| **⚪ Skipped** | ${testInfo.skipped} |\n`;
-    markdown += `| **📈 Pass Rate** | ${passRate}% |\n\n`;
+  if (coverageInfo) {
+    md += `## Coverage Summary\n\n`;
+    md += `| Module | Line Coverage | Branch Coverage |\n`;
+    md += `|--------|---------------|----------------|\n`;
+    coverageInfo.packages.forEach(pkg => {
+      md += `| **${pkg.name}** | ${pkg.lineRate.toFixed(2)}% | ${pkg.branchRate.toFixed(2)}% |\n`;
+    });
+    md += `\n`;
+  }
 
-    if (coverageInfo) {
-        markdown += `## 📈 Coverage Summary\n\n`;
-        markdown += `| Module | Line Coverage | Branch Coverage |\n`;
-        markdown += `|--------|---------------|----------------|\n`;
-        coverageInfo.packages.forEach(pkg => {
-            markdown += `| **${pkg.name}** | ${pkg.lineRate.toFixed(2)}% | ${pkg.branchRate.toFixed(2)}% |\n`;
-        });
-        markdown += `\n`;
-    }
-
-    markdown += `> Download artifact **backend-unit-test-results** for the complete report with per-test details.\n`;
-
-    return markdown;
+  md += `> Download artifact **backend-unit-test-results** for the complete report with per-test details.\n`;
+  return md;
 }
 
-// Helpers
-function formatDuration(duration) {
-    const parts = duration.split(':');
-    if (parts.length !== 3) return duration;
-    
-    const hours = parseInt(parts[0]);
-    const minutes = parseInt(parts[1]);
-    const seconds = parseFloat(parts[2]);
-    
-    if (hours > 0) return `${hours}h ${minutes}m ${seconds.toFixed(2)}s`;
-    if (minutes > 0) return `${minutes}m ${seconds.toFixed(2)}s`;
-    if (seconds >= 1) return `${seconds.toFixed(2)}s`;
-    return `${(seconds * 1000).toFixed(0)}ms`;
-}
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
-function escapeHtml(text) {
-    if (!text) return '';
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-// Main
 async function main() {
-    try {
-        console.log('Parsing TRX file...');
-        const trxData = await parseTrxFile();
-        
-        console.log('Extracting test information...');
-        const testInfo = extractTestInfo(trxData);
-        
-        console.log('Parsing coverage file...');
-        const coberturaData = await parseCoberturaFile();
-        const coverageInfo = extractCoverageInfo(coberturaData);
-        
-        console.log('\nTest summary:');
-        console.log(`   Total: ${testInfo.total}`);
-        console.log(`   Passed: ${testInfo.passed}`);
-        console.log(`   Failed: ${testInfo.failed}`);
-        console.log(`   Skipped: ${testInfo.skipped}`);
-        
-        if (coverageInfo) {
-            console.log('\nCode coverage:');
-            console.log(`   Lines: ${coverageInfo.lineRate.toFixed(2)}%`);
-            console.log(`   Branches: ${coverageInfo.branchRate.toFixed(2)}%`);
-        }
-        
-        console.log('\nGenerating HTML report...');
-        const htmlReport = generateHtmlReport(testInfo, coverageInfo);
-        fs.writeFileSync(HTML_REPORT_PATH, htmlReport, 'utf-8');
-        console.log(`   HTML generated: ${HTML_REPORT_PATH}`);
-        
-        console.log('\nGenerating Markdown report...');
-        const markdownReport = generateMarkdownReport(testInfo, coverageInfo);
-        fs.writeFileSync(MARKDOWN_REPORT_PATH, markdownReport, 'utf-8');
-        console.log(`   Markdown generated: ${MARKDOWN_REPORT_PATH}`);
-        
-        console.log('\nReports generated successfully.\n');
-        
-        process.exit(testInfo.failed > 0 ? 1 : 0);
-    } catch (error) {
-        console.error('Failed to generate reports:', error);
-        process.exit(1);
+  try {
+    console.log('Generating backend unit test report...\n');
+
+    console.log('Parsing TRX file...');
+    const trxData = await parseTrxFile();
+
+    console.log('Extracting test information...');
+    const testInfo = extractTestInfo(trxData);
+
+    console.log('Parsing coverage file...');
+    const coberturaData = await parseCoberturaFile();
+    const coverageInfo = extractCoverageInfo(coberturaData);
+
+    console.log(`\nStats: Total=${testInfo.total}, Passed=${testInfo.passed}, Failed=${testInfo.failed}, Skipped=${testInfo.skipped}`);
+    if (coverageInfo) {
+      console.log(`Coverage: Lines=${coverageInfo.lineRate.toFixed(2)}%, Branches=${coverageInfo.branchRate.toFixed(2)}%`);
     }
+
+    console.log('\nGenerating AI executive summary...');
+    const summaryByLang = await generateExecutiveSummary(testInfo, coverageInfo);
+
+    console.log('\nGenerating HTML report...');
+    const htmlReport = generateHtmlReport(testInfo, coverageInfo, summaryByLang);
+    fs.writeFileSync(HTML_REPORT_PATH, htmlReport, 'utf-8');
+    console.log(`  HTML report: ${HTML_REPORT_PATH}`);
+
+    console.log('\nGenerating Markdown report...');
+    const markdownReport = generateMarkdownReport(testInfo, coverageInfo);
+    fs.writeFileSync(MARKDOWN_REPORT_PATH, markdownReport, 'utf-8');
+    console.log(`  Markdown report: ${MARKDOWN_REPORT_PATH}`);
+
+    console.log('\nReports generated successfully.\n');
+    process.exit(testInfo.failed > 0 ? 1 : 0);
+  } catch (error) {
+    console.error('Failed to generate reports:', error);
+    process.exit(1);
+  }
 }
 
 main();

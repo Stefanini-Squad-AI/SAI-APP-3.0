@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="23" failures="0" errors="0" time="22.032">
+  <testsuite name="useCreditCalculator" errors="0" failures="0" skipped="0" timestamp="2026-03-19T18:24:08" time="5.14" tests="11">
+    <testcase classname="useCreditCalculator should initialize with default values" name="useCreditCalculator should initialize with default values" time="0.098">
+    </testcase>
+    <testcase classname="useCreditCalculator should calculate monthly payment correctly using French amortization formula" name="useCreditCalculator should calculate monthly payment correctly using French amortization formula" time="0.077">
+    </testcase>
+    <testcase classname="useCreditCalculator should calculate correct monthly payment for 100,000 at 18% for 3 years" name="useCreditCalculator should calculate correct monthly payment for 100,000 at 18% for 3 years" time="0.078">
+    </testcase>
+    <testcase classname="useCreditCalculator should calculate correct total payment and interest" name="useCreditCalculator should calculate correct total payment and interest" time="0.077">
+    </testcase>
+    <testcase classname="useCreditCalculator should calculate max financing based on 35% of monthly income" name="useCreditCalculator should calculate max financing based on 35% of monthly income" time="0.078">
+    </testcase>
+    <testcase classname="useCreditCalculator should respect credit type max amount limit" name="useCreditCalculator should respect credit type max amount limit" time="0.077">
+    </testcase>
+    <testcase classname="useCreditCalculator should use correct interest rate from credit type" name="useCreditCalculator should use correct interest rate from credit type" time="0.077">
+    </testcase>
+    <testcase classname="useCreditCalculator should handle zero interest rate edge case" name="useCreditCalculator should handle zero interest rate edge case" time="0.078">
+    </testcase>
+    <testcase classname="useCreditCalculator should recalculate when term changes" name="useCreditCalculator should recalculate when term changes" time="0.079">
+    </testcase>
+    <testcase classname="useCreditCalculator should ensure monthly payment is a positive number" name="useCreditCalculator should ensure monthly payment is a positive number" time="0.078">
+    </testcase>
+    <testcase classname="useCreditCalculator should handle loading state correctly" name="useCreditCalculator should handle loading state correctly" time="0.076">
+    </testcase>
+  </testsuite>
+  <testsuite name="CreditRequestWizard - Form Validations" errors="0" failures="0" skipped="0" timestamp="2026-03-19T18:24:08" time="11.814" tests="12">
+    <testcase classname="CreditRequestWizard - Form Validations should render the wizard with initial step (personal data)" name="CreditRequestWizard - Form Validations should render the wizard with initial step (personal data)" time="0.047">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should show error when fullName is empty" name="CreditRequestWizard - Form Validations should show error when fullName is empty" time="0.068">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should show error when email is empty" name="CreditRequestWizard - Form Validations should show error when email is empty" time="0.194">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should validate email format" name="CreditRequestWizard - Form Validations should validate email format" time="0.426">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should show error when phone is empty" name="CreditRequestWizard - Form Validations should show error when phone is empty" time="0.654">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should advance to step 2 when personal data is valid" name="CreditRequestWizard - Form Validations should advance to step 2 when personal data is valid" time="1.135">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should validate positive monthly salary" name="CreditRequestWizard - Form Validations should validate positive monthly salary" time="1.207">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should call onClose when clicking cancel and user confirms" name="CreditRequestWizard - Form Validations should call onClose when clicking cancel and user confirms" time="0.077">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should not call onClose when clicking cancel if user cancels confirmation" name="CreditRequestWizard - Form Validations should not call onClose when clicking cancel if user cancels confirmation" time="0.015">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should allow navigation back to previous step" name="CreditRequestWizard - Form Validations should allow navigation back to previous step" time="1.151">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should submit form successfully when all data is valid" name="CreditRequestWizard - Form Validations should submit form successfully when all data is valid" time="1.194">
+    </testcase>
+    <testcase classname="CreditRequestWizard - Form Validations should handle submission error" name="CreditRequestWizard - Form Validations should handle submission error" time="1.148">
+    </testcase>
+  </testsuite>
+</testsuites>

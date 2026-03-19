@@ -8,10 +8,8 @@
  *   this.page        — Raw Playwright page (escape hatch)
  *   this.factory     — BrowserFactory (browser lifecycle)
  */
-// dotenv v17+ auto-loads .env before execution — no manual call needed for cucumber-js.
-// Manual load kept only as safety net for ts-node direct execution.
-import 'dotenv/config';
-
+import { config as dotenvConfig } from 'dotenv';
+import { resolve } from 'path';
 import { setWorldConstructor, World, IWorldOptions } from '@cucumber/cucumber';
 import type { Page } from 'playwright';
 import { IntentBuilder } from '../../core/intent/IntentBuilder';
@@ -22,6 +20,10 @@ import { BrowserFactory } from '../../core/engine/BrowserFactory';
 import { WebActions } from '../../core/engine/WebActions';
 import { AuraReportCollector } from '../../core/reporting/AuraReportCollector';
 import type { IntentResult } from '../../types/index';
+
+const ROOT_ENV = resolve(__dirname, '..', '..', '..', '..', '..', '..', '.env');
+dotenvConfig({ path: ROOT_ENV });
+dotenvConfig();
 
 export interface AuraWorldInterface {
   page:       Page;

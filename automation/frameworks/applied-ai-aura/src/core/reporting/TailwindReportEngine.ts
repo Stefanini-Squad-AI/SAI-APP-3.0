@@ -18,6 +18,7 @@ import type {
   ReportSummary,
   ScenarioResult,
   StepResult,
+  StepId,
   TestStatus,
 } from '../../types/index';
 import { ChangelogRegistry } from '../changelog/ChangelogRegistry';
@@ -148,7 +149,7 @@ export class TailwindReportEngine {
         .find((e) => e.mime_type.startsWith('image/'))?.data;
 
       return {
-        id: `step-${idx}` as Parameters<typeof String>[0] & { readonly __brand: 'StepId' },
+        id: `step-${idx}` as StepId,
         text: step.text,
         status,
         durationMs,
@@ -712,6 +713,11 @@ interface CucumberFeature {
 
 // CLI: ts-node src/core/reporting/TailwindReportEngine.ts
 if (require.main === module) {
+  const { config: dotenvConfig } = require('dotenv');
+  const rootEnv = path.resolve(__dirname, '..', '..', '..', '..', '..', '..', '.env');
+  dotenvConfig({ path: rootEnv });
+  dotenvConfig();
+
   const input  = process.env['AURA_REPORT_INPUT']  ?? 'reports/cucumber-report.json';
   const output = process.env['AURA_REPORT_OUTPUT'] ?? 'reports';
   const title  = process.env['AURA_REPORT_TITLE']  ?? 'SAI Test Report';

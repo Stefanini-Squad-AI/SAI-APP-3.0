@@ -144,10 +144,30 @@ A `.env` file with safe local defaults is included. Edit it as needed.
 │       ├── pages/        Public pages + admin panel
 │       ├── services/     Axios API clients (with demo fallbacks)
 │       └── utils/        JWT decoder, secure storage, input sanitizer
+├── scripts/          Report generators (e.g. ZAP Tailwind dashboard v2)
 ├── .env
 ├── .gitignore
 └── docker-compose.yml
 ```
+
+---
+
+## Security reports — OWASP ZAP (Tailwind dashboard v2)
+
+After running ZAP scans (CI or locally), raw reports are written under `test-results/security/` (`zap-frontend-report.json`, `zap-api-report.html`, etc.).
+
+Generate the **homologated interactive dashboard** (TailwindCSS, Dark/Grey mode, i18n ES/EN/PT, Chart.js widgets, executive summary via **Perplexity** from the root `.env`):
+
+```bash
+node scripts/generate-security-tailwind-report.cjs
+```
+
+Output:
+
+- `test-results/security/tailwind-dashboard/security-dashboard.html` — self-contained style aligned with unit/functional (AURA) reports  
+- `test-results/security/tailwind-dashboard/security-dashboard.md` — short executive markdown  
+
+Requires `PERPLEXITY_API_KEY` (and optionally `PERPLEXITY_MODEL`) in the project `.env` for the AI summary.
 
 ---
 
