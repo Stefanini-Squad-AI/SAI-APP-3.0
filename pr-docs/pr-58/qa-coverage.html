@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QA and Coverage - SAI APP 3.0</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 18px 42px; }
+    .back { display: inline-block; margin-bottom: 14px; color: #1d4ed8; text-decoration: none; font-weight: 600; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .lang { display: flex; align-items: center; gap: 8px; color: #475569; font-size: 0.95rem; font-weight: 600; }
+    .lang select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; background: #fff; color: #0f172a; font-weight: 600; }
+    .hero { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff; padding: 22px; border-radius: 14px; margin-bottom: 16px; }
+    .hero h1 { margin: 0 0 8px; }
+    .hero p { margin: 0; opacity: 0.95; line-height: 1.5; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .card h2 { margin: 0 0 10px; font-size: 1.05rem; }
+    ul { margin: 0; padding-left: 20px; }
+    li { line-height: 1.5; color: #374151; margin: 4px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; font-size: 0.95rem; vertical-align: top; }
+    th { background: #f1f5f9; }
+    code { background: #eef2ff; padding: 2px 6px; border-radius: 6px; }
+    .muted { color: #64748b; font-size: 0.92rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <a class="back" href="./index.html" data-i18n="back"><- Back to docs hub</a>
+      <div class="lang">
+        <label for="lang-select" data-i18n="langLabel">Language:</label>
+        <select id="lang-select">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="pt">Português</option>
+        </select>
+      </div>
+    </div>
+
+    <section class="hero">
+      <h1 data-i18n="title">QA and Test Coverage</h1>
+      <p data-i18n="subtitle">Current quality gates, automated test stages, and where to read coverage and execution reports in local and CI environments.</p>
+    </section>
+
+    <section class="card">
+      <h2>QA strategy overview</h2>
+      <ul>
+        <li>CI entrypoint: <code>.github/workflows/ci-pipeline.yml</code>.</li>
+        <li>Pipeline includes static quality analysis, unit tests, integration tests, security scans, and functional tests.</li>
+        <li>Most test jobs are configured with <code>continue-on-error: true</code> so the dashboard always collects evidence and artifacts for review.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Unit test coverage scope</h2>
+      <table>
+        <thead><tr><th>Layer</th><th>Current unit test scope</th><th>Coverage output</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>backend</code></td>
+            <td>
+              Unit tests are filtered using <code>FullyQualifiedName~.UnitTests.</code> and currently focus on service-level scenarios in <code>TuCreditoOnline.Tests/UnitTests/Services</code>.
+            </td>
+            <td>
+              Coverage is collected in Cobertura format and transformed into HTML via ReportGenerator.
+            </td>
+          </tr>
+          <tr>
+            <td><code>frontend</code></td>
+            <td>
+              Jest + React Testing Library tests under <code>frontend/src/**/__tests__</code>, currently including wizard flow and credit calculator hooks.
+            </td>
+            <td>
+              Jest coverage is generated with <code>--coverage</code> and exported as part of the unit test job artifacts/reports.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>How to run tests locally</h2>
+      <table>
+        <thead><tr><th>Target</th><th>Command</th></tr></thead>
+        <tbody>
+          <tr><td>Frontend unit tests</td><td><code>cd frontend && npm test</code></td></tr>
+          <tr><td>Frontend coverage</td><td><code>cd frontend && npm run test:coverage</code></td></tr>
+          <tr><td>Backend unit tests</td><td><code>cd backend && dotnet test tests/TuCreditoOnline.Tests/TuCreditoOnline.Tests.csproj --filter "FullyQualifiedName~.UnitTests."</code></td></tr>
+          <tr><td>Backend integration tests</td><td><code>cd backend && dotnet test TuCreditoOnline.sln --filter "FullyQualifiedName~.IntegrationTests."</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>CI report outputs</h2>
+      <ul>
+        <li><code>backend-unit-test-report</code>: backend unit summary, detailed HTML report, and coverage report files.</li>
+        <li><code>frontend-unit-test-report</code>: frontend unit summary and detailed HTML report generated from Jest JUnit results.</li>
+        <li><code>integration-test-report</code>: integration execution logs and TRX output.</li>
+        <li><code>security-test-report</code>: OWASP ZAP baseline and API scan outputs.</li>
+        <li><code>functional-report</code>: Applied AI Aura functional evidence and report artifacts.</li>
+      </ul>
+      <p class="muted">The CI dashboard comment on each pull request links to live report previews (Surge) when publishing succeeds; otherwise, artifacts remain the source of truth.</p>
+    </section>
+
+    <section class="card">
+      <h2>Coverage interpretation notes</h2>
+      <ul>
+        <li>Coverage is measured and published, but there is currently no hard repository-level minimum threshold configured in CI.</li>
+        <li>Backend coverage focuses on line and branch coverage from Cobertura exports.</li>
+        <li>Frontend unit reports emphasize pass/fail and suite trends; raw Jest coverage output remains available in pipeline artifacts.</li>
+        <li>Quality gate checks for backend and frontend are provided through SonarQube when project access tokens are correctly configured.</li>
+      </ul>
+    </section>
+  </div>
+  <script>
+    const i18n = {
+      en: {
+        back: "<- Back to docs hub",
+        langLabel: "Language:",
+        title: "QA and Test Coverage",
+        subtitle: "Current quality gates, automated test stages, and where to read coverage and execution reports in local and CI environments.",
+      },
+      es: {
+        back: "<- Volver al hub de documentación",
+        langLabel: "Idioma:",
+        title: "QA y Cobertura de Pruebas",
+        subtitle: "Compuertas de calidad actuales, etapas automáticas de prueba y dónde consultar reportes de cobertura y ejecución en local y CI.",
+      },
+      pt: {
+        back: "<- Voltar para o hub de documentação",
+        langLabel: "Idioma:",
+        title: "QA e Cobertura de Testes",
+        subtitle: "Gates de qualidade atuais, etapas automatizadas de testes e onde consultar relatórios de cobertura e execução em ambientes locais e CI.",
+      }
+    };
+    const select = document.getElementById("lang-select");
+    const key = "docs-hub-lang";
+    const supported = new Set(["en", "es", "pt"]);
+    const saved = localStorage.getItem(key);
+    const browserLang = (navigator.language || "en").slice(0, 2);
+    let initial = "en";
+    if (supported.has(saved)) {
+      initial = saved;
+    } else if (supported.has(browserLang)) {
+      initial = browserLang;
+    }
+    select.value = initial;
+    function applyLang(lang) {
+      const dict = i18n[lang] || i18n.en;
+      document.documentElement.lang = lang;
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const token = el.dataset.i18n;
+        if (dict[token]) el.innerHTML = dict[token];
+      });
+      localStorage.setItem(key, lang);
+    }
+    select.addEventListener("change", (e) => applyLang(e.target.value));
+    applyLang(initial);
+  </script>
+</body>
+</html>
