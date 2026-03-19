@@ -323,162 +323,180 @@ const normalizePath = (url = '') => {
   return clean.startsWith('/') ? clean : `/${clean}`;
 };
 
+const handleUserRoutes = (config, method, path, data, params) => {
+  if (method === 'get' && path === '/users') {
+    const page = Number(params.page || 1);
+    const pageSize = Number(params.pageSize || 10);
+    const search = String(params.search || '').toLowerCase().trim();
+    const filtered = search
+      ? mockDb.users.filter((u) => u.email.toLowerCase().includes(search) || u.fullName.toLowerCase().includes(search))
+      : mockDb.users;
+    const start = (page - 1) * pageSize;
+    return mockResponse(config, { users: filtered.slice(start, start + pageSize), totalCount: filtered.length, page, pageSize });
+  }
+  if (method === 'get' && path.startsWith('/users/')) {
+    const userId = path.split('/')[2];
+    const user = mockDb.users.find((u) => u.id === userId) || null;
+    return mockResponse(config, user, user ? 200 : 404);
+  }
+  if (method === 'post' && path === '/users/change-password') return mockResponse(config, true);
+  if (method === 'post' && path === '/users') {
+    const user = { id: id('u'), ...data, isActive: data.isActive ?? true, createdAt: nowIso(), lastLogin: null };
+    mockDb.users.unshift(user);
+    return mockResponse(config, user, 201);
+  }
+  if (method === 'put' && path.startsWith('/users/')) {
+    const userId = path.split('/')[2];
+    const idx = mockDb.users.findIndex((u) => u.id === userId);
+    if (idx >= 0) mockDb.users[idx] = { ...mockDb.users[idx], ...data };
+    return mockResponse(config, mockDb.users[idx] || null);
+  }
+  if (method === 'delete' && path.startsWith('/users/')) {
+    const userId = path.split('/')[2];
+    mockDb.users = mockDb.users.filter((u) => u.id !== userId);
+    return mockResponse(config, true);
+  }
+  return null;
+};
+
+const handleCreditRequestRoutes = (config, method, path, data) => {
+  if (method === 'get' && path === '/creditrequests') return mockResponse(config, mockDb.creditRequests);
+  if (method === 'get' && path.startsWith('/creditrequests/')) {
+    const reqId = path.split('/')[2];
+    const req = mockDb.creditRequests.find((r) => r.id === reqId) || null;
+    return mockResponse(config, req, req ? 200 : 404);
+  }
+  if (method === 'post' && path === '/creditrequests') {
+    const item = { id: id('cr'), ...data, requestDate: nowIso(), status: 'Pending' };
+    mockDb.creditRequests.unshift(item);
+    return mockResponse(config, item, 201);
+  }
+  if (method === 'post' && /\/creditrequests\/[^/]+\/approve$/i.test(path)) {
+    const reqId = path.split('/')[2];
+    mockDb.creditRequests = mockDb.creditRequests.map((r) => (r.id === reqId ? { ...r, status: 'Approved' } : r));
+    return mockResponse(config, true);
+  }
+  if (method === 'post' && /\/creditrequests\/[^/]+\/reject$/i.test(path)) {
+    const reqId = path.split('/')[2];
+    mockDb.creditRequests = mockDb.creditRequests.map((r) => (r.id === reqId ? { ...r, status: 'Rejected' } : r));
+    return mockResponse(config, true);
+  }
+  return null;
+};
+
+const handleContactMessageRoutes = (config, method, path, data, params) => {
+  if (method === 'get' && path === '/contactmessages') {
+    const status = params.status;
+    const list = status === undefined || status === null
+      ? mockDb.contactMessages
+      : mockDb.contactMessages.filter((m) => Number(m.status) === Number(status));
+    return mockResponse(config, list);
+  }
+  if (method === 'get' && path.startsWith('/contactmessages/')) {
+    const msgId = path.split('/')[2];
+    const msg = mockDb.contactMessages.find((m) => m.id === msgId) || null;
+    return mockResponse(config, msg, msg ? 200 : 404);
+  }
+  if (method === 'post' && path === '/contactmessages') {
+    const msg = { id: id('msg'), ...data, status: 0, createdAt: nowIso() };
+    mockDb.contactMessages.unshift(msg);
+    return mockResponse(config, msg, 201);
+  }
+  if (method === 'patch' && /\/contactmessages\/[^/]+\/status$/i.test(path)) {
+    const msgId = path.split('/')[2];
+    mockDb.contactMessages = mockDb.contactMessages.map((m) => (m.id === msgId ? { ...m, status: data.status, adminNotes: data.adminNotes || '' } : m));
+    return mockResponse(config, true);
+  }
+  if (method === 'delete' && path.startsWith('/contactmessages/')) {
+    const msgId = path.split('/')[2];
+    mockDb.contactMessages = mockDb.contactMessages.filter((m) => m.id !== msgId);
+    return mockResponse(config, true);
+  }
+  return null;
+};
+
+const handleServiceRoutes = (config, method, path, data) => {
+  if (method === 'get' && path === '/services') return mockResponse(config, mockDb.services);
+  if (method === 'get' && path.startsWith('/services/')) {
+    const svcId = path.split('/')[2];
+    const svc = mockDb.services.find((s) => s.id === svcId) || null;
+    return mockResponse(config, svc, svc ? 200 : 404);
+  }
+  if (method === 'post' && path === '/services') {
+    const svc = { id: id('svc'), ...data, isActive: data.isActive ?? true };
+    mockDb.services.push(svc);
+    return mockResponse(config, svc, 201);
+  }
+  if (method === 'put' && path.startsWith('/services/')) {
+    const svcId = path.split('/')[2];
+    mockDb.services = mockDb.services.map((s) => (s.id === svcId ? { ...s, ...data } : s));
+    return mockResponse(config, true);
+  }
+  if (method === 'delete' && path.startsWith('/services/')) {
+    const svcId = path.split('/')[2];
+    mockDb.services = mockDb.services.filter((s) => s.id !== svcId);
+    return mockResponse(config, true);
+  }
+  return null;
+};
+
+const handleCreditTypeRoutes = (config, method, path, data) => {
+  if (method === 'get' && path === '/credittypes') return mockResponse(config, mockDb.creditTypes);
+  if (method === 'get' && path.startsWith('/credittypes/')) {
+    const ctId = path.split('/')[2];
+    const ct = mockDb.creditTypes.find((c) => c.id === ctId) || null;
+    return mockResponse(config, ct, ct ? 200 : 404);
+  }
+  if (method === 'post' && path === '/credittypes') {
+    const ct = { id: id('ct'), ...data, isActive: data.isActive ?? true };
+    mockDb.creditTypes.push(ct);
+    return mockResponse(config, ct, 201);
+  }
+  if (method === 'put' && path.startsWith('/credittypes/')) {
+    const ctId = path.split('/')[2];
+    mockDb.creditTypes = mockDb.creditTypes.map((c) => (c.id === ctId ? { ...c, ...data } : c));
+    return mockResponse(config, true);
+  }
+  if (method === 'delete' && path.startsWith('/credittypes/')) {
+    const ctId = path.split('/')[2];
+    mockDb.creditTypes = mockDb.creditTypes.filter((c) => c.id !== ctId);
+    return mockResponse(config, true);
+  }
+  return null;
+};
+
 const attachMockAdapter = (config) => {
   config.adapter = async () => {
     const method = (config.method || 'get').toLowerCase();
     const path = normalizePath(config.url);
     const data = typeof config.data === 'string'
-      ? (() => {
-        try { return JSON.parse(config.data || '{}'); } catch { return {}; }
-      })()
+      ? (() => { try { return JSON.parse(config.data || '{}'); } catch { return {}; } })()
       : (config.data || {});
     const params = config.params || {};
 
     if (method === 'get' && path === '/dashboard/stats') return mockResponse(config, buildDashboardStats());
     if (method === 'get' && path === '/dashboard/status-distribution') return mockResponse(config, buildStatusDistribution());
 
-    if (method === 'get' && path === '/users') {
-      const page = Number(params.page || 1);
-      const pageSize = Number(params.pageSize || 10);
-      const search = String(params.search || '').toLowerCase().trim();
-      const filtered = search
-        ? mockDb.users.filter((u) => u.email.toLowerCase().includes(search) || u.fullName.toLowerCase().includes(search))
-        : mockDb.users;
-      const start = (page - 1) * pageSize;
-      return mockResponse(config, {
-        users: filtered.slice(start, start + pageSize),
-        totalCount: filtered.length,
-        page,
-        pageSize
-      });
-    }
-    if (method === 'get' && path.startsWith('/users/')) {
-      const userId = path.split('/')[2];
-      const user = mockDb.users.find((u) => u.id === userId) || null;
-      return mockResponse(config, user, user ? 200 : 404);
-    }
-    if (method === 'post' && path === '/users') {
-      const user = { id: id('u'), ...data, isActive: data.isActive ?? true, createdAt: nowIso(), lastLogin: null };
-      mockDb.users.unshift(user);
-      return mockResponse(config, user, 201);
-    }
-    if (method === 'put' && path.startsWith('/users/')) {
-      const userId = path.split('/')[2];
-      const idx = mockDb.users.findIndex((u) => u.id === userId);
-      if (idx >= 0) mockDb.users[idx] = { ...mockDb.users[idx], ...data };
-      return mockResponse(config, mockDb.users[idx] || null);
-    }
-    if (method === 'delete' && path.startsWith('/users/')) {
-      const userId = path.split('/')[2];
-      mockDb.users = mockDb.users.filter((u) => u.id !== userId);
-      return mockResponse(config, true);
-    }
-    if (method === 'post' && path === '/users/change-password') return mockResponse(config, true);
+    const userResult = handleUserRoutes(config, method, path, data, params);
+    if (userResult) return userResult;
 
-    if (method === 'get' && path === '/creditrequests') return mockResponse(config, mockDb.creditRequests);
-    if (method === 'get' && path.startsWith('/creditrequests/')) {
-      const reqId = path.split('/')[2];
-      const req = mockDb.creditRequests.find((r) => r.id === reqId) || null;
-      return mockResponse(config, req, req ? 200 : 404);
-    }
-    if (method === 'post' && path === '/creditrequests') {
-      const item = { id: id('cr'), ...data, requestDate: nowIso(), status: 'Pending' };
-      mockDb.creditRequests.unshift(item);
-      return mockResponse(config, item, 201);
-    }
-    if (method === 'post' && /\/creditrequests\/[^/]+\/approve$/i.test(path)) {
-      const reqId = path.split('/')[2];
-      mockDb.creditRequests = mockDb.creditRequests.map((r) => (r.id === reqId ? { ...r, status: 'Approved' } : r));
-      return mockResponse(config, true);
-    }
-    if (method === 'post' && /\/creditrequests\/[^/]+\/reject$/i.test(path)) {
-      const reqId = path.split('/')[2];
-      mockDb.creditRequests = mockDb.creditRequests.map((r) => (r.id === reqId ? { ...r, status: 'Rejected' } : r));
-      return mockResponse(config, true);
-    }
+    const crResult = handleCreditRequestRoutes(config, method, path, data);
+    if (crResult) return crResult;
 
-    if (method === 'get' && path === '/contactmessages') {
-      const status = params.status;
-      const list = status === undefined || status === null
-        ? mockDb.contactMessages
-        : mockDb.contactMessages.filter((m) => Number(m.status) === Number(status));
-      return mockResponse(config, list);
-    }
-    if (method === 'get' && path.startsWith('/contactmessages/')) {
-      const msgId = path.split('/')[2];
-      const msg = mockDb.contactMessages.find((m) => m.id === msgId) || null;
-      return mockResponse(config, msg, msg ? 200 : 404);
-    }
-    if (method === 'post' && path === '/contactmessages') {
-      const msg = { id: id('msg'), ...data, status: 0, createdAt: nowIso() };
-      mockDb.contactMessages.unshift(msg);
-      return mockResponse(config, msg, 201);
-    }
-    if (method === 'patch' && /\/contactmessages\/[^/]+\/status$/i.test(path)) {
-      const msgId = path.split('/')[2];
-      mockDb.contactMessages = mockDb.contactMessages.map((m) => (m.id === msgId ? { ...m, status: data.status, adminNotes: data.adminNotes || '' } : m));
-      return mockResponse(config, true);
-    }
-    if (method === 'delete' && path.startsWith('/contactmessages/')) {
-      const msgId = path.split('/')[2];
-      mockDb.contactMessages = mockDb.contactMessages.filter((m) => m.id !== msgId);
-      return mockResponse(config, true);
-    }
+    const msgResult = handleContactMessageRoutes(config, method, path, data, params);
+    if (msgResult) return msgResult;
 
-    if (method === 'get' && path === '/services') return mockResponse(config, mockDb.services);
-    if (method === 'get' && path.startsWith('/services/')) {
-      const svcId = path.split('/')[2];
-      const svc = mockDb.services.find((s) => s.id === svcId) || null;
-      return mockResponse(config, svc, svc ? 200 : 404);
-    }
-    if (method === 'post' && path === '/services') {
-      const svc = { id: id('svc'), ...data, isActive: data.isActive ?? true };
-      mockDb.services.push(svc);
-      return mockResponse(config, svc, 201);
-    }
-    if (method === 'put' && path.startsWith('/services/')) {
-      const svcId = path.split('/')[2];
-      mockDb.services = mockDb.services.map((s) => (s.id === svcId ? { ...s, ...data } : s));
-      return mockResponse(config, true);
-    }
-    if (method === 'delete' && path.startsWith('/services/')) {
-      const svcId = path.split('/')[2];
-      mockDb.services = mockDb.services.filter((s) => s.id !== svcId);
-      return mockResponse(config, true);
-    }
+    const svcResult = handleServiceRoutes(config, method, path, data);
+    if (svcResult) return svcResult;
 
-    if (method === 'get' && path === '/credittypes') return mockResponse(config, mockDb.creditTypes);
-    if (method === 'get' && path.startsWith('/credittypes/')) {
-      const ctId = path.split('/')[2];
-      const ct = mockDb.creditTypes.find((c) => c.id === ctId) || null;
-      return mockResponse(config, ct, ct ? 200 : 404);
-    }
-    if (method === 'post' && path === '/credittypes') {
-      const ct = { id: id('ct'), ...data, isActive: data.isActive ?? true };
-      mockDb.creditTypes.push(ct);
-      return mockResponse(config, ct, 201);
-    }
-    if (method === 'put' && path.startsWith('/credittypes/')) {
-      const ctId = path.split('/')[2];
-      mockDb.creditTypes = mockDb.creditTypes.map((c) => (c.id === ctId ? { ...c, ...data } : c));
-      return mockResponse(config, true);
-    }
-    if (method === 'delete' && path.startsWith('/credittypes/')) {
-      const ctId = path.split('/')[2];
-      mockDb.creditTypes = mockDb.creditTypes.filter((c) => c.id !== ctId);
-      return mockResponse(config, true);
-    }
+    const ctResult = handleCreditTypeRoutes(config, method, path, data);
+    if (ctResult) return ctResult;
 
     if (method === 'get' && path === '/health') return mockResponse(config, { status: 'Healthy' });
     if (method === 'get' && path === '/backup/generate') {
       const filename = `backup-mock-${new Date().toISOString().slice(0, 10)}.zip`;
       const payload = `Mock backup generated at ${new Date().toISOString()}`;
-      return mockResponse(
-        config,
-        payload,
-        200,
-        { 'content-disposition': `attachment; filename="${filename}"` }
-      );
+      return mockResponse(config, payload, 200, { 'content-disposition': `attachment; filename="${filename}"` });
     }
     if (method === 'get' && path === '/backup/status') return mockResponse(config, { isAvailable: false, mode: 'mock' });
 

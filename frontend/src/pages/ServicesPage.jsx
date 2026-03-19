@@ -96,29 +96,21 @@ const ServicesPage = () => {
     ];
   };
 
-  return (
-    <div className="py-16">
-      {/* Hero */}
-      <section className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">{t('servicesPage.heroTitle')}</h1>
-          <p className="text-xl text-primary-100 max-w-3xl mx-auto">
-            {t('servicesPage.heroSubtitle')}
-          </p>
-        </div>
-      </section>
-
-      {/* Services Grid */}
-      <section className="container mx-auto px-4 py-16">
-        {error ? (
-          <div className="text-center py-20">
-            <p className="text-xl text-gray-600">{t('servicesPage.noServicesDesc')}</p>
-          </div>
-        ) : loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-primary-500"></div>
-          </div>
-        ) : creditTypes.length > 0 ? (
+  let gridContent;
+  if (error) {
+    gridContent = (
+      <div className="text-center py-20">
+        <p className="text-xl text-gray-600">{t('servicesPage.noServicesDesc')}</p>
+      </div>
+    );
+  } else if (loading) {
+    gridContent = (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-primary-500"></div>
+      </div>
+    );
+  } else if (creditTypes.length > 0) {
+    gridContent = (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {creditTypes.map((creditType) => (
               <div key={creditType.id} className="bg-white rounded-xl shadow-soft hover:shadow-medium transition">
@@ -186,17 +178,36 @@ const ServicesPage = () => {
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-20">
-            <svg className="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="text-2xl font-semibold text-gray-700 mb-2">{t('servicesPage.noServices')}</h3>
-            <p className="text-gray-600">
-              {t('servicesPage.noServicesDesc')}
-            </p>
-          </div>
-        )}
+    );
+  } else {
+    gridContent = (
+      <div className="text-center py-20">
+        <svg className="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 className="text-2xl font-semibold text-gray-700 mb-2">{t('servicesPage.noServices')}</h3>
+        <p className="text-gray-600">
+          {t('servicesPage.noServicesDesc')}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-16">
+      {/* Hero */}
+      <section className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-5xl font-bold mb-6">{t('servicesPage.heroTitle')}</h1>
+          <p className="text-xl text-primary-100 max-w-3xl mx-auto">
+            {t('servicesPage.heroSubtitle')}
+          </p>
+        </div>
+      </section>
+
+      {/* Services Grid */}
+      <section className="container mx-auto px-4 py-16">
+        {gridContent}
       </section>
 
       {/* CTA Section */}

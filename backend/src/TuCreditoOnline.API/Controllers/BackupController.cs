@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TuCreditoOnline.Application.DTOs;
 using TuCreditoOnline.Infrastructure.Services;
 
 namespace TuCreditoOnline.API.Controllers;
@@ -86,14 +87,14 @@ public class BackupController : ControllerBase
     /// Get backup status and information
     /// </summary>
     [HttpGet("status")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BackupStatusDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult GetBackupStatus()
     {
         try
         {
             var backupPath = Path.Combine(Path.GetTempPath(), "mongodb_backups");
-            var files = Directory.Exists(backupPath) 
+            var files = Directory.Exists(backupPath)
                 ? Directory.GetFiles(backupPath, "backup_*.zip")
                 : Array.Empty<string>();
 
@@ -101,19 +102,19 @@ public class BackupController : ControllerBase
                 .Select(f => new FileInfo(f))
                 .OrderByDescending(f => f.CreationTimeUtc)
                 .Take(10)
-                .Select(f => new
+                .Select(f => new BackupFileDto
                 {
-                    fileName = f.Name,
-                    size = f.Length,
-                    createdAt = f.CreationTimeUtc,
-                    sizeFormatted = FormatBytes(f.Length)
+                    FileName = f.Name,
+                    Size = f.Length,
+                    CreatedAt = f.CreationTimeUtc,
+                    SizeFormatted = FormatBytes(f.Length)
                 })
                 .ToList();
 
-            return Ok(new
+            return Ok(new BackupStatusDto
             {
-                totalBackups = backups.Count,
-                backups = backups
+                TotalBackups = backups.Count,
+                Backups = backups
             });
         }
         catch (Exception ex)
