@@ -133,6 +133,15 @@ const Footer = () => {
             <h3 className="font-semibold mb-4 text-lg">{t('footer.legal')}</h3>
             <ul className="space-y-2">
               <li>
+                <Link
+                  to="/legal"
+                  className="text-gray-400 hover:text-white transition"
+                  data-testid="footer-link-legal-information"
+                >
+                  {t('footer.legalInformation')}
+                </Link>
+              </li>
+              <li>
                 <Link to="/privacy" className="text-gray-400 hover:text-white transition">
                   {t('footer.privacyPolicy')}
                 </Link>
@@ -143,9 +152,9 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="/terms" className="text-gray-400 hover:text-white transition">
+                <Link to="/legal" className="text-gray-400 hover:text-white transition">
                   {t('footer.legalNotice')}
-                </a>
+                </Link>
               </li>
               <li>
                 <Link to="/admin/login" className="text-gray-400 hover:text-white transition">
