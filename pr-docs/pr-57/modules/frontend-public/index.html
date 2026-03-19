@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module - Frontend Public</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 18px 40px; }
+    .head { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border-radius: 14px; padding: 24px; margin-bottom: 18px; }
+    .head p { color: rgba(255, 255, 255, 0.94); margin: 0; line-height: 1.55; }
+    .head h1 { margin: 0 0 8px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    .back { display: inline-block; color: #1d4ed8; text-decoration: none; font-weight: 600; }
+    .lang { display: flex; align-items: center; gap: 8px; color: #475569; font-size: 0.95rem; font-weight: 600; }
+    .lang select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; background: #fff; color: #0f172a; font-weight: 600; }
+    .card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    h2 { margin: 0 0 10px; font-size: 1.12rem; }
+    p, li { line-height: 1.55; color: #374151; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; font-size: 0.92rem; vertical-align: top; }
+    th { background: #f1f5f9; }
+    code { background: #eef2ff; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <a class="back" href="../../index.html" data-i18n="back"><- Back to docs hub</a>
+      <div class="lang">
+        <label for="lang-select" data-i18n="langLabel">Language:</label>
+        <select id="lang-select">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="pt">Português</option>
+        </select>
+      </div>
+    </div>
+
+    <section class="head">
+      <h1 data-i18n="title">frontend-public</h1>
+      <p data-i18n="subtitle">
+        Public customer-facing experience for content browsing, credit simulation,
+        form submission, and multilingual information pages.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="techFoundation">Technical foundation</h2>
+      <ul>
+        <li data-i18n="tech1">Framework: React 18 + Vite SPA with route-based pages.</li>
+        <li data-i18n="tech2">Routing: <code>react-router-dom</code> routes defined in <code>frontend/src/App.jsx</code>.</li>
+        <li data-i18n="tech3">Localization: i18next with <code>en</code>, <code>es</code>, and <code>pt</code> strings shared across pages.</li>
+        <li data-i18n="tech4">Backend integration through service clients in <code>frontend/src/services</code>, with demo fallbacks for static preview deployments.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="routeMap">Public route map (source of truth)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thPath">Path</th>
+            <th data-i18n="thView">View</th>
+            <th data-i18n="thAuth">Auth</th>
+            <th data-i18n="thSource">Main source file</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>/</code></td><td data-i18n="vHome">Home</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/HomePage.jsx</code></td></tr>
+          <tr><td><code>/services</code></td><td data-i18n="vServices">Services</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/ServicesPage.jsx</code></td></tr>
+          <tr><td><code>/about</code></td><td data-i18n="vAbout">About</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/AboutPage.jsx</code></td></tr>
+          <tr><td><code>/faq</code></td><td data-i18n="vFaq">FAQ</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/FAQPage.jsx</code></td></tr>
+          <tr><td><code>/contact</code></td><td data-i18n="vContact">Contact</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/ContactPage.jsx</code></td></tr>
+          <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
+          <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
+          <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="catalogTitle">Detailed page catalog (what each page has and what it does)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thPath">Path</th>
+            <th data-i18n="thPurpose">Primary purpose</th>
+            <th data-i18n="thContains">What the page contains</th>
+            <th data-i18n="thActions">Main user actions</th>
+            <th data-i18n="thApi">Main API calls</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>/</code></td>
+            <td data-i18n="rHomePurpose">Present brand value and convert visitors into simulation and contact flows.</td>
+            <td data-i18n="rHomeContains">Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.</td>
+            <td data-i18n="rHomeActions">Navigate to calculator/services pages, explore highlighted product cards, change language from global selector.</td>
+            <td><code>GET /api/credittypes?isActive=true</code></td>
+          </tr>
+          <tr>
+            <td><code>/services</code></td>
+            <td data-i18n="rServicesPurpose">Explain available credit products and route user to simulation/contact next step.</td>
+            <td data-i18n="rServicesContains">Credit type cards with amount, term, base rate, feature list, requirements, and CTA to calculator or contact advisor.</td>
+            <td data-i18n="rServicesActions">Review products, compare limits/rates, open calculator flow, contact advisor.</td>
+            <td><code>GET /api/credittypes?isActive=true</code></td>
+          </tr>
+          <tr>
+            <td><code>/calculator</code></td>
+            <td data-i18n="rCalcPurpose">Estimate installment and financing terms before submitting a formal request.</td>
+            <td data-i18n="rCalcContains">Input controls (type, purpose, income, amount, term), computed result cards, breakdown panel, and request wizard trigger.</td>
+            <td data-i18n="rCalcActions">Adjust simulation variables, compare payment outcomes, open request wizard to send application.</td>
+            <td><code>GET /api/credittypes?isActive=true</code>, <code>POST /api/creditrequests</code></td>
+          </tr>
+          <tr>
+            <td><code>/about</code></td>
+            <td data-i18n="rAboutPurpose">Build trust through company background and differentiators.</td>
+            <td data-i18n="rAboutContains">Company story section, six value/benefit cards, and CTA to calculator.</td>
+            <td data-i18n="rAboutActions">Read institutional narrative, evaluate trust signals, continue to credit simulation.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
+            <td><code>/faq</code></td>
+            <td data-i18n="rFaqPurpose">Resolve common doubts without contacting support.</td>
+            <td data-i18n="rFaqContains">Accordion by category (general, requirements, amounts, process) and support CTA block.</td>
+            <td data-i18n="rFaqActions">Expand/collapse answers, jump to contact page, call support phone.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
+            <td><code>/contact</code></td>
+            <td data-i18n="rContactPurpose">Capture customer inquiries and open support channel.</td>
+            <td data-i18n="rContactContains">Validated contact form, contact information cards, support links, embedded map, and office details.</td>
+            <td data-i18n="rContactActions">Submit inquiry, trigger success/error feedback, call or WhatsApp support options.</td>
+            <td><code>POST /api/contactmessages</code></td>
+          </tr>
+          <tr>
+            <td><code>/privacy</code></td>
+            <td data-i18n="rPrivacyPurpose">Disclose data handling and user privacy rights.</td>
+            <td data-i18n="rPrivacyContains">Five policy sections with update date, plus contact and back-home links.</td>
+            <td data-i18n="rPrivacyActions">Read legal clauses and navigate to contact/home pages.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
+            <td><code>/terms</code></td>
+            <td data-i18n="rTermsPurpose">Describe contract and usage conditions for platform services.</td>
+            <td data-i18n="rTermsContains">Five terms sections with update date, plus contact and back-home links.</td>
+            <td data-i18n="rTermsActions">Review legal obligations, then navigate to contact/home pages.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
+            <td><code>*</code></td>
+            <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
+            <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
+            <td data-i18n="r404Actions">Return safely to root route.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <script>
+    const i18n = {
+      en: {
+        back: "<- Back to docs hub",
+        langLabel: "Language:",
+        title: "frontend-public",
+        subtitle: "Public customer-facing experience for content browsing, credit simulation, form submission, and multilingual information pages.",
+        techFoundation: "Technical foundation",
+        tech1: "Framework: React 18 + Vite SPA with route-based pages.",
+        tech2: "Routing: <code>react-router-dom</code> routes defined in <code>frontend/src/App.jsx</code>.",
+        tech3: "Localization: i18next with <code>en</code>, <code>es</code>, and <code>pt</code> strings shared across pages.",
+        tech4: "Backend integration through service clients in <code>frontend/src/services</code>, with demo fallbacks for static preview deployments.",
+        routeMap: "Public route map (source of truth)",
+        catalogTitle: "Detailed page catalog (what each page has and what it does)",
+        thPath: "Path",
+        thView: "View",
+        thAuth: "Auth",
+        thSource: "Main source file",
+        thPurpose: "Primary purpose",
+        thContains: "What the page contains",
+        thActions: "Main user actions",
+        thApi: "Main API calls",
+        vHome: "Home",
+        vServices: "Services",
+        vAbout: "About",
+        vFaq: "FAQ",
+        vContact: "Contact",
+        vCalculator: "Calculator",
+        vPrivacy: "Privacy Policy",
+        vTerms: "Terms and Conditions",
+        vNotFound: "Not found",
+        rHomePurpose: "Present brand value and convert visitors into simulation and contact flows.",
+        rHomeContains: "Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.",
+        rHomeActions: "Navigate to calculator/services pages, explore highlighted product cards, change language from global selector.",
+        rServicesPurpose: "Explain available credit products and route user to simulation/contact next step.",
+        rServicesContains: "Credit type cards with amount, term, base rate, feature list, requirements, and CTA to calculator or contact advisor.",
+        rServicesActions: "Review products, compare limits/rates, open calculator flow, contact advisor.",
+        rCalcPurpose: "Estimate installment and financing terms before submitting a formal request.",
+        rCalcContains: "Input controls (type, purpose, income, amount, term), computed result cards, breakdown panel, and request wizard trigger.",
+        rCalcActions: "Adjust simulation variables, compare payment outcomes, open request wizard to send application.",
+        rAboutPurpose: "Build trust through company background and differentiators.",
+        rAboutContains: "Company story section, six value/benefit cards, and CTA to calculator.",
+        rAboutActions: "Read institutional narrative, evaluate trust signals, continue to credit simulation.",
+        rFaqPurpose: "Resolve common doubts without contacting support.",
+        rFaqContains: "Accordion by category (general, requirements, amounts, process) and support CTA block.",
+        rFaqActions: "Expand/collapse answers, jump to contact page, call support phone.",
+        rContactPurpose: "Capture customer inquiries and open support channel.",
+        rContactContains: "Validated contact form, contact information cards, support links, embedded map, and office details.",
+        rContactActions: "Submit inquiry, trigger success/error feedback, call or WhatsApp support options.",
+        rPrivacyPurpose: "Disclose data handling and user privacy rights.",
+        rPrivacyContains: "Five policy sections with update date, plus contact and back-home links.",
+        rPrivacyActions: "Read legal clauses and navigate to contact/home pages.",
+        rTermsPurpose: "Describe contract and usage conditions for platform services.",
+        rTermsContains: "Five terms sections with update date, plus contact and back-home links.",
+        rTermsActions: "Review legal obligations, then navigate to contact/home pages.",
+        r404Purpose: "Handle unknown URLs and recover navigation.",
+        r404Contains: "404 code, explanatory text, and CTA back to home.",
+        r404Actions: "Return safely to root route.",
+        noApi: "No backend calls.",
+        authYes: "Yes",
+        authNo: "No"
+      },
+      es: {
+        back: "<- Volver al hub de documentación",
+        langLabel: "Idioma:",
+        title: "frontend-public",
+        subtitle: "Experiencia pública para clientes: navegación de contenido, simulación de crédito, envío de formularios y páginas informativas multilenguaje.",
+        techFoundation: "Base técnica",
+        tech1: "Framework: SPA React 18 + Vite con páginas por ruta.",
+        tech2: "Ruteo: rutas de <code>react-router-dom</code> definidas en <code>frontend/src/App.jsx</code>.",
+        tech3: "Localización: i18next con cadenas <code>en</code>, <code>es</code> y <code>pt</code> compartidas entre páginas.",
+        tech4: "Integración backend mediante clientes en <code>frontend/src/services</code>, con fallback demo en despliegues estáticos.",
+        routeMap: "Mapa de rutas públicas (fuente de verdad)",
+        catalogTitle: "Catálogo detallado de páginas (qué tiene cada página y qué hace)",
+        thPath: "Ruta",
+        thView: "Vista",
+        thAuth: "Auth",
+        thSource: "Archivo fuente principal",
+        thPurpose: "Propósito principal",
+        thContains: "Qué contiene la página",
+        thActions: "Acciones principales del usuario",
+        thApi: "Llamadas API principales",
+        vHome: "Inicio",
+        vServices: "Servicios",
+        vAbout: "Nosotros",
+        vFaq: "FAQ",
+        vContact: "Contacto",
+        vCalculator: "Calculadora",
+        vPrivacy: "Política de Privacidad",
+        vTerms: "Términos y Condiciones",
+        vNotFound: "No encontrado",
+        noApi: "Sin llamadas al backend.",
+        authYes: "Sí",
+        authNo: "No"
+      },
+      pt: {
+        back: "<- Voltar para o hub de documentação",
+        langLabel: "Idioma:",
+        title: "frontend-public",
+        subtitle: "Experiência pública para clientes: navegação de conteúdo, simulação de crédito, envio de formulários e páginas informativas multilíngues.",
+        techFoundation: "Base técnica",
+        tech1: "Framework: SPA React 18 + Vite com páginas por rota.",
+        tech2: "Rotas: <code>react-router-dom</code> definidas em <code>frontend/src/App.jsx</code>.",
+        tech3: "Localização: i18next com strings <code>en</code>, <code>es</code> e <code>pt</code> compartilhadas entre páginas.",
+        tech4: "Integração backend por clientes em <code>frontend/src/services</code>, com fallback de demonstração em previews estáticos.",
+        routeMap: "Mapa de rotas públicas (fonte de verdade)",
+        catalogTitle: "Catálogo detalhado de páginas (o que cada página tem e o que faz)",
+        thPath: "Rota",
+        thView: "Tela",
+        thAuth: "Auth",
+        thSource: "Arquivo-fonte principal",
+        thPurpose: "Objetivo principal",
+        thContains: "O que a página contém",
+        thActions: "Ações principais do usuário",
+        thApi: "Chamadas de API principais",
+        vHome: "Início",
+        vServices: "Serviços",
+        vAbout: "Sobre",
+        vFaq: "FAQ",
+        vContact: "Contato",
+        vCalculator: "Calculadora",
+        vPrivacy: "Política de Privacidade",
+        vTerms: "Termos e Condições",
+        vNotFound: "Não encontrado",
+        noApi: "Sem chamadas ao backend.",
+        authYes: "Sim",
+        authNo: "Não"
+      }
+    };
+
+    const select = document.getElementById("lang-select");
+    const key = "docs-hub-lang";
+    const saved = localStorage.getItem(key);
+    const browserLang = (navigator.language || "en").slice(0, 2);
+    const supported = new Set(["en", "es", "pt"]);
+    let initial = "en";
+    if (supported.has(saved)) {
+      initial = saved;
+    } else if (supported.has(browserLang)) {
+      initial = browserLang;
+    }
+    select.value = initial;
+
+    function applyLang(lang) {
+      const dict = i18n[lang] || i18n.en;
+      document.documentElement.lang = lang;
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const token = el.dataset.i18n;
+        if (dict[token]) {
+          el.innerHTML = dict[token];
+        } else if (i18n.en[token]) {
+          el.innerHTML = i18n.en[token];
+        }
+      });
+      document.querySelectorAll(".auth-cell").forEach((cell) => {
+        const value = cell.dataset.auth;
+        cell.textContent = value === "yes" ? dict.authYes : dict.authNo;
+      });
+      localStorage.setItem(key, lang);
+    }
+
+    select.addEventListener("change", (e) => applyLang(e.target.value));
+    applyLang(initial);
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Documentation - SAI APP 3.0</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 18px 42px; }
+    .back { display: inline-block; margin-bottom: 14px; color: #1d4ed8; text-decoration: none; font-weight: 600; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .lang { display: flex; align-items: center; gap: 8px; color: #475569; font-size: 0.95rem; font-weight: 600; }
+    .lang select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; background: #fff; color: #0f172a; font-weight: 600; }
+    .hero { background: linear-gradient(135deg, #0f766e, #0e7490); color: #fff; padding: 22px; border-radius: 14px; margin-bottom: 16px; }
+    .hero h1 { margin: 0 0 8px; }
+    .hero p { margin: 0; opacity: 0.95; line-height: 1.5; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .card h2 { margin: 0 0 10px; font-size: 1.05rem; }
+    ul { margin: 0; padding-left: 20px; }
+    li { line-height: 1.5; color: #374151; margin: 4px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; font-size: 0.95rem; vertical-align: top; }
+    th { background: #f1f5f9; }
+    code { background: #eef2ff; padding: 2px 6px; border-radius: 6px; }
+    .muted { color: #64748b; font-size: 0.92rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <a class="back" href="./index.html" data-i18n="back"><- Back to docs hub</a>
+      <div class="lang">
+        <label for="lang-select" data-i18n="langLabel">Language:</label>
+        <select id="lang-select">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="pt">Português</option>
+        </select>
+      </div>
+    </div>
+
+    <section class="hero">
+      <h1 data-i18n="title">Database Documentation</h1>
+      <p data-i18n="subtitle">MongoDB structure, initialization flow, collection contracts, indexes, and seed data used by the application.</p>
+    </section>
+
+    <section class="card">
+      <h2>Runtime setup</h2>
+      <ul>
+        <li>Engine: <code>MongoDB 7</code> (dockerized for local full-stack mode).</li>
+        <li>Default database: <code>tucreditoonline</code>.</li>
+        <li>Initialization script: <code>database/init/init-db.js</code>.</li>
+        <li>The init script runs automatically the first time the MongoDB container is created.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Collections and schema rules</h2>
+      <table>
+        <thead><tr><th>Collection</th><th>Main required fields</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>users</code></td><td><code>email</code>, <code>createdAt</code></td><td>Uses soft delete field <code>deletedAt</code> and optional <code>updatedAt</code>.</td></tr>
+          <tr><td><code>credittypes</code></td><td><code>name</code>, <code>baseInterestRate</code>, <code>maxAmount</code>, <code>createdAt</code></td><td>Catalog for available loan products and rules used by calculator and request flow.</td></tr>
+          <tr><td><code>creditrequests</code></td><td><code>email</code>, <code>requestedAmount</code>, <code>status</code>, <code>createdAt</code></td><td>Status enum in validator: <code>Pending</code>, <code>Approved</code>, <code>Rejected</code>.</td></tr>
+          <tr><td><code>services</code></td><td>(none defined in validator)</td><td>Container for service catalog data used by frontend informational pages.</td></tr>
+          <tr><td><code>contactmessages</code></td><td>(none defined in validator)</td><td>Stores contact form submissions and moderation status.</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">Schema validators are currently configured for core operational collections and can be expanded as domain requirements evolve.</p>
+    </section>
+
+    <section class="card">
+      <h2>Index strategy</h2>
+      <table>
+        <thead><tr><th>Collection</th><th>Indexes</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td><code>users</code></td><td><code>email</code> (unique), <code>createdAt</code>, <code>deletedAt</code></td><td>Fast authentication lookup, chronological listing, and soft-delete filtering.</td></tr>
+          <tr><td><code>credittypes</code></td><td><code>isActive</code>, <code>name</code> (unique), <code>createdAt</code></td><td>Public pages and calculators filter active products frequently.</td></tr>
+          <tr><td><code>creditrequests</code></td><td><code>status</code>, <code>email</code>, <code>createdAt</code> (desc)</td><td>Admin dashboard and request tracking are status/date driven.</td></tr>
+          <tr><td><code>contactmessages</code></td><td><code>status</code>, <code>createdAt</code> (desc)</td><td>Operational inbox views prioritize message status and recency.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Seed data and defaults</h2>
+      <ul>
+        <li>The init script inserts four default credit types: <code>Personal Credit</code>, <code>Express Credit</code>, <code>Consolidation Credit</code>, and <code>Business Credit</code>.</li>
+        <li>Each seeded credit type includes range and rate controls: minimum/maximum amount, term limits, and base interest rate.</li>
+        <li>The script prints bootstrap login information for the default admin account used in local environments.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Local operations</h2>
+      <ul>
+        <li>Start services: <code>docker compose up --build</code></li>
+        <li>Stop services: <code>docker compose down</code></li>
+        <li>Reset and re-seed database volume: <code>docker compose down -v</code></li>
+      </ul>
+      <p class="muted">Resetting with <code>-v</code> recreates the volume and reruns initialization scripts from scratch.</p>
+    </section>
+  </div>
+  <script>
+    const i18n = {
+      en: {
+        back: "<- Back to docs hub",
+        langLabel: "Language:",
+        title: "Database Documentation",
+        subtitle: "MongoDB structure, initialization flow, collection contracts, indexes, and seed data used by the application.",
+      },
+      es: {
+        back: "<- Volver al hub de documentación",
+        langLabel: "Idioma:",
+        title: "Documentación de Base de Datos",
+        subtitle: "Estructura de MongoDB, flujo de inicialización, contratos de colecciones, índices y datos semilla usados por la aplicación.",
+      },
+      pt: {
+        back: "<- Voltar para o hub de documentação",
+        langLabel: "Idioma:",
+        title: "Documentação de Banco de Dados",
+        subtitle: "Estrutura MongoDB, fluxo de inicialização, contratos de coleções, índices e dados de seed usados pela aplicação.",
+      }
+    };
+    const select = document.getElementById("lang-select");
+    const key = "docs-hub-lang";
+    const supported = new Set(["en", "es", "pt"]);
+    const saved = localStorage.getItem(key);
+    const browserLang = (navigator.language || "en").slice(0, 2);
+    let initial = "en";
+    if (supported.has(saved)) {
+      initial = saved;
+    } else if (supported.has(browserLang)) {
+      initial = browserLang;
+    }
+    select.value = initial;
+    function applyLang(lang) {
+      const dict = i18n[lang] || i18n.en;
+      document.documentElement.lang = lang;
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const token = el.dataset.i18n;
+        if (dict[token]) el.innerHTML = dict[token];
+      });
+      localStorage.setItem(key, lang);
+    }
+    select.addEventListener("change", (e) => applyLang(e.target.value));
+    applyLang(initial);
+  </script>
+</body>
+</html>
