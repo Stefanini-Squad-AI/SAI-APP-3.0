@@ -2,7 +2,8 @@ import apiClient, { API_BASE_URL } from './apiClient';
 
 const RAW_API_URL = String(import.meta.env.VITE_API_URL || '').trim();
 const ENABLE_MOCK_AUTH = String(import.meta.env.VITE_ENABLE_MOCK_AUTH || 'false').toLowerCase() === 'true';
-const USE_MOCK_AUTH = ENABLE_MOCK_AUTH && RAW_API_URL.length === 0;
+const ENABLE_MOCK_BACKEND = String(import.meta.env.VITE_ENABLE_MOCK_BACKEND || 'false').toLowerCase() === 'true';
+const USE_MOCK_AUTH = ENABLE_MOCK_BACKEND || (ENABLE_MOCK_AUTH && RAW_API_URL.length === 0);
 const DEFAULT_ADMIN_EMAIL = (import.meta.env.VITE_DEFAULT_ADMIN_EMAIL || 'admin@tucreditoonline.local').trim().toLowerCase();
 const DEFAULT_ADMIN_PASSWORD = (import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || 'Admin123!').trim();
 
@@ -73,7 +74,7 @@ const authService = {
       const isReachabilityError = !error.response || status === 404 || status === 405;
 
       // Fallback mode: if mock auth is enabled and backend is unreachable, allow demo login.
-      if (ENABLE_MOCK_AUTH && isReachabilityError && canUseMockCredentials) {
+      if ((ENABLE_MOCK_AUTH || ENABLE_MOCK_BACKEND) && isReachabilityError && canUseMockCredentials) {
         return buildMockLoginResponse();
       }
 

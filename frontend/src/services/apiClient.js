@@ -10,7 +10,8 @@ const normalizeApiBaseUrl = (rawBaseUrl) => {
 
 const RAW_API_URL = String(import.meta.env.VITE_API_URL || '').trim();
 const ENABLE_MOCK_AUTH = String(import.meta.env.VITE_ENABLE_MOCK_AUTH || 'false').toLowerCase() === 'true';
-const USE_MOCK_API = ENABLE_MOCK_AUTH && RAW_API_URL.length === 0;
+const ENABLE_MOCK_BACKEND = String(import.meta.env.VITE_ENABLE_MOCK_BACKEND || 'false').toLowerCase() === 'true';
+const USE_MOCK_API = ENABLE_MOCK_BACKEND || (ENABLE_MOCK_AUTH && RAW_API_URL.length === 0);
 export const API_BASE_URL = normalizeApiBaseUrl(RAW_API_URL);
 
 const nowIso = () => new Date().toISOString();
@@ -154,12 +155,12 @@ const getMockStatusText = (status) => {
   return 'Error';
 };
 
-const mockResponse = (config, data, status = 200) =>
+const mockResponse = (config, data, status = 200, headers = {}) =>
   Promise.resolve({
     data,
     status,
     statusText: getMockStatusText(status),
-    headers: {},
+    headers,
     config,
     request: {}
   });
@@ -199,6 +200,11 @@ const attachMockAdapter = (config) => {
         pageSize
       });
     }
+    if (method === 'get' && path.startsWith('/users/')) {
+      const userId = path.split('/')[2];
+      const user = mockDb.users.find((u) => u.id === userId) || null;
+      return mockResponse(config, user, user ? 200 : 404);
+    }
     if (method === 'post' && path === '/users') {
       const user = { id: id('u'), ...data, isActive: data.isActive ?? true, createdAt: nowIso(), lastLogin: null };
       mockDb.users.unshift(user);
@@ -218,6 +224,11 @@ const attachMockAdapter = (config) => {
     if (method === 'post' && path === '/users/change-password') return mockResponse(config, true);
 
     if (method === 'get' && path === '/creditrequests') return mockResponse(config, mockDb.creditRequests);
+    if (method === 'get' && path.startsWith('/creditrequests/')) {
+      const reqId = path.split('/')[2];
+      const req = mockDb.creditRequests.find((r) => r.id === reqId) || null;
+      return mockResponse(config, req, req ? 200 : 404);
+    }
     if (method === 'post' && path === '/creditrequests') {
       const item = { id: id('cr'), ...data, requestDate: nowIso(), status: 'Pending' };
       mockDb.creditRequests.unshift(item);
@@ -241,6 +252,11 @@ const attachMockAdapter = (config) => {
         : mockDb.contactMessages.filter((m) => Number(m.status) === Number(status));
       return mockResponse(config, list);
     }
+    if (method === 'get' && path.startsWith('/contactmessages/')) {
+      const msgId = path.split('/')[2];
+      const msg = mockDb.contactMessages.find((m) => m.id === msgId) || null;
+      return mockResponse(config, msg, msg ? 200 : 404);
+    }
     if (method === 'post' && path === '/contactmessages') {
       const msg = { id: id('msg'), ...data, status: 0, createdAt: nowIso() };
       mockDb.contactMessages.unshift(msg);
@@ -258,6 +274,11 @@ const attachMockAdapter = (config) => {
     }
 
     if (method === 'get' && path === '/services') return mockResponse(config, mockDb.services);
+    if (method === 'get' && path.startsWith('/services/')) {
+      const svcId = path.split('/')[2];
+      const svc = mockDb.services.find((s) => s.id === svcId) || null;
+      return mockResponse(config, svc, svc ? 200 : 404);
+    }
     if (method === 'post' && path === '/services') {
       const svc = { id: id('svc'), ...data, isActive: data.isActive ?? true };
       mockDb.services.push(svc);
@@ -275,6 +296,11 @@ const attachMockAdapter = (config) => {
     }
 
     if (method === 'get' && path === '/credittypes') return mockResponse(config, mockDb.creditTypes);
+    if (method === 'get' && path.startsWith('/credittypes/')) {
+      const ctId = path.split('/')[2];
+      const ct = mockDb.creditTypes.find((c) => c.id === ctId) || null;
+      return mockResponse(config, ct, ct ? 200 : 404);
+    }
     if (method === 'post' && path === '/credittypes') {
       const ct = { id: id('ct'), ...data, isActive: data.isActive ?? true };
       mockDb.creditTypes.push(ct);
@@ -292,6 +318,16 @@ const attachMockAdapter = (config) => {
     }
 
     if (method === 'get' && path === '/health') return mockResponse(config, { status: 'Healthy' });
+    if (method === 'get' && path === '/backup/generate') {
+      const filename = `backup-mock-${new Date().toISOString().slice(0, 10)}.zip`;
+      const payload = `Mock backup generated at ${new Date().toISOString()}`;
+      return mockResponse(
+        config,
+        payload,
+        200,
+        { 'content-disposition': `attachment; filename="${filename}"` }
+      );
+    }
     if (method === 'get' && path === '/backup/status') return mockResponse(config, { isAvailable: false, mode: 'mock' });
 
     return mockResponse(config, { error: `Mock route not implemented for ${method.toUpperCase()} ${path}` }, 404);

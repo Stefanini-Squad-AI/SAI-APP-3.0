@@ -97,6 +97,9 @@ GitHub Pages deploys the frontend only. In this mode, login and admin pages run 
 CD workflow (`.github/workflows/cd-pipeline.yml`) enables:
 - `VITE_ENABLE_MOCK_AUTH=true`
 
+Optional (recommended for full admin backend-less demo):
+- `VITE_ENABLE_MOCK_BACKEND=true` (mocks admin API modules such as dashboard, users, requests, services, messages, and backup)
+
 Optional GitHub repository secrets for demo credentials shown in the login panel:
 - `DEFAULT_ADMIN_EMAIL`
 - `DEFAULT_ADMIN_PASSWORD`
