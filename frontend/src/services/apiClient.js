@@ -334,6 +334,15 @@ const getUserList = (config, params) => {
   return mockResponse(config, { users: filtered.slice(start, start + pageSize), totalCount: filtered.length, page, pageSize });
 };
 
+const updateUserById = (config, path, data) => {
+  const userId = path.split('/')[2];
+  const idx = mockDb.users.findIndex((u) => u.id === userId);
+  if (idx < 0) return mockResponse(config, null, 404);
+  const updated = { ...mockDb.users[idx], ...data };
+  mockDb.users.splice(idx, 1, updated);
+  return mockResponse(config, updated);
+};
+
 const handleUserRoutes = (config, method, path, data, params) => {
   if (method === 'get' && path === '/users') return getUserList(config, params);
   if (method === 'get' && path.startsWith('/users/')) {
@@ -347,13 +356,7 @@ const handleUserRoutes = (config, method, path, data, params) => {
     mockDb.users.unshift(user);
     return mockResponse(config, user, 201);
   }
-  if (method === 'put' && path.startsWith('/users/')) {
-    const userId = path.split('/')[2];
-    const idx = mockDb.users.findIndex((u) => u.id === userId);
-    const updated = idx >= 0 ? { ...mockDb.users[idx], ...data } : null;
-    if (idx >= 0) mockDb.users.splice(idx, 1, updated);
-    return mockResponse(config, updated);
-  }
+  if (method === 'put' && path.startsWith('/users/')) return updateUserById(config, path, data);
   if (method === 'delete' && path.startsWith('/users/')) {
     const userId = path.split('/')[2];
     mockDb.users = mockDb.users.filter((u) => u.id !== userId);

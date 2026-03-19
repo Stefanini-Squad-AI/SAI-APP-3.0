@@ -193,7 +193,6 @@ jobs:
       pull-requests: write
     outputs:
       quality_gate: ${{ steps.quality-gate.outputs.status }}
-      dashboard_url: ${{ steps.quality-gate.outputs.dashboard_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -292,8 +291,6 @@ jobs:
           fi
 
           CE_TASK_ID=$(grep '^ceTaskId=' "$REPORT_TASK" | cut -d= -f2)
-          DASHBOARD_URL=$(grep '^dashboardUrl=' "$REPORT_TASK" | cut -d= -f2-)
-          echo "dashboard_url=$DASHBOARD_URL" >> "$GITHUB_OUTPUT"
 
           MAX_WAIT=300; ELAPSED=0; CE_STATUS="PENDING"
           while [ "$CE_STATUS" = "PENDING" ] || [ "$CE_STATUS" = "IN_PROGRESS" ]; do
@@ -340,7 +337,6 @@ jobs:
         uses: actions/github-script@v8
         env:
           QG_STATUS: ${{ steps.quality-gate.outputs.status }}
-          DASHBOARD_URL: ${{ steps.quality-gate.outputs.dashboard_url }}
           CAN_SCAN: ${{ steps.sonar-backend-access.outputs.can_scan }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
         with:
@@ -366,8 +362,9 @@ jobs:
             }
 
             const qg = process.env.QG_STATUS;
-            const url = process.env.DASHBOARD_URL ||
-              (process.env.SONAR_HOST_URL ? `${process.env.SONAR_HOST_URL}/dashboard?id=applied-ai-team-sai3-backend` : '');
+            const url = process.env.SONAR_HOST_URL
+              ? `${process.env.SONAR_HOST_URL}/dashboard?id=applied-ai-team-sai3-backend`
+              : '';
             const canScan = process.env.CAN_SCAN;
 
             let content;
@@ -396,7 +393,6 @@ jobs:
       pull-requests: write
     outputs:
       quality_gate: ${{ steps.quality-gate.outputs.status }}
-      dashboard_url: ${{ steps.quality-gate.outputs.dashboard_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -474,8 +470,6 @@ jobs:
           fi
 
           CE_TASK_ID=$(grep '^ceTaskId=' "$REPORT_TASK" | cut -d= -f2)
-          DASHBOARD_URL=$(grep '^dashboardUrl=' "$REPORT_TASK" | cut -d= -f2-)
-          echo "dashboard_url=$DASHBOARD_URL" >> "$GITHUB_OUTPUT"
 
           MAX_WAIT=300; ELAPSED=0; CE_STATUS="PENDING"
           while [ "$CE_STATUS" = "PENDING" ] || [ "$CE_STATUS" = "IN_PROGRESS" ]; do
@@ -522,7 +516,6 @@ jobs:
         uses: actions/github-script@v8
         env:
           QG_STATUS: ${{ steps.quality-gate.outputs.status }}
-          DASHBOARD_URL: ${{ steps.quality-gate.outputs.dashboard_url }}
           CAN_SCAN: ${{ steps.sonar-frontend-access.outputs.can_scan }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
         with:
@@ -548,8 +541,9 @@ jobs:
             }
 
             const qg = process.env.QG_STATUS;
-            const url = process.env.DASHBOARD_URL ||
-              (process.env.SONAR_HOST_URL ? `${process.env.SONAR_HOST_URL}/dashboard?id=applied-ai-team-sai3-frontend` : '');
+            const url = process.env.SONAR_HOST_URL
+              ? `${process.env.SONAR_HOST_URL}/dashboard?id=applied-ai-team-sai3-frontend`
+              : '';
             const canScan = process.env.CAN_SCAN;
 
             let content;
@@ -916,6 +910,7 @@ jobs:
               -v "$(pwd)/test-results/security:/zap/wrk/:rw" \
               ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
               -t http://localhost:3000 \
+              -m 1 \
               -J zap-frontend-report.json \
               -r zap-frontend-report.html \
               -w zap-frontend-report.md \
@@ -929,6 +924,7 @@ jobs:
               ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
               -t http://localhost:5000/swagger/v1/swagger.json \
               -f openapi \
+              -m 1 \
               -J zap-api-report.json \
               -r zap-api-report.html \
               -w zap-api-report.md \
