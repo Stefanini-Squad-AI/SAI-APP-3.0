@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module - Backend API</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 28px 18px 40px; }
+    .head { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; border-radius: 14px; padding: 24px; margin-bottom: 18px; }
+    .head p { color: rgba(255, 255, 255, 0.94); margin: 0; line-height: 1.55; }
+    .head h1 { margin: 0 0 8px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+    .back { display: inline-block; color: #6d28d9; text-decoration: none; font-weight: 600; }
+    .lang { display: flex; align-items: center; gap: 8px; color: #475569; font-size: 0.95rem; font-weight: 600; }
+    .lang select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; background: #fff; color: #0f172a; font-weight: 600; }
+    .card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    h2 { margin: 0 0 10px; font-size: 1.12rem; }
+    p, li { line-height: 1.55; color: #374151; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; font-size: 0.9rem; vertical-align: top; }
+    th { background: #f1f5f9; }
+    code { background: #f5f3ff; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <a class="back" href="../../index.html" data-i18n="back"><- Back to docs hub</a>
+      <div class="lang">
+        <label for="lang-select" data-i18n="langLabel">Language:</label>
+        <select id="lang-select">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="pt">Português</option>
+        </select>
+      </div>
+    </div>
+
+    <section class="head">
+      <h1 data-i18n="title">backend-api</h1>
+      <p data-i18n="subtitle">
+        ASP.NET Core API that concentrates authentication, business operations, admin workflows,
+        maintenance utilities, and health monitoring consumed by public and admin frontend modules.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="tech">Technical foundation</h2>
+      <ul>
+        <li data-i18n="tech1">.NET 8 + ASP.NET Core controllers in <code>backend/src/TuCreditoOnline.API/Controllers</code>.</li>
+        <li data-i18n="tech2">JWT authentication + role-based authorization (<code>Admin</code>, <code>SuperAdmin</code>).</li>
+        <li data-i18n="tech3">Public and protected endpoints coexist for customer and admin experiences.</li>
+        <li data-i18n="tech4">Controller methods delegate business logic to infrastructure/application services.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="controllers">Controller domains and responsibilities</h2>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thController">Controller</th>
+            <th data-i18n="thRoute">Base route</th>
+            <th data-i18n="thResponsibility">What it is responsible for</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>AuthController</code></td><td><code>/api/auth</code></td><td data-i18n="cAuth">Admin login and conditional user registration (first setup or admin-authorized creation).</td></tr>
+          <tr><td><code>DashboardController</code></td><td><code>/api/dashboard</code></td><td data-i18n="cDash">KPI and distribution data for operations dashboard visualizations.</td></tr>
+          <tr><td><code>CreditRequestsController</code></td><td><code>/api/creditrequests</code></td><td data-i18n="cCreditReq">Creation and lifecycle management of credit request records.</td></tr>
+          <tr><td><code>UsersController</code></td><td><code>/api/users</code></td><td data-i18n="cUsers">Admin user lifecycle: search, create, update, delete, and password updates.</td></tr>
+          <tr><td><code>CreditTypesController</code></td><td><code>/api/credittypes</code></td><td data-i18n="cCreditTypes">Credit product catalog consumed by calculator and admin catalog tools.</td></tr>
+          <tr><td><code>ServicesController</code></td><td><code>/api/services</code></td><td data-i18n="cServices">Marketing/service cards shown on public pages and managed by admins.</td></tr>
+          <tr><td><code>ContactMessagesController</code></td><td><code>/api/contactmessages</code></td><td data-i18n="cContact">Customer contact intake and admin follow-up workflow by status.</td></tr>
+          <tr><td><code>BackupController</code></td><td><code>/api/backup</code></td><td data-i18n="cBackup">Generate downloadable backups and report backup file inventory/status.</td></tr>
+          <tr><td><code>HealthController</code></td><td><code>/api/health</code></td><td data-i18n="cHealth">API + database health telemetry for uptime checks.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="endpointCatalog">Detailed endpoint catalog (what each route does)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thMethod">Method</th>
+            <th data-i18n="thEndpoint">Endpoint</th>
+            <th data-i18n="thAuth">Auth / Role</th>
+            <th data-i18n="thUsedBy">Used by</th>
+            <th data-i18n="thBehavior">Behavior and purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>POST</code></td><td><code>/api/auth/login</code></td><td data-i18n="authPublic">Public</td><td><code>frontend-admin/login</code></td><td data-i18n="eAuthLogin">Validates credentials and returns JWT token + user profile payload.</td></tr>
+          <tr><td><code>POST</code></td><td><code>/api/auth/register</code></td><td data-i18n="authConditional">Conditional (public first setup, then admin only)</td><td data-i18n="usedAdminOps">Admin operations / setup flows</td><td data-i18n="eAuthRegister">Creates user accounts with guardrail: only open anonymously when there are no users yet.</td></tr>
+
+          <tr><td><code>GET</code></td><td><code>/api/dashboard/stats</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/dashboard</code></td><td data-i18n="eDashStats">Returns aggregated KPIs (requests, users, approved amount, monthly stats).</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/dashboard/status-distribution</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/dashboard</code></td><td data-i18n="eDashDist">Returns distribution counts/percentages by request status for charts.</td></tr>
+
+          <tr><td><code>POST</code></td><td><code>/api/creditrequests</code></td><td data-i18n="authPublic">Public</td><td><code>frontend-public/calculator</code></td><td data-i18n="eCrCreate">Creates a customer credit request and returns created resource payload.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/creditrequests</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/credit-requests</code></td><td data-i18n="eCrGetAll">Lists all requests for operational review tables and counters.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/creditrequests/{id}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/credit-requests</code></td><td data-i18n="eCrGetById">Returns one request detail for modal/detail-level inspection.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/creditrequests/status/{status}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/credit-requests</code></td><td data-i18n="eCrByStatus">Filters request list by workflow status segment.</td></tr>
+          <tr><td><code>PATCH</code></td><td><code>/api/creditrequests/{id}/status</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td data-i18n="usedAdminOps">Admin operations</td><td data-i18n="eCrPatch">Generic status update endpoint for approve/reject style transitions.</td></tr>
+          <tr><td><code>POST</code></td><td><code>/api/creditrequests/{id}/approve</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/credit-requests</code></td><td data-i18n="eCrApprove">Approves request and stores approval remarks/financial details.</td></tr>
+          <tr><td><code>POST</code></td><td><code>/api/creditrequests/{id}/reject</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/credit-requests</code></td><td data-i18n="eCrReject">Rejects request and captures rejection remarks.</td></tr>
+
+          <tr><td><code>GET</code></td><td><code>/api/users</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/users</code></td><td data-i18n="eUsersGetAll">Returns paginated users list with optional search query.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/users/{id}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/users</code></td><td data-i18n="eUsersGetById">Fetches one user profile by ID.</td></tr>
+          <tr><td><code>POST</code></td><td><code>/api/users</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/users</code></td><td data-i18n="eUsersCreate">Creates a new admin-side user account.</td></tr>
+          <tr><td><code>PUT</code></td><td><code>/api/users/{id}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/users</code></td><td data-i18n="eUsersUpdate">Updates user metadata, role, and status flags.</td></tr>
+          <tr><td><code>DELETE</code></td><td><code>/api/users/{id}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/users</code></td><td data-i18n="eUsersDelete">Deletes user account record.</td></tr>
+          <tr><td><code>POST</code></td><td><code>/api/users/change&#45;password</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td data-i18n="usedAdminOps">Admin operations</td><td data-i18n="eUsersPassword">Changes password for a specific user ID.</td></tr>
+
+          <tr><td><code>GET</code></td><td><code>/api/credittypes</code></td><td data-i18n="authPublic">Public (filter optional)</td><td><code>frontend-public/home</code>, <code>services</code>, <code>calculator</code>, <code>frontend-admin/credit-types</code></td><td data-i18n="eCtGetAll">Lists credit products; can be filtered by active status.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/credittypes/{id}</code></td><td data-i18n="authPublic">Public</td><td data-i18n="usedPublicAdmin">Public/Admin detail flows</td><td data-i18n="eCtGetById">Returns one credit type entity.</td></tr>
+          <tr><td><code>POST</code></td><td><code>/api/credittypes</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/credit-types</code></td><td data-i18n="eCtCreate">Creates new credit type catalog item.</td></tr>
+          <tr><td><code>PUT</code></td><td><code>/api/credittypes/{id}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/credit-types</code></td><td data-i18n="eCtUpdate">Updates existing credit type catalog item.</td></tr>
+          <tr><td><code>DELETE</code></td><td><code>/api/credittypes/{id}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/credit-types</code></td><td data-i18n="eCtDelete">Deletes credit type catalog item.</td></tr>
+
+          <tr><td><code>GET</code></td><td><code>/api/services</code></td><td data-i18n="authPublic">Public (filter optional)</td><td><code>frontend-admin/services</code>, public marketing pages</td><td data-i18n="eSvGetAll">Lists service cards, optionally filtered by active flag.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/services/{id}</code></td><td data-i18n="authPublic">Public</td><td data-i18n="usedPublicAdmin">Public/Admin detail flows</td><td data-i18n="eSvGetById">Returns one service catalog record.</td></tr>
+          <tr><td><code>POST</code></td><td><code>/api/services</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/services</code></td><td data-i18n="eSvCreate">Creates service record shown in frontend marketing sections.</td></tr>
+          <tr><td><code>PUT</code></td><td><code>/api/services/{id}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/services</code></td><td data-i18n="eSvUpdate">Updates service title, description, icon, and display order.</td></tr>
+          <tr><td><code>DELETE</code></td><td><code>/api/services/{id}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/services</code></td><td data-i18n="eSvDelete">Deletes service record.</td></tr>
+
+          <tr><td><code>POST</code></td><td><code>/api/contactmessages</code></td><td data-i18n="authPublic">Public</td><td><code>frontend-public/contact</code></td><td data-i18n="eCmCreate">Persists customer contact form submission and returns acknowledgment data.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/contactmessages</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/messages</code></td><td data-i18n="eCmGetAll">Lists messages with optional status filter for inbox operations.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/contactmessages/{id}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/messages</code></td><td data-i18n="eCmGetById">Returns one message for detailed handling.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/contactmessages/pending</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td data-i18n="usedAdminOps">Admin operations</td><td data-i18n="eCmPending">Returns only New/InProgress messages.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/contactmessages/stats</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td data-i18n="usedAdminOps">Admin operations</td><td data-i18n="eCmStats">Returns contact message KPI statistics by status/state.</td></tr>
+          <tr><td><code>PATCH</code></td><td><code>/api/contactmessages/{id}/status</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/messages</code></td><td data-i18n="eCmPatch">Applies status transitions and stores optional admin notes.</td></tr>
+          <tr><td><code>DELETE</code></td><td><code>/api/contactmessages/{id}</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/messages</code></td><td data-i18n="eCmDelete">Soft-deletes contact message record.</td></tr>
+
+          <tr><td><code>GET</code></td><td><code>/api/backup/generate</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/settings</code></td><td data-i18n="eBkGenerate">Generates ZIP backup file and streams it for download.</td></tr>
+          <tr><td><code>GET</code></td><td><code>/api/backup/status</code></td><td data-i18n="authAdmin">Admin, SuperAdmin</td><td><code>frontend-admin/settings</code></td><td data-i18n="eBkStatus">Returns recent backup metadata and counts.</td></tr>
+
+          <tr><td><code>GET</code></td><td><code>/api/health</code></td><td data-i18n="authPublic">Public</td><td data-i18n="usedMonitoring">Monitoring / ops</td><td data-i18n="eHealth">Returns API health state with database connectivity metrics and timestamps.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <script>
+    const i18n = {
+      en: {
+        back: "<- Back to docs hub",
+        langLabel: "Language:",
+        title: "backend-api",
+        subtitle: "ASP.NET Core API that concentrates authentication, business operations, admin workflows, maintenance utilities, and health monitoring consumed by public and admin frontend modules.",
+        tech: "Technical foundation",
+        tech1: ".NET 8 + ASP.NET Core controllers in <code>backend/src/TuCreditoOnline.API/Controllers</code>.",
+        tech2: "JWT authentication + role-based authorization (<code>Admin</code>, <code>SuperAdmin</code>).",
+        tech3: "Public and protected endpoints coexist for customer and admin experiences.",
+        tech4: "Controller methods delegate business logic to infrastructure/application services.",
+        controllers: "Controller domains and responsibilities",
+        endpointCatalog: "Detailed endpoint catalog (what each route does)",
+        thController: "Controller",
+        thRoute: "Base route",
+        thResponsibility: "What it is responsible for",
+        thMethod: "Method",
+        thEndpoint: "Endpoint",
+        thAuth: "Auth / Role",
+        thUsedBy: "Used by",
+        thBehavior: "Behavior and purpose",
+        cAuth: "Admin login and conditional user registration (first setup or admin-authorized creation).",
+        cDash: "KPI and distribution data for operations dashboard visualizations.",
+        cCreditReq: "Creation and lifecycle management of credit request records.",
+        cUsers: "Admin user lifecycle: search, create, update, delete, and password updates.",
+        cCreditTypes: "Credit product catalog consumed by calculator and admin catalog tools.",
+        cServices: "Marketing/service cards shown on public pages and managed by admins.",
+        cContact: "Customer contact intake and admin follow-up workflow by status.",
+        cBackup: "Generate downloadable backups and report backup file inventory/status.",
+        cHealth: "API + database health telemetry for uptime checks.",
+        authPublic: "Public",
+        authAdmin: "Admin, SuperAdmin",
+        authConditional: "Conditional (public first setup, then admin only)",
+        usedAdminOps: "Admin operations / setup flows",
+        usedPublicAdmin: "Public/Admin detail flows",
+        usedMonitoring: "Monitoring / ops",
+        eAuthLogin: "Validates credentials and returns JWT token + user profile payload.",
+        eAuthRegister: "Creates user accounts with guardrail: only open anonymously when there are no users yet.",
+        eDashStats: "Returns aggregated KPIs (requests, users, approved amount, monthly stats).",
+        eDashDist: "Returns distribution counts/percentages by request status for charts.",
+        eCrCreate: "Creates a customer credit request and returns created resource payload.",
+        eCrGetAll: "Lists all requests for operational review tables and counters.",
+        eCrGetById: "Returns one request detail for modal/detail-level inspection.",
+        eCrByStatus: "Filters request list by workflow status segment.",
+        eCrPatch: "Generic status update endpoint for approve/reject style transitions.",
+        eCrApprove: "Approves request and stores approval remarks/financial details.",
+        eCrReject: "Rejects request and captures rejection remarks.",
+        eUsersGetAll: "Returns paginated users list with optional search query.",
+        eUsersGetById: "Fetches one user profile by ID.",
+        eUsersCreate: "Creates a new admin-side user account.",
+        eUsersUpdate: "Updates user metadata, role, and status flags.",
+        eUsersDelete: "Deletes user account record.",
+        eUsersPassword: "Changes password for a specific user ID.",
+        eCtGetAll: "Lists credit products; can be filtered by active status.",
+        eCtGetById: "Returns one credit type entity.",
+        eCtCreate: "Creates new credit type catalog item.",
+        eCtUpdate: "Updates existing credit type catalog item.",
+        eCtDelete: "Deletes credit type catalog item.",
+        eSvGetAll: "Lists service cards, optionally filtered by active flag.",
+        eSvGetById: "Returns one service catalog record.",
+        eSvCreate: "Creates service record shown in frontend marketing sections.",
+        eSvUpdate: "Updates service title, description, icon, and display order.",
+        eSvDelete: "Deletes service record.",
+        eCmCreate: "Persists customer contact form submission and returns acknowledgment data.",
+        eCmGetAll: "Lists messages with optional status filter for inbox operations.",
+        eCmGetById: "Returns one message for detailed handling.",
+        eCmPending: "Returns only New/InProgress messages.",
+        eCmStats: "Returns contact message KPI statistics by status/state.",
+        eCmPatch: "Applies status transitions and stores optional admin notes.",
+        eCmDelete: "Soft-deletes contact message record.",
+        eBkGenerate: "Generates ZIP backup file and streams it for download.",
+        eBkStatus: "Returns recent backup metadata and counts.",
+        eHealth: "Returns API health state with database connectivity metrics and timestamps."
+      },
+      es: {
+        back: "<- Volver al hub de documentación",
+        langLabel: "Idioma:",
+        title: "backend-api",
+        subtitle: "API ASP.NET Core que concentra autenticación, operaciones de negocio, flujos admin, utilidades de mantenimiento y monitoreo de salud para frontend público y admin.",
+        tech: "Base técnica",
+        tech1: ".NET 8 + controladores ASP.NET Core en <code>backend/src/TuCreditoOnline.API/Controllers</code>.",
+        tech2: "Autenticación JWT + autorización por roles (<code>Admin</code>, <code>SuperAdmin</code>).",
+        tech3: "Conviven endpoints públicos y protegidos para experiencia cliente y admin.",
+        tech4: "Los controladores delegan la lógica de negocio a servicios de infraestructura/aplicación.",
+        controllers: "Dominios de controladores y responsabilidades",
+        endpointCatalog: "Catálogo detallado de endpoints (qué hace cada ruta)",
+        thController: "Controlador",
+        thRoute: "Ruta base",
+        thResponsibility: "Responsabilidad",
+        thMethod: "Método",
+        thEndpoint: "Endpoint",
+        thAuth: "Auth / Rol",
+        thUsedBy: "Usado por",
+        thBehavior: "Comportamiento y propósito",
+        authPublic: "Público",
+        authAdmin: "Admin, SuperAdmin",
+        authConditional: "Condicional (público en primer setup, luego solo admin)",
+        usedAdminOps: "Operación admin / setup",
+        usedPublicAdmin: "Flujos detalle público/admin",
+        usedMonitoring: "Monitoreo / operaciones"
+      },
+      pt: {
+        back: "<- Voltar para o hub de documentação",
+        langLabel: "Idioma:",
+        title: "backend-api",
+        subtitle: "API ASP.NET Core que concentra autenticação, operações de negócio, fluxos admin, utilidades de manutenção e monitoramento de saúde para frontend público e admin.",
+        tech: "Base técnica",
+        tech1: ".NET 8 + controladores ASP.NET Core em <code>backend/src/TuCreditoOnline.API/Controllers</code>.",
+        tech2: "Autenticação JWT + autorização por papéis (<code>Admin</code>, <code>SuperAdmin</code>).",
+        tech3: "Endpoints públicos e protegidos coexistem para cliente e admin.",
+        tech4: "Controladores delegam regras de negócio para serviços de infraestrutura/aplicação.",
+        controllers: "Domínios de controladores e responsabilidades",
+        endpointCatalog: "Catálogo detalhado de endpoints (o que cada rota faz)",
+        thController: "Controlador",
+        thRoute: "Rota base",
+        thResponsibility: "Responsabilidade",
+        thMethod: "Método",
+        thEndpoint: "Endpoint",
+        thAuth: "Auth / Papel",
+        thUsedBy: "Usado por",
+        thBehavior: "Comportamento e propósito",
+        authPublic: "Público",
+        authAdmin: "Admin, SuperAdmin",
+        authConditional: "Condicional (público no primeiro setup, depois só admin)",
+        usedAdminOps: "Operação admin / setup",
+        usedPublicAdmin: "Fluxos de detalhe público/admin",
+        usedMonitoring: "Monitoramento / operações"
+      }
+    };
+    const select = document.getElementById("lang-select");
+    const key = "docs-hub-lang";
+    const supported = new Set(["en", "es", "pt"]);
+    const saved = localStorage.getItem(key);
+    const browserLang = (navigator.language || "en").slice(0, 2);
+    let initial = "en";
+    if (supported.has(saved)) {
+      initial = saved;
+    } else if (supported.has(browserLang)) {
+      initial = browserLang;
+    }
+    select.value = initial;
+    function applyLang(lang) {
+      const dict = i18n[lang] || i18n.en;
+      document.documentElement.lang = lang;
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const token = el.dataset.i18n;
+        if (dict[token]) {
+          el.innerHTML = dict[token];
+        } else if (i18n.en[token]) {
+          el.innerHTML = i18n.en[token];
+        }
+      });
+      localStorage.setItem(key, lang);
+    }
+    select.addEventListener("change", (e) => applyLang(e.target.value));
+    applyLang(initial);
+  </script>
+</body>
+</html>
