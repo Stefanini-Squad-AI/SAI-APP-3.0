@@ -1119,6 +1119,11 @@ jobs:
           VITE_ENABLE_MOCK_BACKEND: "true"
         run: npm run build
 
+      - name: Include documentation in preview build
+        run: |
+          mkdir -p frontend/dist/docs
+          cp -R docs/* frontend/dist/docs/
+
       - name: Deploy preview to Surge
         id: preview
         run: |
@@ -1213,10 +1218,8 @@ jobs:
     needs: [init-dashboard]
     continue-on-error: true
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
-    outputs:
-      docs_preview_url: ${{ steps.publish-docs.outputs.docs_preview_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -1231,37 +1234,13 @@ jobs:
             echo "has_docs=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Publish docs to Surge
-        id: publish-docs
-        if: steps.detect-docs.outputs.has_docs == 'true'
-        run: |
-          npx surge --project docs --domain ${{ env.DOCS_PREVIEW_DOMAIN }}
-          echo "docs_preview_url=${{ env.DOCS_PREVIEW_URL }}" >> "$GITHUB_OUTPUT"
-        env:
-          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
-          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
-
-      - name: Publish docs preview to GitHub Pages path
-        id: publish-docs-gh
-        if: steps.detect-docs.outputs.has_docs == 'true'
-        continue-on-error: true
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          destination_dir: ${{ env.DOCS_GH_PREVIEW_PATH }}
-          keep_files: true
-
       - name: Update docs section in dashboard
         if: always()
         uses: actions/github-script@v8
         env:
           HAS_DOCS: ${{ steps.detect-docs.outputs.has_docs }}
-          DOCS_SURGE_URL: ${{ steps.publish-docs.outputs.docs_preview_url }}
-          DOCS_GH_URL: ${{ env.DOCS_GH_PREVIEW_URL }}
-          MAIN_DOCS_URL: ${{ env.MAIN_DOCS_URL }}
-          MAIN_APP_URL: ${{ env.MAIN_APP_URL }}
           PR_PREVIEW_URL: ${{ env.PREVIEW_URL }}
+          MAIN_DOCS_URL: ${{ env.MAIN_DOCS_URL }}
         with:
           script: |
             async function updateDashboard(github, context, sections) {
@@ -1285,18 +1264,18 @@ jobs:
             }
 
             const hasDocs = process.env.HAS_DOCS === 'true';
-            const docsSurgeUrl = process.env.DOCS_SURGE_URL;
-            const docsGhUrl = process.env.DOCS_GH_URL;
+            const prPreviewUrl = process.env.PR_PREVIEW_URL;
             const mainDocsUrl = process.env.MAIN_DOCS_URL;
+            // Docs are embedded inside the main Surge preview build at /docs/
+            const prDocsUrl = prPreviewUrl ? `${prPreviewUrl.replace(/\/$/, '')}/docs/` : null;
             let content;
             if (hasDocs) {
-              const prDocsUrl = docsGhUrl || docsSurgeUrl;
               content = [
                 '> \u{1F4D6} **Documentation preview published**',
                 '>',
                 ...(prDocsUrl
                   ? [`> \u{1F517} **[PR documentation preview](${prDocsUrl})**`]
-                  : ['> \u23F3 _PR documentation: pending publish_']
+                  : ['> \u23F3 _PR documentation: available once preview site is deployed_']
                 ),
                 ...(mainDocsUrl ? [`> \u{1F517} [Current documentation](${mainDocsUrl})`] : []),
               ].join('\n');
