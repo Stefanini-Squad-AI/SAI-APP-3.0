@@ -1,6 +1,9 @@
-const fs = require('fs');
-const path = require('path');
-const xml2js = require('xml2js');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parseStringPromise } from 'xml2js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const TRX_PATH = path.join(__dirname, 'TestResults', 'test-results.trx');
 const TEST_RESULTS_DIR = path.join(__dirname, 'TestResults');
@@ -34,8 +37,7 @@ async function parseTrxFile() {
     }
 
     const trxContent = fs.readFileSync(TRX_PATH, 'utf-8');
-    const parser = new xml2js.Parser();
-    return await parser.parseStringPromise(trxContent);
+    return await parseStringPromise(trxContent);
 }
 
 // Parse Cobertura file
@@ -49,8 +51,7 @@ async function parseCoberturaFile() {
 
     console.log(`   📁 Archivo encontrado: ${COBERTURA_PATH}`);
     const coberturaContent = fs.readFileSync(COBERTURA_PATH, 'utf-8');
-    const parser = new xml2js.Parser();
-    return await parser.parseStringPromise(coberturaContent);
+    return await parseStringPromise(coberturaContent);
 }
 
 // Extract test info from TRX
@@ -87,10 +88,10 @@ function extractTestInfo(trxData) {
     });
 
     return {
-        total: parseInt(counters?.total || 0),
-        passed: parseInt(counters?.passed || 0),
-        failed: parseInt(counters?.failed || 0),
-        skipped: parseInt(counters?.inconclusive || 0),
+        total: Number.parseInt(counters?.total || 0),
+        passed: Number.parseInt(counters?.passed || 0),
+        failed: Number.parseInt(counters?.failed || 0),
+        skipped: Number.parseInt(counters?.inconclusive || 0),
         tests
     };
 }
@@ -102,24 +103,24 @@ function extractCoverageInfo(coberturaData) {
     const coverage = coberturaData.coverage;
     const packages = coverage.packages?.[0]?.package || [];
     
-    const lineRate = parseFloat(coverage.$['line-rate'] || 0) * 100;
-    const branchRate = parseFloat(coverage.$['branch-rate'] || 0) * 100;
+    const lineRate = Number.parseFloat(coverage.$['line-rate'] || 0) * 100;
+    const branchRate = Number.parseFloat(coverage.$['branch-rate'] || 0) * 100;
     
     const packageDetails = packages.map(pkg => {
         const pkgName = pkg.$.name || 'Unknown';
-        const pkgLineRate = parseFloat(pkg.$['line-rate'] || 0) * 100;
-        const pkgBranchRate = parseFloat(pkg.$['branch-rate'] || 0) * 100;
+        const pkgLineRate = Number.parseFloat(pkg.$['line-rate'] || 0) * 100;
+        const pkgBranchRate = Number.parseFloat(pkg.$['branch-rate'] || 0) * 100;
         
         const classes = pkg.classes?.[0]?.class || [];
         const classDetails = classes.map(cls => {
             const className = cls.$.name || 'Unknown';
             const filename = cls.$.filename || '';
-            const clsLineRate = parseFloat(cls.$['line-rate'] || 0) * 100;
-            const clsBranchRate = parseFloat(cls.$['branch-rate'] || 0) * 100;
+            const clsLineRate = Number.parseFloat(cls.$['line-rate'] || 0) * 100;
+            const clsBranchRate = Number.parseFloat(cls.$['branch-rate'] || 0) * 100;
             
             const lines = cls.lines?.[0]?.line || [];
             const totalLines = lines.length;
-            const coveredLines = lines.filter(l => parseInt(l.$.hits) > 0).length;
+            const coveredLines = lines.filter(l => Number.parseInt(l.$.hits) > 0).length;
             
             return {
                 name: className,
@@ -149,10 +150,6 @@ function extractCoverageInfo(coberturaData) {
 
 // Generate rich HTML report
 function generateHtmlReport(testInfo, coverageInfo) {
-    const passRate = testInfo.total > 0 
-        ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) 
-        : 0;
-
     const testsByClass = {};
     testInfo.tests.forEach(test => {
         const className = test.className || 'Unknown';
@@ -633,35 +630,32 @@ function generateHtmlReport(testInfo, coverageInfo) {
                     </div>
                     <div class="accordion-content" id="accordion-${idx}">
                         <div class="accordion-body">
-                            ${classTests.map((test, testIdx) => `
-                                <div class="test-item ${test.errorMessage ? 'expanded' : ''}" onclick="event.stopPropagation(); this.classList.toggle('expanded')">
+                            ${classTests.map((test) => {
+                                const expandedClass = test.errorMessage ? 'expanded' : '';
+                                const outcomeIcon = test.outcome === 'Passed' ? '✓' : '✗';
+                                const errorBlock = test.errorMessage
+                                    ? `<div class="error-message"><div class="error-title">❌ Error Message</div><div class="error-content">${escapeHtml(test.errorMessage)}</div></div>`
+                                    : '';
+                                const stackBlock = test.stackTrace
+                                    ? `<div class="stack-trace"><div class="stack-trace-title">📋 Stack Trace</div><div class="stack-trace-content">${escapeHtml(test.stackTrace)}</div></div>`
+                                    : '';
+                                const detailsBlock = (test.errorMessage || test.stackTrace)
+                                    ? `<div class="test-details">${errorBlock}${stackBlock}</div>`
+                                    : '';
+                                return `
+                                <div class="test-item ${expandedClass}" onclick="event.stopPropagation(); this.classList.toggle('expanded')">
                                     <div class="test-header">
                                         <div class="test-info">
                                             <div class="test-status ${test.outcome.toLowerCase()}">
-                                                ${test.outcome === 'Passed' ? '✓' : '✗'}
+                                                ${outcomeIcon}
                                             </div>
                                             <div class="test-name">${test.name}</div>
                                         </div>
                                         <div class="test-duration">${formatDuration(test.duration)}</div>
                                     </div>
-                                    ${test.errorMessage || test.stackTrace ? `
-                                        <div class="test-details">
-                                            ${test.errorMessage ? `
-                                                <div class="error-message">
-                                                    <div class="error-title">❌ Error Message</div>
-                                                    <div class="error-content">${escapeHtml(test.errorMessage)}</div>
-                                                </div>
-                                            ` : ''}
-                                            ${test.stackTrace ? `
-                                                <div class="stack-trace">
-                                                    <div class="stack-trace-title">📋 Stack Trace</div>
-                                                    <div class="stack-trace-content">${escapeHtml(test.stackTrace)}</div>
-                                                </div>
-                                            ` : ''}
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            `).join('')}
+                                    ${detailsBlock}
+                                </div>`;
+                            }).join('')}
                         </div>
                     </div>
                 </div>
@@ -924,9 +918,9 @@ function formatDuration(duration) {
     const parts = duration.split(':');
     if (parts.length !== 3) return duration;
     
-    const hours = parseInt(parts[0]);
-    const minutes = parseInt(parts[1]);
-    const seconds = parseFloat(parts[2]);
+    const hours = Number.parseInt(parts[0]);
+    const minutes = Number.parseInt(parts[1]);
+    const seconds = Number.parseFloat(parts[2]);
     
     if (hours > 0) return `${hours}h ${minutes}m ${seconds.toFixed(2)}s`;
     if (minutes > 0) return `${minutes}m ${seconds.toFixed(2)}s`;
@@ -937,55 +931,51 @@ function formatDuration(duration) {
 function escapeHtml(text) {
     if (!text) return '';
     return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 }
 
 // Main
-async function main() {
-    try {
-        console.log('Parsing TRX file...');
-        const trxData = await parseTrxFile();
-        
-        console.log('Extracting test information...');
-        const testInfo = extractTestInfo(trxData);
-        
-        console.log('Parsing coverage file...');
-        const coberturaData = await parseCoberturaFile();
-        const coverageInfo = extractCoverageInfo(coberturaData);
-        
-        console.log('\nTest summary:');
-        console.log(`   Total: ${testInfo.total}`);
-        console.log(`   Passed: ${testInfo.passed}`);
-        console.log(`   Failed: ${testInfo.failed}`);
-        console.log(`   Skipped: ${testInfo.skipped}`);
-        
-        if (coverageInfo) {
-            console.log('\nCode coverage:');
-            console.log(`   Lines: ${coverageInfo.lineRate.toFixed(2)}%`);
-            console.log(`   Branches: ${coverageInfo.branchRate.toFixed(2)}%`);
-        }
-        
-        console.log('\nGenerating HTML report...');
-        const htmlReport = generateHtmlReport(testInfo, coverageInfo);
-        fs.writeFileSync(HTML_REPORT_PATH, htmlReport, 'utf-8');
-        console.log(`   HTML generated: ${HTML_REPORT_PATH}`);
-        
-        console.log('\nGenerating Markdown report...');
-        const markdownReport = generateMarkdownReport(testInfo, coverageInfo);
-        fs.writeFileSync(MARKDOWN_REPORT_PATH, markdownReport, 'utf-8');
-        console.log(`   Markdown generated: ${MARKDOWN_REPORT_PATH}`);
-        
-        console.log('\nReports generated successfully.\n');
-        
-        process.exit(testInfo.failed > 0 ? 1 : 0);
-    } catch (error) {
-        console.error('Failed to generate reports:', error);
-        process.exit(1);
-    }
-}
+try {
+    console.log('Parsing TRX file...');
+    const trxData = await parseTrxFile();
 
-main();
+    console.log('Extracting test information...');
+    const testInfo = extractTestInfo(trxData);
+
+    console.log('Parsing coverage file...');
+    const coberturaData = await parseCoberturaFile();
+    const coverageInfo = extractCoverageInfo(coberturaData);
+
+    console.log('\nTest summary:');
+    console.log(`   Total: ${testInfo.total}`);
+    console.log(`   Passed: ${testInfo.passed}`);
+    console.log(`   Failed: ${testInfo.failed}`);
+    console.log(`   Skipped: ${testInfo.skipped}`);
+
+    if (coverageInfo) {
+        console.log('\nCode coverage:');
+        console.log(`   Lines: ${coverageInfo.lineRate.toFixed(2)}%`);
+        console.log(`   Branches: ${coverageInfo.branchRate.toFixed(2)}%`);
+    }
+
+    console.log('\nGenerating HTML report...');
+    const htmlReport = generateHtmlReport(testInfo, coverageInfo);
+    fs.writeFileSync(HTML_REPORT_PATH, htmlReport, 'utf-8');
+    console.log(`   HTML generated: ${HTML_REPORT_PATH}`);
+
+    console.log('\nGenerating Markdown report...');
+    const markdownReport = generateMarkdownReport(testInfo, coverageInfo);
+    fs.writeFileSync(MARKDOWN_REPORT_PATH, markdownReport, 'utf-8');
+    console.log(`   Markdown generated: ${MARKDOWN_REPORT_PATH}`);
+
+    console.log('\nReports generated successfully.\n');
+
+    process.exit(testInfo.failed > 0 ? 1 : 0);
+} catch (error) {
+    console.error('Failed to generate reports:', error);
+    process.exit(1);
+}

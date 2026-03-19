@@ -75,7 +75,7 @@ jobs:
               '<!-- /section:preview -->',
               '',
               '<!-- section:docs-preview -->',
-              '> \u23F3 _Publishing documentation preview..._',
+              '> \u23F3 _PR documentation preview: publishing..._',
               '<!-- /section:docs-preview -->',
               '',
               '---',
@@ -1116,6 +1116,7 @@ jobs:
         working-directory: ./frontend
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_ENABLE_MOCK_BACKEND: "true"
         run: npm run build
 
       - name: Deploy preview to Surge
@@ -1133,6 +1134,7 @@ jobs:
         env:
           PREVIEW_URL: ${{ steps.preview.outputs.preview_url }}
           EXPECTED_URL: ${{ env.PREVIEW_URL }}
+          MAIN_APP_URL: ${{ env.MAIN_APP_URL }}
         with:
           script: |
             async function updateDashboard(github, context, sections) {
@@ -1156,12 +1158,14 @@ jobs:
             }
 
             const url = process.env.PREVIEW_URL || process.env.EXPECTED_URL;
+            const mainAppUrl = process.env.MAIN_APP_URL;
             let content;
             if (url) {
               content = [
                 '> \u{1F7E2} **Site deployed successfully**',
                 '>',
                 `> \u{1F517} **[Open preview site](${url})**`,
+                ...(mainAppUrl ? [`> \u{1F517} [Current site](${mainAppUrl})`] : []),
               ].join('\n');
             } else {
               content = '> \u274C _Failed to deploy preview site_';
@@ -1284,23 +1288,17 @@ jobs:
             const docsSurgeUrl = process.env.DOCS_SURGE_URL;
             const docsGhUrl = process.env.DOCS_GH_URL;
             const mainDocsUrl = process.env.MAIN_DOCS_URL;
-            const mainAppUrl = process.env.MAIN_APP_URL;
-            const prPreviewUrl = process.env.PR_PREVIEW_URL;
             let content;
             if (hasDocs) {
-              const compareTarget = docsGhUrl || docsSurgeUrl;
+              const prDocsUrl = docsGhUrl || docsSurgeUrl;
               content = [
                 '> \u{1F4D6} **Documentation preview published**',
                 '>',
-                '> \u{1F517} **Quick access links**',
-                `> - [Current page](${mainAppUrl})`,
-                `> - [Preview page](${prPreviewUrl})`,
-                `> - [Current documentation](${mainDocsUrl})`,
-                ...(compareTarget ? [
-                  `> - [New documentation](${compareTarget})`,
-                ] : [
-                  '> - New documentation: Pending CI publish'
-                ])
+                ...(prDocsUrl
+                  ? [`> \u{1F517} **[PR documentation preview](${prDocsUrl})**`]
+                  : ['> \u23F3 _PR documentation: pending publish_']
+                ),
+                ...(mainDocsUrl ? [`> \u{1F517} [Current documentation](${mainDocsUrl})`] : []),
               ].join('\n');
             } else {
               content = '> \u26AA _No documentation directory found to publish_';
@@ -1449,7 +1447,7 @@ jobs:
     if: github.event.action == 'closed'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     steps:
       - name: Tear down preview
@@ -1469,6 +1467,48 @@ jobs:
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Clean up PR docs from GitHub Pages branch
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prPath = '${{ env.DOCS_GH_PREVIEW_PATH }}';
+            try {
+              const { data: ref } = await github.rest.git.getRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: 'heads/gh-pages',
+              });
+              const baseTree = ref.object.sha;
+              const { data: commit } = await github.rest.git.getCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: baseTree,
+              });
+              const { data: tree } = await github.rest.git.createTree({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base_tree: commit.tree.sha,
+                tree: [{ path: prPath, mode: '040000', type: 'tree', sha: null }],
+              });
+              const { data: newCommit } = await github.rest.git.createCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                message: `chore: remove docs preview for PR #${context.issue.number}`,
+                tree: tree.sha,
+                parents: [baseTree],
+              });
+              await github.rest.git.updateRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: 'heads/gh-pages',
+                sha: newCommit.sha,
+              });
+              core.info(`Removed ${prPath} from gh-pages branch.`);
+            } catch (e) {
+              core.warning(`Could not clean up PR docs from gh-pages: ${e.message}`);
+            }
 
       - name: Tear down backend unit report
         run: npx surge teardown ${{ env.BACKEND_REPORT_DOMAIN }} || true
@@ -1546,7 +1586,7 @@ jobs:
 
             const existing = comments.find(c =>
               c.user.login === 'github-actions[bot]' &&
-              (c.body.includes('Previsualizaci\u00F3n disponible') || c.body.includes('Preview deployment ready'))
+              c.body.includes('Preview available')
             );
 
             if (existing) {

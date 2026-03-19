@@ -22,6 +22,8 @@ public class BackupController : ControllerBase
     /// Generate database backup and download as ZIP file
     /// </summary>
     [HttpGet("generate")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GenerateBackup()
     {
         _logger.LogInformation("Backup generation request received");
@@ -84,6 +86,8 @@ public class BackupController : ControllerBase
     /// Get backup status and information
     /// </summary>
     [HttpGet("status")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult GetBackupStatus()
     {
         try
@@ -109,8 +113,7 @@ public class BackupController : ControllerBase
             return Ok(new
             {
                 totalBackups = backups.Count,
-                backups = backups,
-                backupPath = backupPath
+                backups = backups
             });
         }
         catch (Exception ex)

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const FAQPage = () => {
@@ -12,8 +13,8 @@ const FAQPage = () => {
     { categoryKey: 'catProcess', items: ['p1', 'p2', 'p3'] }
   ];
 
-  const toggleFAQ = (categoryIndex, questionIndex) => {
-    const index = `${categoryIndex}-${questionIndex}`;
+  const toggleFAQ = (categoryKey, itemKey) => {
+    const index = `${categoryKey}-${itemKey}`;
     setOpenIndex(openIndex === index ? null : index);
   };
 
@@ -32,21 +33,21 @@ const FAQPage = () => {
       {/* FAQ Content */}
       <section className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
-          {faqs.map((category, categoryIndex) => (
-            <div key={categoryIndex} className="mb-12">
+          {faqs.map((category) => (
+            <div key={category.categoryKey} className="mb-12">
               <h2 className="text-3xl font-bold mb-6 text-gray-900 border-b-2 border-primary-600 pb-2">
                 {t(`faqPage.${category.categoryKey}`)}
               </h2>
               <div className="space-y-4">
-                {category.items.map((item, questionIndex) => {
-                  const isOpen = openIndex === `${categoryIndex}-${questionIndex}`;
+                {category.items.map((item) => {
+                  const isOpen = openIndex === `${category.categoryKey}-${item}`;
                   return (
                     <div
-                      key={questionIndex}
+                      key={item}
                       className="bg-white rounded-lg shadow-soft overflow-hidden"
                     >
                       <button
-                        onClick={() => toggleFAQ(categoryIndex, questionIndex)}
+                        onClick={() => toggleFAQ(category.categoryKey, item)}
                         className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition"
                       >
                         <span className="font-semibold text-lg text-gray-900 pr-8">
@@ -90,12 +91,12 @@ const FAQPage = () => {
             {t('faqPage.supportDesc')}
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <a
-              href="/contact"
+            <Link
+              to="/contact"
               className="inline-block px-8 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-semibold"
             >
               {t('faqPage.contactSupport')}
-            </a>
+            </Link>
             <a
               href="tel:+525512345678"
               className="inline-block px-8 py-3 bg-white text-primary-600 border-2 border-primary-600 rounded-lg hover:bg-primary-50 transition font-semibold"

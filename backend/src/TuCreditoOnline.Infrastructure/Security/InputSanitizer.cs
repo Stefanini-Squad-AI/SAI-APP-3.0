@@ -3,8 +3,16 @@ using Ganss.Xss;
 
 namespace TuCreditoOnline.Infrastructure.Security;
 
-public static class InputSanitizer
+public static partial class InputSanitizer
 {
+    [GeneratedRegex(@"[\x00-\x08\x0B\x0C\x0E-\x1F]")]
+    private static partial Regex ControlCharsRegex();
+
+    [GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
+    private static partial Regex EmailFormatRegex();
+
+    [GeneratedRegex(@"[^\d]")]
+    private static partial Regex NonDigitRegex();
     private static readonly HtmlSanitizer _htmlSanitizer = new HtmlSanitizer();
     
     static InputSanitizer()
@@ -38,7 +46,7 @@ public static class InputSanitizer
         var sanitized = SanitizeHtml(input);
         
         // Remove control characters except newline and tab
-        sanitized = Regex.Replace(sanitized, @"[\x00-\x08\x0B\x0C\x0E-\x1F]", string.Empty);
+        sanitized = ControlCharsRegex().Replace(sanitized, string.Empty);
         
         // Trim whitespace
         return sanitized.Trim();
@@ -55,7 +63,7 @@ public static class InputSanitizer
         var sanitized = SanitizeString(email).ToLowerInvariant();
         
         // Basic email validation
-        if (!Regex.IsMatch(sanitized, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+        if (!EmailFormatRegex().IsMatch(sanitized))
             return string.Empty;
 
         return sanitized;
@@ -82,7 +90,7 @@ public static class InputSanitizer
             return string.Empty;
 
         // Remove all non-digit characters
-        var digitsOnly = Regex.Replace(phone, @"[^\d]", string.Empty);
+        var digitsOnly = NonDigitRegex().Replace(phone, string.Empty);
         
         // Validate length (10 digits for Mexican phone numbers)
         if (digitsOnly.Length < 10 || digitsOnly.Length > 15)

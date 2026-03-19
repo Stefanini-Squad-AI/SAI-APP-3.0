@@ -25,8 +25,35 @@ const mockDb = {
       fullName: 'System Administrator',
       role: 'Admin',
       isActive: true,
-      createdAt: nowIso(),
+      createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
       lastLogin: nowIso()
+    },
+    {
+      id: 'u-analyst-1',
+      email: 'analyst.garcia@tucreditoonline.local',
+      fullName: 'Laura García',
+      role: 'Analista',
+      isActive: true,
+      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+      lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: 'u-analyst-2',
+      email: 'analyst.morales@tucreditoonline.local',
+      fullName: 'Diego Morales',
+      role: 'Analista',
+      isActive: true,
+      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      lastLogin: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: 'u-analyst-3',
+      email: 'analyst.torres@tucreditoonline.local',
+      fullName: 'Sofía Torres',
+      role: 'Analista',
+      isActive: false,
+      createdAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
+      lastLogin: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
     }
   ],
   creditRequests: [
@@ -34,9 +61,20 @@ const mockDb = {
       id: 'cr-1',
       fullName: 'Ana Gomez',
       email: 'ana@example.com',
+      phone: '+52 55 9876 0001',
+      identificationNumber: 'MX-0001234',
+      address: 'Av. Reforma 222, Piso 3, Juárez, CDMX',
+      employmentStatus: 'Employed',
+      monthlySalary: 28000,
+      yearsOfEmployment: 4,
+      creditType: 'Personal Credit',
+      useOfMoney: 'Home renovations and furniture',
       requestedAmount: 15000,
       termYears: 2,
+      interestRate: 18,
       monthlyPayment: 760,
+      totalPayment: 18240,
+      totalInterest: 3240,
       requestDate: nowIso(),
       status: 'Pending'
     },
@@ -44,21 +82,70 @@ const mockDb = {
       id: 'cr-2',
       fullName: 'Luis Perez',
       email: 'luis@example.com',
+      phone: '+52 55 9876 0002',
+      identificationNumber: 'MX-0002345',
+      address: 'Calle Insurgentes 450, Narvarte, CDMX',
+      employmentStatus: 'Self-Employed',
+      monthlySalary: 62000,
+      yearsOfEmployment: 8,
+      creditType: 'Business Credit',
+      useOfMoney: 'Equipment acquisition for workshop',
       requestedAmount: 50000,
       termYears: 3,
+      interestRate: 16,
       monthlyPayment: 1850,
+      totalPayment: 66600,
+      totalInterest: 16600,
       requestDate: nowIso(),
-      status: 'Approved'
+      status: 'Approved',
+      approvedDate: nowIso(),
+      approvedAmount: 50000,
+      approvedTermMonths: 36,
+      remarks: 'Excellent credit history. Approved at requested amount.'
     },
     {
       id: 'cr-3',
       fullName: 'Maria Diaz',
       email: 'maria@example.com',
+      phone: '+52 55 9876 0003',
+      identificationNumber: 'MX-0003456',
+      address: 'Blvd. Adolfo López Mateos 1001, Álvaro Obregón, CDMX',
+      employmentStatus: 'Employed',
+      monthlySalary: 14500,
+      yearsOfEmployment: 1,
+      creditType: 'Express Credit',
+      useOfMoney: 'Medical expenses',
       requestedAmount: 8000,
       termYears: 1,
+      interestRate: 24,
       monthlyPayment: 740,
+      totalPayment: 8880,
+      totalInterest: 880,
       requestDate: nowIso(),
-      status: 'Rejected'
+      status: 'Rejected',
+      rejectedDate: nowIso(),
+      remarks: 'Insufficient income for requested amount. Please reapply with a lower amount.'
+    },
+    {
+      id: 'cr-4',
+      fullName: 'Carlos Ramos',
+      email: 'carlos@example.com',
+      phone: '+52 55 9876 0004',
+      identificationNumber: 'MX-0004567',
+      address: 'Av. Universidad 1200, Coyoacán, CDMX',
+      employmentStatus: 'Employed',
+      monthlySalary: 45000,
+      yearsOfEmployment: 6,
+      creditType: 'Consolidation Credit',
+      useOfMoney: 'Debt consolidation — 3 credit cards',
+      requestedAmount: 120000,
+      termYears: 5,
+      interestRate: 15,
+      monthlyPayment: 2852,
+      totalPayment: 171120,
+      totalInterest: 51120,
+      requestDate: nowIso(),
+      status: 'Pending'
     }
   ],
   contactMessages: [
@@ -66,10 +153,42 @@ const mockDb = {
       id: 'msg-1',
       name: 'John Smith',
       email: 'john@example.com',
-      subject: 'Credit question',
-      message: 'Can I pay early without penalty?',
+      subject: 'Early payment — any penalties?',
+      message: 'Hello, I have a personal credit and I would like to know if I can pay it off early without any penalties. Thank you.',
       status: 0,
-      createdAt: nowIso()
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: 'msg-2',
+      name: 'Patricia Herrera',
+      email: 'patricia.h@example.com',
+      subject: 'Documentation required for credit application',
+      message: 'Good afternoon, I would like to know which documents I need to provide to apply for the Express Credit. I am self-employed.',
+      status: 1,
+      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      adminNotes: 'Sent list of required documents via email.'
+    },
+    {
+      id: 'msg-3',
+      name: 'Roberto Fuentes',
+      email: 'r.fuentes@example.com',
+      subject: 'Issue accessing my account',
+      message: 'I cannot log in to my account. I have tried resetting my password but never receive the email. Please help.',
+      status: 2,
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      respondedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      respondedBy: 'Laura García'
+    },
+    {
+      id: 'msg-4',
+      name: 'Elena Castillo',
+      email: 'elena.c@example.com',
+      subject: 'Thank you for the fast service',
+      message: 'I just wanted to say thank you. The credit was approved in less than 24 hours and the process was very simple. I will definitely recommend you.',
+      status: 3,
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      closedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+      closedBy: 'System Administrator'
     }
   ],
   services: [
@@ -94,12 +213,45 @@ const mockDb = {
     {
       id: 'ct-1',
       name: 'Personal Credit',
-      description: 'General purpose credit',
+      description: 'For personal expenses: travel, home improvements, emergencies and more.',
       baseInterestRate: 18,
       minAmount: 5000,
       maxAmount: 200000,
       minTermMonths: 12,
       maxTermMonths: 60,
+      isActive: true
+    },
+    {
+      id: 'ct-2',
+      name: 'Express Credit',
+      description: 'Same-day approval for small amounts. No collateral required.',
+      baseInterestRate: 24,
+      minAmount: 1000,
+      maxAmount: 50000,
+      minTermMonths: 6,
+      maxTermMonths: 24,
+      isActive: true
+    },
+    {
+      id: 'ct-3',
+      name: 'Consolidation Credit',
+      description: 'Combine all your existing debts into one manageable monthly payment.',
+      baseInterestRate: 15,
+      minAmount: 10000,
+      maxAmount: 300000,
+      minTermMonths: 24,
+      maxTermMonths: 120,
+      isActive: true
+    },
+    {
+      id: 'ct-4',
+      name: 'Business Credit',
+      description: 'Flexible financing to grow your business or cover operating costs.',
+      baseInterestRate: 16,
+      minAmount: 20000,
+      maxAmount: 500000,
+      minTermMonths: 12,
+      maxTermMonths: 84,
       isActive: true
     }
   ]

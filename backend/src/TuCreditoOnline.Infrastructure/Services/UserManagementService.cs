@@ -22,10 +22,9 @@ public class UserManagementService
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                searchTerm = searchTerm.ToLower();
                 allUsers = allUsers.Where(u =>
-                    u.Email.ToLower().Contains(searchTerm) ||
-                    u.FullName.ToLower().Contains(searchTerm)
+                    u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    u.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
                 ).ToList();
             }
 

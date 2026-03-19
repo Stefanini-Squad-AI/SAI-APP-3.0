@@ -7,15 +7,17 @@ const ServicesPage = () => {
   const { t } = useTranslation();
   const [creditTypes, setCreditTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const fetchCreditTypes = async () => {
       try {
         setLoading(true);
+        setError(false);
         const data = await creditTypeService.getAll(true);
         setCreditTypes(data);
-      } catch (error) {
-        console.error('Error loading credit types:', error);
+      } catch {
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -34,7 +36,7 @@ const ServicesPage = () => {
 
   // Selects an icon based on keywords in the credit type name
   const getIcon = (name) => {
-    const nameLower = name.toLowerCase();
+    const nameLower = (name ?? '').toLowerCase();
 
     if (nameLower.includes('express') || nameLower.includes('rápido') || nameLower.includes('quick') || nameLower.includes('fast')) {
       return (
@@ -76,21 +78,13 @@ const ServicesPage = () => {
   };
 
   const getFeatures = (creditType) => {
-    const features = [];
-    
-    if (creditType.minTermMonths <= 3) {
-      features.push(t('servicesPage.feature1'));
-    }
-    if (creditType.baseInterestRate <= 15) {
-      features.push(t('servicesPage.feature2'));
-    }
-    if (creditType.maxAmount >= 100000) {
-      features.push(t('servicesPage.feature3'));
-    }
-    features.push(t('servicesPage.feature4'));
-    features.push(t('servicesPage.feature5'));
-    
-    return features;
+    return [
+      ...(creditType.minTermMonths <= 3 ? [t('servicesPage.feature1')] : []),
+      ...(creditType.baseInterestRate <= 15 ? [t('servicesPage.feature2')] : []),
+      ...(creditType.maxAmount >= 100000 ? [t('servicesPage.feature3')] : []),
+      t('servicesPage.feature4'),
+      t('servicesPage.feature5'),
+    ];
   };
 
   const getRequirements = () => {
@@ -116,7 +110,11 @@ const ServicesPage = () => {
 
       {/* Services Grid */}
       <section className="container mx-auto px-4 py-16">
-        {loading ? (
+        {error ? (
+          <div className="text-center py-20">
+            <p className="text-xl text-gray-600">{t('servicesPage.noServicesDesc')}</p>
+          </div>
+        ) : loading ? (
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-primary-500"></div>
           </div>
@@ -158,8 +156,8 @@ const ServicesPage = () => {
 
                   <h3 className="font-semibold text-lg mb-3">{t('servicesPage.characteristics')}</h3>
                   <ul className="space-y-2 mb-6">
-                    {getFeatures(creditType).map((feature, idx) => (
-                      <li key={idx} className="flex items-start text-gray-600">
+                    {getFeatures(creditType).map((feature) => (
+                      <li key={feature} className="flex items-start text-gray-600">
                         <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -170,8 +168,8 @@ const ServicesPage = () => {
 
                   <h3 className="font-semibold text-lg mb-3">{t('servicesPage.requirements')}</h3>
                   <ul className="space-y-2 mb-6">
-                    {getRequirements().map((req, idx) => (
-                      <li key={idx} className="flex items-start text-gray-600 text-sm">
+                    {getRequirements().map((req) => (
+                      <li key={req} className="flex items-start text-gray-600 text-sm">
                         <span className="text-primary-600 mr-2">•</span>
                         {req}
                       </li>

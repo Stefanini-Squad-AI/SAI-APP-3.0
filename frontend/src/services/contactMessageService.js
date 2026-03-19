@@ -8,7 +8,7 @@ const contactMessageService = {
     try {
       const response = await apiClient.post(API_URL, messageData);
       return response.data;
-    } catch (error) {
+    } catch {
       // Simulate a successful submission when the backend is unreachable (e.g. GitHub Pages)
       return {
         id: `demo-${Date.now()}`,
@@ -25,7 +25,7 @@ const contactMessageService = {
    */
   async getAll(status = null) {
     try {
-      const params = status !== null ? { status } : {};
+      const params = status === null ? {} : { status };
       const response = await apiClient.get(API_URL, { params });
       return response.data;
     } catch (error) {

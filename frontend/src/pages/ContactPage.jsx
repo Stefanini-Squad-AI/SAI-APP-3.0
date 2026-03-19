@@ -30,8 +30,8 @@ const ContactPage = () => {
       
       Swal.fire({
         icon: 'success',
-        title: t('loginPage.messageSent'),
-        text: t('loginPage.thanksContact'),
+        title: t('contactPage.messageSent'),
+        text: t('contactPage.thanksContact'),
         confirmButtonColor: '#2563eb'
       });
 
@@ -45,8 +45,8 @@ const ContactPage = () => {
       console.error('Error sending contact message:', error);
       Swal.fire({
         icon: 'error',
-        title: t('loginPage.error'),
-        text: t('loginPage.sendError'),
+        title: t('contactPage.errorTitle'),
+        text: t('contactPage.sendError'),
         confirmButtonColor: '#dc2626'
       });
     } finally {
@@ -247,9 +247,9 @@ const ContactPage = () => {
                     <div>
                       <h3 className="font-semibold text-lg mb-2">{t('contactPage.mainOffice')}</h3>
                       <p className="text-gray-600">
-                        123 Main Street<br />
-                        Suite 100<br />
-                        New York, NY 10001
+                        Reforma 222, Piso 8<br />
+                        Juárez, Cuauhtémoc<br />
+                        06600 Ciudad de México, CDMX
                       </p>
                     </div>
                   </div>

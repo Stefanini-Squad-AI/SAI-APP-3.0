@@ -44,7 +44,7 @@ const SettingsPage = () => {
         } else {
           Swal.fire({ title: 'Error', text: response.error || 'Failed to generate backup', icon: 'error' });
         }
-      } catch (error) {
+      } catch {
         setIsGenerating(false);
         Swal.fire({ title: 'Error', text: 'Unexpected error generating backup', icon: 'error' });
       }

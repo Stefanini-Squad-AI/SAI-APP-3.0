@@ -18,7 +18,7 @@ Object.defineProperty(globalThis, 'matchMedia', {
 // Mock IntersectionObserver
 globalThis.IntersectionObserver = class IntersectionObserver {
   constructor() {
-    return undefined;
+    // no-op
   }
   disconnect() {
     return undefined;

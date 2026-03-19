@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const AboutPage = () => {
@@ -108,12 +109,12 @@ const AboutPage = () => {
             <p className="text-xl text-primary-100 mb-8">
               {t('aboutPage.joinCTA')}
             </p>
-            <a
-              href="/calculator"
+            <Link
+              to="/calculator"
               className="inline-block px-8 py-3 bg-white text-primary-600 rounded-lg hover:bg-primary-50 transition font-semibold text-lg"
             >
               {t('aboutPage.applyNow')}
-            </a>
+            </Link>
           </div>
         </div>
       </section>

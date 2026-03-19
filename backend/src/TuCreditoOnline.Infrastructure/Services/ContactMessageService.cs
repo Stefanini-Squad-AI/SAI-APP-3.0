@@ -198,7 +198,7 @@ public class ContactMessageService
                 .ToList();
 
             double avgResponseTime = 0;
-            if (respondedMessages.Any())
+            if (respondedMessages.Count > 0)
             {
                 avgResponseTime = respondedMessages
                     .Select(m => (m.RespondedAt!.Value - m.CreatedAt).TotalHours)

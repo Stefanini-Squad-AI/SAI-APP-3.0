@@ -26,11 +26,15 @@ const createMockJwt = ({ email, fullName, role }) => {
   return `${toBase64Url(JSON.stringify(header))}.${toBase64Url(JSON.stringify(payload))}.mock-signature`;
 };
 
-const buildMockLoginResponse = () => {
+const buildMockLoginResponse = ({
+  email = DEFAULT_ADMIN_EMAIL,
+  fullName = 'System Administrator',
+  role = 'Admin'
+} = {}) => {
   const token = createMockJwt({
-    email: DEFAULT_ADMIN_EMAIL,
-    fullName: 'System Administrator',
-    role: 'Admin'
+    email,
+    fullName,
+    role
   });
   const expiresAt = new Date(Date.now() + 60 * 60 * 24 * 1000).toISOString();
 
@@ -38,9 +42,9 @@ const buildMockLoginResponse = () => {
     success: true,
     data: {
       token,
-      email: DEFAULT_ADMIN_EMAIL,
-      fullName: 'System Administrator',
-      role: 'Admin',
+      email,
+      fullName,
+      role,
       expiresAt
     }
   };
@@ -56,6 +60,24 @@ const authService = {
       normalizedPassword === DEFAULT_ADMIN_PASSWORD;
 
     if (USE_MOCK_AUTH) {
+      // Demo mode: keep login permissive so previews work without backend dependencies.
+      if (ENABLE_MOCK_BACKEND) {
+        if (!normalizedEmail || !normalizedPassword) {
+          return {
+            success: false,
+            error: 'Email and password are required'
+          };
+        }
+        const inferredName = normalizedEmail.split('@')[0]
+          .replaceAll(/[._-]+/g, ' ')
+          .replaceAll(/\b\w/g, (char) => char.toUpperCase()) || 'Demo Admin';
+        return buildMockLoginResponse({
+          email: normalizedEmail,
+          fullName: inferredName,
+          role: 'Admin'
+        });
+      }
+
       if (!canUseMockCredentials) {
         return {
           success: false,
