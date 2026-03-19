@@ -323,20 +323,22 @@ const normalizePath = (url = '') => {
   return clean.startsWith('/') ? clean : `/${clean}`;
 };
 
+const getUserList = (config, params) => {
+  const page = Number(params.page || 1);
+  const pageSize = Number(params.pageSize || 10);
+  const search = String(params.search || '').toLowerCase().trim();
+  const filtered = search
+    ? mockDb.users.filter((u) => u.email.toLowerCase().includes(search) || u.fullName.toLowerCase().includes(search))
+    : mockDb.users;
+  const start = (page - 1) * pageSize;
+  return mockResponse(config, { users: filtered.slice(start, start + pageSize), totalCount: filtered.length, page, pageSize });
+};
+
 const handleUserRoutes = (config, method, path, data, params) => {
-  if (method === 'get' && path === '/users') {
-    const page = Number(params.page || 1);
-    const pageSize = Number(params.pageSize || 10);
-    const search = String(params.search || '').toLowerCase().trim();
-    const filtered = search
-      ? mockDb.users.filter((u) => u.email.toLowerCase().includes(search) || u.fullName.toLowerCase().includes(search))
-      : mockDb.users;
-    const start = (page - 1) * pageSize;
-    return mockResponse(config, { users: filtered.slice(start, start + pageSize), totalCount: filtered.length, page, pageSize });
-  }
+  if (method === 'get' && path === '/users') return getUserList(config, params);
   if (method === 'get' && path.startsWith('/users/')) {
     const userId = path.split('/')[2];
-    const user = mockDb.users.find((u) => u.id === userId) || null;
+    const user = mockDb.users.find((u) => u.id === userId) ?? null;
     return mockResponse(config, user, user ? 200 : 404);
   }
   if (method === 'post' && path === '/users/change-password') return mockResponse(config, true);
@@ -348,14 +350,21 @@ const handleUserRoutes = (config, method, path, data, params) => {
   if (method === 'put' && path.startsWith('/users/')) {
     const userId = path.split('/')[2];
     const idx = mockDb.users.findIndex((u) => u.id === userId);
-    if (idx >= 0) mockDb.users[idx] = { ...mockDb.users[idx], ...data };
-    return mockResponse(config, mockDb.users[idx] || null);
+    const updated = idx >= 0 ? { ...mockDb.users[idx], ...data } : null;
+    if (idx >= 0) mockDb.users.splice(idx, 1, updated);
+    return mockResponse(config, updated);
   }
   if (method === 'delete' && path.startsWith('/users/')) {
     const userId = path.split('/')[2];
     mockDb.users = mockDb.users.filter((u) => u.id !== userId);
     return mockResponse(config, true);
   }
+  return null;
+};
+
+const handleDashboardRoutes = (config, method, path) => {
+  if (method === 'get' && path === '/dashboard/stats') return mockResponse(config, buildDashboardStats());
+  if (method === 'get' && path === '/dashboard/status-distribution') return mockResponse(config, buildStatusDistribution());
   return null;
 };
 
@@ -474,23 +483,23 @@ const attachMockAdapter = (config) => {
       : (config.data || {});
     const params = config.params || {};
 
-    if (method === 'get' && path === '/dashboard/stats') return mockResponse(config, buildDashboardStats());
-    if (method === 'get' && path === '/dashboard/status-distribution') return mockResponse(config, buildStatusDistribution());
+    const dashResult = await handleDashboardRoutes(config, method, path);
+    if (dashResult !== null) return dashResult;
 
-    const userResult = handleUserRoutes(config, method, path, data, params);
-    if (userResult) return userResult;
+    const userResult = await handleUserRoutes(config, method, path, data, params);
+    if (userResult !== null) return userResult;
 
-    const crResult = handleCreditRequestRoutes(config, method, path, data);
-    if (crResult) return crResult;
+    const crResult = await handleCreditRequestRoutes(config, method, path, data);
+    if (crResult !== null) return crResult;
 
-    const msgResult = handleContactMessageRoutes(config, method, path, data, params);
-    if (msgResult) return msgResult;
+    const msgResult = await handleContactMessageRoutes(config, method, path, data, params);
+    if (msgResult !== null) return msgResult;
 
-    const svcResult = handleServiceRoutes(config, method, path, data);
-    if (svcResult) return svcResult;
+    const svcResult = await handleServiceRoutes(config, method, path, data);
+    if (svcResult !== null) return svcResult;
 
-    const ctResult = handleCreditTypeRoutes(config, method, path, data);
-    if (ctResult) return ctResult;
+    const ctResult = await handleCreditTypeRoutes(config, method, path, data);
+    if (ctResult !== null) return ctResult;
 
     if (method === 'get' && path === '/health') return mockResponse(config, { status: 'Healthy' });
     if (method === 'get' && path === '/backup/generate') {
