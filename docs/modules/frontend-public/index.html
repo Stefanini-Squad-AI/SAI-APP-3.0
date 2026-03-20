@@ -75,6 +75,7 @@
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="vLegal">Legal Information (tabs)</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
         </tbody>
       </table>
@@ -150,12 +151,56 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/legal</code></td>
+            <td data-i18n="rLegalPurpose">Centralize all legal documents in a single accessible, tabbed page.</td>
+            <td data-i18n="rLegalContains">Hero section, ARIA-compliant tab list (Legal Notice / Privacy Policy / Terms &amp; Conditions), tab panels with full content, and back-home navigation.</td>
+            <td data-i18n="rLegalActions">Switch between legal document tabs without page reload; change language and see translations in real time; navigate to contact or home.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
             <td data-i18n="r404Actions">Return safely to root route.</td>
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="legalPageTitle">Página de Informaciones Legales — <code>/legal</code> (SAIAPP3-25)</h2>
+      <p data-i18n="legalPageDesc">
+        <code>LegalPage.jsx</code> provides a centralized, tabbed legal information hub accessible at <code>/legal</code>.
+        It groups Legal Notice, Privacy Policy, and Terms &amp; Conditions under a single accessible interface,
+        replacing the previous scattered links from the footer.
+      </p>
+      <ul>
+        <li data-i18n="legalPageDetail1">Component: <code>frontend/src/pages/LegalPage.jsx</code> — inline tab state managed with React <code>useState</code>.</li>
+        <li data-i18n="legalPageDetail2">Accessibility: <code>role="tablist"</code>, <code>role="tab"</code>, <code>role="tabpanel"</code>, <code>aria-selected</code>, <code>aria-controls</code>, <code>aria-labelledby</code>. Keyboard-accessible and screen-reader compatible.</li>
+        <li data-i18n="legalPageDetail3">i18n keys: <code>legalPage.title</code>, <code>legalPage.subtitle</code>, <code>legalPage.tabLegalNotice</code>, <code>legalPage.tabPrivacy</code>, <code>legalPage.tabTerms</code>, <code>legalPage.ln.*</code> (4 Legal Notice sections). Defined in <code>es.json</code>, <code>en.json</code>, and <code>pt.json</code>.</li>
+        <li data-i18n="legalPageDetail4">Header: new key <code>header.legal</code> added to all locales. <code>Header.jsx</code> includes the link both in desktop and mobile menus.</li>
+        <li data-i18n="legalPageDetail5">Footer: <code>footer.legalNotice</code> link updated from <code>/terms</code> to <code>/legal</code>.</li>
+        <li data-i18n="legalPageDetail6">Privacy and Terms tab content reuses existing <code>privacyPage.*</code> and <code>termsPage.*</code> i18n keys — zero duplication.</li>
+        <li data-i18n="legalPageDetail7">Legal Notice content covers: site owner, acceptable use, intellectual property, and limitation of liability.</li>
+        <li data-i18n="legalPageDetail8">Responsiveness: Tailwind classes ensure tabs stack on mobile and are fully reachable with min-height 44px touch targets.</li>
+      </ul>
+
+      <h2 data-i18n="legalPageAcTitle" style="margin-top:14px;">Acceptance Criteria Examples</h2>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thAcId">AC</th>
+            <th data-i18n="thAcDesc">Criterion</th>
+            <th data-i18n="thAcEvidence">Evidence / Key</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>AC1</td><td data-i18n="ac1Desc">Route <code>/legal</code> renders <code>LegalPage.jsx</code> with correct heading.</td><td><code>h1</code> = "Informaciones Legales" (es) / "Legal Information" (en) / "Informações Legais" (pt)</td></tr>
+          <tr><td>AC2</td><td data-i18n="ac2Desc">Tab navigation works without page reload; first tab active by default.</td><td><code>aria-selected="true"</code> on active tab; panel visibility toggled via <code>hidden</code> attribute.</td></tr>
+          <tr><td>AC3</td><td data-i18n="ac3Desc">All texts update in real time on language switch.</td><td>Keys <code>legalPage.*</code> exist in <code>es.json</code>, <code>en.json</code>, <code>pt.json</code>.</td></tr>
+          <tr><td>AC4</td><td data-i18n="ac4Desc">Header includes "Legal" link; footer "Aviso Legal" points to <code>/legal</code>.</td><td>Key <code>header.legal</code> in all locales; footer <code>Link to="/legal"</code>.</td></tr>
+          <tr><td>AC5</td><td data-i18n="ac5Desc">ARIA roles present; component fully responsive on 375px viewports.</td><td><code>role="tablist/tab/tabpanel"</code>; Tailwind <code>flex-wrap</code> + <code>min-h-[44px]</code>.</td></tr>
         </tbody>
       </table>
     </section>
@@ -190,6 +235,7 @@
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
+        vLegal: "Legal Information (tabs)",
         vNotFound: "Not found",
         rHomePurpose: "Present brand value and convert visitors into simulation and contact flows.",
         rHomeContains: "Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.",
@@ -215,10 +261,30 @@
         rTermsPurpose: "Describe contract and usage conditions for platform services.",
         rTermsContains: "Five terms sections with update date, plus contact and back-home links.",
         rTermsActions: "Review legal obligations, then navigate to contact/home pages.",
+        rLegalPurpose: "Centralize all legal documents in a single accessible, tabbed page.",
+        rLegalContains: "Hero section, ARIA-compliant tab list (Legal Notice / Privacy Policy / Terms & Conditions), tab panels with full content, and back-home navigation.",
+        rLegalActions: "Switch between legal document tabs without page reload; change language and see translations in real time; navigate to contact or home.",
         r404Purpose: "Handle unknown URLs and recover navigation.",
         r404Contains: "404 code, explanatory text, and CTA back to home.",
         r404Actions: "Return safely to root route.",
         noApi: "No backend calls.",
+        legalPageTitle: "Legal Information Page — /legal (SAIAPP3-25)",
+        legalPageDesc: "LegalPage.jsx provides a centralized, tabbed legal information hub accessible at /legal. It groups Legal Notice, Privacy Policy, and Terms & Conditions under a single accessible interface, replacing the previous scattered links from the footer.",
+        legalPageDetail1: "Component: frontend/src/pages/LegalPage.jsx — inline tab state managed with React useState.",
+        legalPageDetail2: "Accessibility: role=\"tablist\", role=\"tab\", role=\"tabpanel\", aria-selected, aria-controls, aria-labelledby. Keyboard-accessible and screen-reader compatible.",
+        legalPageDetail3: "i18n keys: legalPage.title, legalPage.subtitle, legalPage.tabLegalNotice, legalPage.tabPrivacy, legalPage.tabTerms, legalPage.ln.* (4 Legal Notice sections). Defined in es.json, en.json, and pt.json.",
+        legalPageDetail4: "Header: new key header.legal added to all locales. Header.jsx includes the link both in desktop and mobile menus.",
+        legalPageDetail5: "Footer: footer.legalNotice link updated from /terms to /legal.",
+        legalPageDetail6: "Privacy and Terms tab content reuses existing privacyPage.* and termsPage.* i18n keys — zero duplication.",
+        legalPageDetail7: "Legal Notice content covers: site owner, acceptable use, intellectual property, and limitation of liability.",
+        legalPageDetail8: "Responsiveness: Tailwind classes ensure tabs stack on mobile and are fully reachable with min-height 44px touch targets.",
+        legalPageAcTitle: "Acceptance Criteria Examples",
+        thAcId: "AC", thAcDesc: "Criterion", thAcEvidence: "Evidence / Key",
+        ac1Desc: "Route /legal renders LegalPage.jsx with correct heading.",
+        ac2Desc: "Tab navigation works without page reload; first tab active by default.",
+        ac3Desc: "All texts update in real time on language switch.",
+        ac4Desc: "Header includes 'Legal' link; footer 'Aviso Legal' points to /legal.",
+        ac5Desc: "ARIA roles present; component fully responsive on 375px viewports.",
         authYes: "Yes",
         authNo: "No"
       },
@@ -250,8 +316,29 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
+        vLegal: "Informaciones Legales (pestañas)",
         vNotFound: "No encontrado",
         noApi: "Sin llamadas al backend.",
+        rLegalPurpose: "Centralizar todos los documentos legales en una única página accesible con pestañas.",
+        rLegalContains: "Hero, lista de pestañas ARIA (Aviso Legal / Política de Privacidad / Términos y Condiciones), paneles de contenido y navegación de vuelta.",
+        rLegalActions: "Cambiar entre pestañas sin recarga; cambiar idioma y ver traducciones en tiempo real; navegar a contacto o inicio.",
+        legalPageTitle: "Página de Informaciones Legales — /legal (SAIAPP3-25)",
+        legalPageDesc: "LegalPage.jsx proporciona un hub legal centralizado accesible en /legal, con pestañas ARIA para Aviso Legal, Política de Privacidad y Términos y Condiciones.",
+        legalPageDetail1: "Componente: frontend/src/pages/LegalPage.jsx — estado de pestañas con React useState.",
+        legalPageDetail2: "Accesibilidad: role=\"tablist\", role=\"tab\", role=\"tabpanel\", aria-selected, aria-controls, aria-labelledby. Navegable por teclado.",
+        legalPageDetail3: "Claves i18n: legalPage.title, legalPage.subtitle, legalPage.tabLegalNotice, legalPage.tabPrivacy, legalPage.tabTerms, legalPage.ln.* (4 secciones). Definidas en es.json, en.json y pt.json.",
+        legalPageDetail4: "Header: nueva clave header.legal en todos los idiomas. Header.jsx incluye el enlace en menú escritorio y móvil.",
+        legalPageDetail5: "Footer: enlace footer.legalNotice actualizado de /terms a /legal.",
+        legalPageDetail6: "Contenido de Privacidad y Términos reutiliza privacyPage.* y termsPage.* existentes — sin duplicación.",
+        legalPageDetail7: "Aviso Legal cubre: titular del sitio, uso aceptable, propiedad intelectual y limitación de responsabilidad.",
+        legalPageDetail8: "Responsividad: clases Tailwind garantizan pestañas accesibles en móvil con altura mínima de 44px.",
+        legalPageAcTitle: "Ejemplos de Criterios de Aceptación",
+        thAcId: "CA", thAcDesc: "Criterio", thAcEvidence: "Evidencia / Clave",
+        ac1Desc: "La ruta /legal renderiza LegalPage.jsx con el encabezado correcto.",
+        ac2Desc: "La navegación por pestañas funciona sin recarga; primera pestaña activa por defecto.",
+        ac3Desc: "Todos los textos se actualizan en tiempo real al cambiar idioma.",
+        ac4Desc: "El header incluye el enlace 'Legal'; el footer 'Aviso Legal' apunta a /legal.",
+        ac5Desc: "Roles ARIA presentes; componente completamente responsivo en viewports de 375px.",
         authYes: "Sí",
         authNo: "No"
       },
@@ -283,8 +370,29 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
+        vLegal: "Informações Legais (abas)",
         vNotFound: "Não encontrado",
         noApi: "Sem chamadas ao backend.",
+        rLegalPurpose: "Centralizar todos os documentos legais em uma única página acessível com abas.",
+        rLegalContains: "Hero, lista de abas ARIA (Aviso Legal / Política de Privacidade / Termos e Condições), painéis de conteúdo e navegação de retorno.",
+        rLegalActions: "Alternar entre abas sem recarregar a página; trocar idioma e ver traduções em tempo real; navegar para contato ou início.",
+        legalPageTitle: "Página de Informações Legais — /legal (SAIAPP3-25)",
+        legalPageDesc: "LegalPage.jsx fornece um hub legal centralizado acessível em /legal, com abas ARIA para Aviso Legal, Política de Privacidade e Termos e Condições.",
+        legalPageDetail1: "Componente: frontend/src/pages/LegalPage.jsx — estado de abas com React useState.",
+        legalPageDetail2: "Acessibilidade: role=\"tablist\", role=\"tab\", role=\"tabpanel\", aria-selected, aria-controls, aria-labelledby. Navegável por teclado.",
+        legalPageDetail3: "Chaves i18n: legalPage.title, legalPage.subtitle, legalPage.tabLegalNotice, legalPage.tabPrivacy, legalPage.tabTerms, legalPage.ln.* (4 seções). Definidas em es.json, en.json e pt.json.",
+        legalPageDetail4: "Header: nova chave header.legal em todos os idiomas. Header.jsx inclui o link nos menus desktop e mobile.",
+        legalPageDetail5: "Footer: link footer.legalNotice atualizado de /terms para /legal.",
+        legalPageDetail6: "Conteúdo de Privacidade e Termos reutiliza privacyPage.* e termsPage.* existentes — sem duplicação.",
+        legalPageDetail7: "Aviso Legal cobre: titular do site, uso aceitável, propriedade intelectual e limitação de responsabilidade.",
+        legalPageDetail8: "Responsividade: classes Tailwind garantem abas acessíveis em mobile com altura mínima de 44px.",
+        legalPageAcTitle: "Exemplos de Critérios de Aceitação",
+        thAcId: "CA", thAcDesc: "Critério", thAcEvidence: "Evidência / Chave",
+        ac1Desc: "A rota /legal renderiza LegalPage.jsx com o título correto.",
+        ac2Desc: "A navegação por abas funciona sem recarregar; primeira aba ativa por padrão.",
+        ac3Desc: "Todos os textos são atualizados em tempo real ao trocar o idioma.",
+        ac4Desc: "O header inclui o link 'Legal'; o footer 'Aviso Legal' aponta para /legal.",
+        ac5Desc: "Roles ARIA presentes; componente totalmente responsivo em viewports de 375px.",
         authYes: "Sim",
         authNo: "Não"
       }

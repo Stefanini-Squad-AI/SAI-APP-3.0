@@ -67,10 +67,31 @@
     </section>
 
     <section class="card">
+      <h2 data-i18n="publicRoutes">Public route catalog (frontend-public)</h2>
+      <table>
+        <thead><tr><th>Route</th><th>Component</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>/</code></td><td><code>HomePage.jsx</code></td><td>Brand hero, services preview, stats, location block.</td></tr>
+          <tr><td><code>/services</code></td><td><code>ServicesPage.jsx</code></td><td>Credit product cards with amounts, rates and features.</td></tr>
+          <tr><td><code>/calculator</code></td><td><code>CalculatorPage.jsx</code></td><td>Installment simulator with real-time results.</td></tr>
+          <tr><td><code>/about</code></td><td><code>AboutPage.jsx</code></td><td>Company story, values and trust signals.</td></tr>
+          <tr><td><code>/faq</code></td><td><code>FAQPage.jsx</code></td><td>Accordion FAQ by category.</td></tr>
+          <tr><td><code>/contact</code></td><td><code>ContactPage.jsx</code></td><td>Validated contact form and support channels.</td></tr>
+          <tr><td><code>/privacy</code></td><td><code>PrivacyPage.jsx</code></td><td>Privacy policy document (standalone).</td></tr>
+          <tr><td><code>/terms</code></td><td><code>TermsPage.jsx</code></td><td>Terms &amp; conditions document (standalone).</td></tr>
+          <tr><td><code><strong>/legal</strong></code></td><td><code><strong>LegalPage.jsx</strong></code></td><td><strong>Centralized legal hub with ARIA-compliant tabs: Legal Notice, Privacy Policy, Terms &amp; Conditions. Added in SAIAPP3-25.</strong></td></tr>
+          <tr><td><code>*</code></td><td><code>NotFoundPage.jsx</code></td><td>404 recovery page.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
       <h2 data-i18n="i18nStrict">Internationalization (strict)</h2>
       <ul>
         <li>Supported runtime locales are strictly: <code>en</code>, <code>es</code>, and <code>pt</code>.</li>
         <li>Language switch is provided in the header selector and persisted with <code>tco-user-language</code>.</li>
+        <li>The <code>/legal</code> page (<code>LegalPage.jsx</code>) uses keys <code>legalPage.*</code> defined in all three locale files, covering the page title, tab labels, and Legal Notice section content.</li>
+        <li>The header navigation uses the new key <code>header.legal</code> (value: <code>Legal</code> in all locales) to label the link to <code>/legal</code>.</li>
       </ul>
     </section>
 
@@ -88,9 +109,9 @@
   </div>
   <script>
     const i18n = {
-      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
-      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
-      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
+      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", publicRoutes: "Public route catalog (frontend-public)", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
+      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", publicRoutes: "Catálogo de rutas públicas (frontend-public)", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
+      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", publicRoutes: "Catálogo de rotas públicas (frontend-public)", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
     };
     const select = document.getElementById("lang-select");
     const key = "docs-hub-lang";
