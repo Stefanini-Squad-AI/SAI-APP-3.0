@@ -67,10 +67,29 @@
     </section>
 
     <section class="card">
+      <h2 data-i18n="publicRoutes">Public routes (frontend-public)</h2>
+      <table>
+        <thead><tr><th data-i18n="thPath">Path</th><th data-i18n="thDesc">Description</th><th data-i18n="thNav">Header nav</th></tr></thead>
+        <tbody>
+          <tr><td><code>/</code></td><td>Home — brand hero, services preview, stats</td><td>✓</td></tr>
+          <tr><td><code>/services</code></td><td>Credit product catalog</td><td>✓</td></tr>
+          <tr><td><code>/calculator</code></td><td>Credit simulation with wizard</td><td>✓</td></tr>
+          <tr><td><code>/about</code></td><td>Institutional page</td><td>✓</td></tr>
+          <tr><td><code>/faq</code></td><td>Accordion FAQ</td><td>✓</td></tr>
+          <tr><td><code>/contact</code></td><td>Contact form and info</td><td>✓</td></tr>
+          <tr><td><code>/legal-info</code></td><td data-i18n="legalInfoDesc">Legal Information — consolidated legal disclosures: Legal Notice, Regulatory Framework, Jurisdiction, User Rights, and links to /privacy and /terms. Added in SAIAPP3-22.</td><td>✓</td></tr>
+          <tr><td><code>/privacy</code></td><td>Privacy Policy</td><td>Footer only</td></tr>
+          <tr><td><code>/terms</code></td><td>Terms and Conditions</td><td>Footer only</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
       <h2 data-i18n="i18nStrict">Internationalization (strict)</h2>
       <ul>
         <li>Supported runtime locales are strictly: <code>en</code>, <code>es</code>, and <code>pt</code>.</li>
         <li>Language switch is provided in the header selector and persisted with <code>tco-user-language</code>.</li>
+        <li>All public pages including <code>/legal-info</code> are fully translated in all three locales via <code>legalInfoPage.*</code> and <code>header.legalInfo</code> i18n keys.</li>
       </ul>
     </section>
 
@@ -88,9 +107,9 @@
   </div>
   <script>
     const i18n = {
-      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
-      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
-      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
+      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", publicRoutes: "Public routes (frontend-public)", thPath: "Path", thDesc: "Description", thNav: "Header nav", legalInfoDesc: "Legal Information — consolidated legal disclosures: Legal Notice, Regulatory Framework, Jurisdiction, User Rights, and links to /privacy and /terms. Added in SAIAPP3-22.", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
+      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", publicRoutes: "Rutas públicas (frontend-public)", thPath: "Ruta", thDesc: "Descripción", thNav: "Nav en Header", legalInfoDesc: "Información Legal — avisos legales consolidados: Aviso Legal, Marco Regulatorio, Jurisdicción, Derechos del Usuario y enlaces a /privacy y /terms. Agregado en SAIAPP3-22.", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
+      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", publicRoutes: "Rotas públicas (frontend-public)", thPath: "Rota", thDesc: "Descrição", thNav: "Nav no Header", legalInfoDesc: "Informações Legais — avisos legais consolidados: Aviso Legal, Marco Regulatório, Jurisdição, Direitos do Usuário e links para /privacy e /terms. Adicionado em SAIAPP3-22.", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
     };
     const select = document.getElementById("lang-select");
     const key = "docs-hub-lang";
