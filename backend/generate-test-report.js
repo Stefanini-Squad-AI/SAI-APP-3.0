@@ -96,10 +96,10 @@ function extractTestInfo(trxData) {
   });
 
   return {
-    total: parseInt(counters?.total || 0),
-    passed: parseInt(counters?.passed || 0),
-    failed: parseInt(counters?.failed || 0),
-    skipped: parseInt(counters?.inconclusive || 0),
+    total: Number.parseInt(counters?.total || 0),
+    passed: Number.parseInt(counters?.passed || 0),
+    failed: Number.parseInt(counters?.failed || 0),
+    skipped: Number.parseInt(counters?.inconclusive || 0),
     tests,
   };
 }
@@ -108,21 +108,21 @@ function extractCoverageInfo(coberturaData) {
   if (!coberturaData) return null;
   const cov = coberturaData.coverage;
   const packages = cov.packages?.[0]?.package || [];
-  const lineRate = parseFloat(cov.$['line-rate'] || 0) * 100;
-  const branchRate = parseFloat(cov.$['branch-rate'] || 0) * 100;
+  const lineRate = Number.parseFloat(cov.$['line-rate'] || 0) * 100;
+  const branchRate = Number.parseFloat(cov.$['branch-rate'] || 0) * 100;
 
   const packageDetails = packages.map(pkg => {
-    const pkgLineRate = parseFloat(pkg.$['line-rate'] || 0) * 100;
-    const pkgBranchRate = parseFloat(pkg.$['branch-rate'] || 0) * 100;
+    const pkgLineRate = Number.parseFloat(pkg.$['line-rate'] || 0) * 100;
+    const pkgBranchRate = Number.parseFloat(pkg.$['branch-rate'] || 0) * 100;
     const classes = (pkg.classes?.[0]?.class || []).map(cls => {
       const lines = cls.lines?.[0]?.line || [];
       const totalLines = lines.length;
-      const coveredLines = lines.filter(l => parseInt(l.$.hits) > 0).length;
+      const coveredLines = lines.filter(l => Number.parseInt(l.$.hits) > 0).length;
       return {
         name: cls.$.name || 'Unknown',
         filename: cls.$.filename || '',
-        lineRate: parseFloat(cls.$['line-rate'] || 0) * 100,
-        branchRate: parseFloat(cls.$['branch-rate'] || 0) * 100,
+        lineRate: Number.parseFloat(cls.$['line-rate'] || 0) * 100,
+        branchRate: Number.parseFloat(cls.$['branch-rate'] || 0) * 100,
         totalLines, coveredLines, uncoveredLines: totalLines - coveredLines,
       };
     });
@@ -224,7 +224,7 @@ ${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`
 
     return parseSummaryJson(content) || { en: content.trim(), es: content.trim(), pt: content.trim() };
   } catch (err) {
-    console.warn(`  Perplexity API call failed: ${err && err.message ? err.message : String(err)}`);
+    console.warn(`  Perplexity API call failed: ${err?.message ?? String(err)}`);
     return { en: '', es: '', pt: '' };
   }
 }
@@ -250,7 +250,7 @@ function parseSummaryJson(raw) {
 
 function esc(s) {
   if (!s) return '';
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
 
 function mdToHtml(md) {
@@ -262,9 +262,9 @@ function mdToHtml(md) {
     if (block.startsWith('## '))  return `<h3 class="text-lg font-semibold text-slate-800 dark:text-white mt-3 mb-2">${esc(block.slice(3))}</h3>`;
     if (block.startsWith('# '))   return `<h2 class="text-xl font-bold text-slate-800 dark:text-white mt-4 mb-2">${esc(block.slice(2))}</h2>`;
     let h = esc(block);
-    h = h.replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 dark:text-white">$1</strong>');
-    h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    h = h.replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
+    h = h.replaceAll(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 dark:text-white">$1</strong>');
+    h = h.replaceAll(/\*(.+?)\*/g, '<em>$1</em>');
+    h = h.replaceAll(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
     if (h.includes('<li')) h = `<ul class="space-y-1 mb-3">${h}</ul>`;
     else h = `<p class="mb-3">${h}</p>`;
     return h;
@@ -274,7 +274,7 @@ function mdToHtml(md) {
 function formatDuration(duration) {
   const parts = duration.split(':');
   if (parts.length !== 3) return duration;
-  const h = parseInt(parts[0]), m = parseInt(parts[1]), s = parseFloat(parts[2]);
+  const h = Number.parseInt(parts[0]), m = Number.parseInt(parts[1]), s = Number.parseFloat(parts[2]);
   if (h > 0) return `${h}h ${m}m ${s.toFixed(2)}s`;
   if (m > 0) return `${m}m ${s.toFixed(2)}s`;
   if (s >= 1) return `${s.toFixed(2)}s`;
@@ -295,15 +295,48 @@ function getCoverageBadge(rate) {
 
 // ─── HTML Report ──────────────────────────────────────────────────────────────
 
+function renderStackTraceDetails(t) {
+  if (!t.stackTrace) return '';
+  return `<details class="mt-2"><summary class="text-xs text-slate-500 dark:text-gray-400 cursor-pointer hover:text-slate-700 dark:hover:text-gray-300" data-i18n="stackTrace">Stack Trace</summary>
+                <pre class="mt-2 text-xs text-slate-500 dark:text-gray-500 font-mono bg-slate-100 dark:bg-zinc-800 rounded-lg p-3 max-h-48 overflow-y-auto whitespace-pre-wrap">${esc(t.stackTrace)}</pre></details>`;
+}
+
+function renderTestErrorRow(t) {
+  if (!t.errorMessage) return '';
+  return `
+            <tr class="bg-red-50 dark:bg-red-950/20">
+              <td colspan="3" class="px-4 py-3">
+                <div class="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 rounded-lg p-3 mb-2">
+                  <p class="text-xs font-semibold text-red-800 dark:text-red-300 mb-1" data-i18n="errorMessage">Error</p>
+                  <p class="text-xs text-red-700 dark:text-red-400 font-mono break-all whitespace-pre-wrap max-h-32 overflow-y-auto">${esc(t.errorMessage)}</p>
+                </div>
+                ${renderStackTraceDetails(t)}
+              </td>
+            </tr>`;
+}
+
+function getPassRateTextClass(rate) {
+  if (rate >= 80) return 'text-emerald-600 dark:text-emerald-400';
+  if (rate >= 50) return 'text-amber-600 dark:text-amber-400';
+  return 'text-red-600 dark:text-red-400';
+}
+
+function getPassRateBgClass(rate) {
+  if (rate >= 80) return 'bg-emerald-500';
+  if (rate >= 50) return 'bg-amber-500';
+  return 'bg-red-500';
+}
+
 function generateHtmlReport(testInfo, coverageInfo, summaryByLang) {
   const passRate = testInfo.total > 0 ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) : '0';
+  const passRateNum = Number.parseFloat(passRate);
 
   const summaryHtmlByLang = {
     en: mdToHtml(summaryByLang.en),
     es: mdToHtml(summaryByLang.es),
     pt: mdToHtml(summaryByLang.pt),
   };
-  const summaryJson = JSON.stringify(summaryHtmlByLang).replace(/<\/script/g, '<\\/script');
+  const summaryJson = JSON.stringify(summaryHtmlByLang).replaceAll('</script', String.raw`<\/script`);
 
   const testsByClass = {};
   testInfo.tests.forEach(t => {
@@ -320,8 +353,8 @@ function generateHtmlReport(testInfo, coverageInfo, summaryByLang) {
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Backend Unit Test Report — TuCreditoOnline</title>
-<script src="https://cdn.tailwindcss.com"><\/script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"><\/script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script>
 tailwind.config = {
@@ -339,7 +372,7 @@ tailwind.config = {
     }
   }
 };
-<\/script>
+</script>
 <style>
 .tab-btn.active{border-color:#6366f1;color:#6366f1;background:rgba(99,102,241,.08)}
 .dark .tab-btn.active{color:#a5b4fc;background:rgba(99,102,241,.15)}
@@ -448,10 +481,10 @@ tailwind.config = {
   <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
     <div class="flex items-center justify-between mb-3">
       <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400" data-i18n="overallProgress">Progreso General</h3>
-      <span class="text-sm font-bold ${parseFloat(passRate) >= 80 ? 'text-emerald-600 dark:text-emerald-400' : parseFloat(passRate) >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}">${passRate}%</span>
+      <span class="text-sm font-bold ${getPassRateTextClass(passRateNum)}">${passRate}%</span>
     </div>
     <div class="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-3 overflow-hidden">
-      <div class="h-full rounded-full transition-all duration-500 ${parseFloat(passRate) >= 80 ? 'bg-emerald-500' : parseFloat(passRate) >= 50 ? 'bg-amber-500' : 'bg-red-500'}" style="width:${passRate}%"></div>
+      <div class="h-full rounded-full transition-all duration-500 ${getPassRateBgClass(passRateNum)}" style="width:${passRate}%"></div>
     </div>
     <div class="flex justify-between mt-2 text-xs text-slate-400 dark:text-gray-500">
       <span>${testInfo.passed} <span data-i18n="lblPassed">exitosos</span></span>
@@ -506,17 +539,7 @@ ${tests.map(t => {
               <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold border ${isPassed ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700' : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700'}">${t.outcome.toUpperCase()}</span></td>
               <td class="px-4 py-3 text-xs text-slate-400 dark:text-gray-500 font-mono">${formatDuration(t.duration)}</td>
             </tr>
-${t.errorMessage ? `
-            <tr class="bg-red-50 dark:bg-red-950/20">
-              <td colspan="3" class="px-4 py-3">
-                <div class="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 rounded-lg p-3 mb-2">
-                  <p class="text-xs font-semibold text-red-800 dark:text-red-300 mb-1" data-i18n="errorMessage">Error</p>
-                  <p class="text-xs text-red-700 dark:text-red-400 font-mono break-all whitespace-pre-wrap max-h-32 overflow-y-auto">${esc(t.errorMessage)}</p>
-                </div>
-                ${t.stackTrace ? `<details class="mt-2"><summary class="text-xs text-slate-500 dark:text-gray-400 cursor-pointer hover:text-slate-700 dark:hover:text-gray-300" data-i18n="stackTrace">Stack Trace</summary>
-                <pre class="mt-2 text-xs text-slate-500 dark:text-gray-500 font-mono bg-slate-100 dark:bg-zinc-800 rounded-lg p-3 max-h-48 overflow-y-auto whitespace-pre-wrap">${esc(t.stackTrace)}</pre></details>` : ''}
-              </td>
-            </tr>` : ''}`;
+${renderTestErrorRow(t)}`;
 }).join('')}
           </tbody>
         </table>
@@ -828,7 +851,7 @@ function switchLang(l) {
   renderExecutiveSummary(l);
 }
 switchLang(document.getElementById('lang-select')?.value || 'es');
-<\/script>
+</script>
 </body>
 </html>`;
 }
@@ -861,44 +884,40 @@ function generateMarkdownReport(testInfo, coverageInfo) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-async function main() {
-  try {
-    console.log('Generating backend unit test report...\n');
+try {
+  console.log('Generating backend unit test report...\n');
 
-    console.log('Parsing TRX file...');
-    const trxData = await parseTrxFile();
+  console.log('Parsing TRX file...');
+  const trxData = await parseTrxFile();
 
-    console.log('Extracting test information...');
-    const testInfo = extractTestInfo(trxData);
+  console.log('Extracting test information...');
+  const testInfo = extractTestInfo(trxData);
 
-    console.log('Parsing coverage file...');
-    const coberturaData = await parseCoberturaFile();
-    const coverageInfo = extractCoverageInfo(coberturaData);
+  console.log('Parsing coverage file...');
+  const coberturaData = await parseCoberturaFile();
+  const coverageInfo = extractCoverageInfo(coberturaData);
 
-    console.log(`\nStats: Total=${testInfo.total}, Passed=${testInfo.passed}, Failed=${testInfo.failed}, Skipped=${testInfo.skipped}`);
-    if (coverageInfo) {
-      console.log(`Coverage: Lines=${coverageInfo.lineRate.toFixed(2)}%, Branches=${coverageInfo.branchRate.toFixed(2)}%`);
-    }
-
-    console.log('\nGenerating AI executive summary...');
-    const summaryByLang = await generateExecutiveSummary(testInfo, coverageInfo);
-
-    console.log('\nGenerating HTML report...');
-    const htmlReport = generateHtmlReport(testInfo, coverageInfo, summaryByLang);
-    fs.writeFileSync(HTML_REPORT_PATH, htmlReport, 'utf-8');
-    console.log(`  HTML report: ${HTML_REPORT_PATH}`);
-
-    console.log('\nGenerating Markdown report...');
-    const markdownReport = generateMarkdownReport(testInfo, coverageInfo);
-    fs.writeFileSync(MARKDOWN_REPORT_PATH, markdownReport, 'utf-8');
-    console.log(`  Markdown report: ${MARKDOWN_REPORT_PATH}`);
-
-    console.log('\nReports generated successfully.\n');
-    process.exit(testInfo.failed > 0 ? 1 : 0);
-  } catch (error) {
-    console.error('Failed to generate reports:', error);
-    process.exit(1);
+  console.log(`\nStats: Total=${testInfo.total}, Passed=${testInfo.passed}, Failed=${testInfo.failed}, Skipped=${testInfo.skipped}`);
+  if (coverageInfo) {
+    console.log(`Coverage: Lines=${coverageInfo.lineRate.toFixed(2)}%, Branches=${coverageInfo.branchRate.toFixed(2)}%`);
   }
-}
 
-main();
+  console.log('\nGenerating AI executive summary...');
+  const summaryByLang = await generateExecutiveSummary(testInfo, coverageInfo);
+
+  console.log('\nGenerating HTML report...');
+  const htmlReport = generateHtmlReport(testInfo, coverageInfo, summaryByLang);
+  fs.writeFileSync(HTML_REPORT_PATH, htmlReport, 'utf-8');
+  console.log(`  HTML report: ${HTML_REPORT_PATH}`);
+
+  console.log('\nGenerating Markdown report...');
+  const markdownReport = generateMarkdownReport(testInfo, coverageInfo);
+  fs.writeFileSync(MARKDOWN_REPORT_PATH, markdownReport, 'utf-8');
+  console.log(`  Markdown report: ${MARKDOWN_REPORT_PATH}`);
+
+  console.log('\nReports generated successfully.\n');
+  process.exit(testInfo.failed > 0 ? 1 : 0);
+} catch (error) {
+  console.error('Failed to generate reports:', error);
+  process.exit(1);
+}

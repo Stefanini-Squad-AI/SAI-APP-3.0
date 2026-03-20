@@ -450,6 +450,7 @@ jobs:
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**,**/*.min.js,**/*.css,**/locales/**,**/*.gitkeep,**/test-results/**
             -Dsonar.test.inclusions=**/*.test.js,**/*.test.jsx,**/*.spec.js,**/*.spec.jsx,**/__tests__/**
             -Dsonar.coverage.exclusions=**/services/**,**/i18n/**,**/config/**,**/pages/**,**/components/layout/**,**/components/admin/**,**/components/auth/**
+            -Dsonar.cpd.exclusions=**/pages/**,**/components/admin/**,**/components/auth/**,**/components/layout/**,**/*.test.js,**/*.test.jsx,**/*.spec.js,**/*.spec.jsx
             -Dsonar.sourceEncoding=UTF-8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_FRONTEND }}
@@ -623,6 +624,8 @@ jobs:
       - name: Generate backend test reports
         if: always()
         working-directory: ./backend
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
         run: |
           npm ci
           npm run test:report || true
@@ -727,6 +730,8 @@ jobs:
       - name: Generate frontend test reports
         if: always()
         working-directory: ./frontend
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
         run: npm run test:report || true
 
       - name: Upload frontend reports

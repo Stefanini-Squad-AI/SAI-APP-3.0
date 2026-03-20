@@ -18,7 +18,6 @@ import {
   resolveApiKey,
   getActiveModelEntry,
   resolveModelName,
-  validateActiveProvider,
 } from './AIModelConfig';
 import type { ResolutionStrategy } from '../intent/types';
 import type { SemanticResolution, Selector } from '../../types/index';
@@ -41,11 +40,14 @@ from a compact DOM snapshot.
 
 Rules:
 1. Prefer data-testid, aria-label, role+name over fragile CSS paths.
-2. Return valid Playwright locator syntax (e.g., "[data-testid='x']", "text=Submit").
+2. Return valid Playwright locator syntax (e.g., "[data-testid='x']", "text=Submit", "[aria-label='Foo']").
 3. Only return selectors for elements present in the provided DOM.
 4. Confidence: 0.0 (no match) to 1.0 (exact, unambiguous match).
 5. Always respond with valid JSON matching this schema:
    { "selector": string, "confidence": number, "explanation": string, "alternatives": string[] }
+6. NEVER translate any text, label, or string — copy them EXACTLY as they appear in the DOM.
+7. NEVER use HTML tag names (a, div, span…) as ARIA role values. Valid ARIA roles are: link, button, textbox, checkbox, radio, combobox, listbox, option, menuitem, tab, heading, img, etc.
+8. When the target is a link/anchor, prefer selectors like "text=Label", "[aria-label='Label']", or "role=link[name='Label']" over raw CSS attribute selectors.
 `.trim();
 
 // ─── Cognitive Scanner ────────────────────────────────────────────────────────
@@ -146,6 +148,23 @@ Find the best selector for the element described by the intent.
 
     if (!parsed.selector || parsed.confidence < 0.3) return null;
 
+    // Validate: the AI-generated selector must actually match an element on the page.
+    // This catches invalid selectors (e.g. [role="a"]) and translated labels.
+    try {
+      const matchCount = await page.locator(parsed.selector).count();
+      if (matchCount === 0) {
+        console.warn(
+          `[AURA/Cognitive] Selector "${parsed.selector}" matches 0 elements — discarding AI result.`,
+        );
+        return null;
+      }
+    } catch {
+      console.warn(
+        `[AURA/Cognitive] Selector "${parsed.selector}" is syntactically invalid — discarding AI result.`,
+      );
+      return null;
+    }
+
     const resolution: SemanticResolution = {
       selector: parsed.selector as Selector,
       confidence: parsed.confidence,
@@ -162,4 +181,4 @@ Find the best selector for the element described by the intent.
 }
 
 // Named export for backwards compatibility
-export { validateActiveProvider };
+export { validateActiveProvider } from './AIModelConfig';

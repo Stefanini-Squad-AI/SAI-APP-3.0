@@ -74,9 +74,17 @@ export class DOMExtractor {
             };
           }
 
+          const TAG_TO_ARIA_ROLE: Record<string, string> = {
+            a: 'link', button: 'button', input: 'textbox',
+            select: 'combobox', textarea: 'textbox', option: 'option',
+            summary: 'button', details: 'group',
+          };
+          const explicitRole = el.getAttribute('role');
+          const inferredRole = explicitRole ?? TAG_TO_ARIA_ROLE[el.tagName.toLowerCase()] ?? null;
+
           return {
             tag: el.tagName.toLowerCase(),
-            role: el.getAttribute('role') ?? el.tagName.toLowerCase(),
+            role: inferredRole,
             name:
               el.getAttribute('aria-label') ??
               el.getAttribute('aria-labelledby') ??
@@ -84,8 +92,8 @@ export class DOMExtractor {
               null,
             placeholder: el.getAttribute('placeholder'),
             testId:
-              el.getAttribute('data-testid') ??
-              el.getAttribute('data-cy') ??
+              htmlEl.dataset['testid'] ??
+              htmlEl.dataset['cy'] ??
               null,
             text: htmlEl.innerText?.trim().slice(0, 80) ?? null,
             id: el.getAttribute('id'),
