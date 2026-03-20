@@ -19,7 +19,7 @@ const CreditTypesPage = () => {
       setLoading(true);
       const data = await creditTypeService.getAll();
       setCreditTypes(data);
-    } catch (error) {
+    } catch {
       Swal.fire('Error', 'Failed to load credit types', 'error');
     } finally {
       setLoading(false);

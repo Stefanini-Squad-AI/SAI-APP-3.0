@@ -3,8 +3,22 @@ using TuCreditoOnline.Application.Common.Models;
 
 namespace TuCreditoOnline.Infrastructure.Security;
 
-public static class DtoValidator
+public static partial class DtoValidator
 {
+    [GeneratedRegex(@"[A-Z]")]
+    private static partial Regex UppercaseRegex();
+
+    [GeneratedRegex(@"[a-z]")]
+    private static partial Regex LowercaseRegex();
+
+    [GeneratedRegex(@"\d")]
+    private static partial Regex DigitRegex();
+
+    [GeneratedRegex(@"[!@#$%^&*(),.?""':{}|<>]")]
+    private static partial Regex SpecialCharRegex();
+
+    [GeneratedRegex(@"<script|javascript:|onerror=|onclick=|\$where|\$ne|\$gt|\$lt|UNION\s+SELECT|DROP\s+TABLE|INSERT\s+INTO|\.\.\/|\.\.\\|eval\(|exec\(|system\(", RegexOptions.IgnoreCase)]
+    private static partial Regex SuspiciousPatternRegex();
     private const int MaxStringLength = 500;
     private const int MaxEmailLength = 100;
     private const int MaxPhoneLength = 15;
@@ -85,19 +99,19 @@ public static class DtoValidator
             return Result<string>.Failure("Password cannot exceed 100 characters");
 
         // Check for at least one uppercase letter
-        if (!Regex.IsMatch(password, @"[A-Z]"))
+        if (!UppercaseRegex().IsMatch(password))
             return Result<string>.Failure("Password must contain at least one uppercase letter");
 
         // Check for at least one lowercase letter
-        if (!Regex.IsMatch(password, @"[a-z]"))
+        if (!LowercaseRegex().IsMatch(password))
             return Result<string>.Failure("Password must contain at least one lowercase letter");
 
         // Check for at least one digit
-        if (!Regex.IsMatch(password, @"\d"))
+        if (!DigitRegex().IsMatch(password))
             return Result<string>.Failure("Password must contain at least one number");
 
         // Check for at least one special character
-        if (!Regex.IsMatch(password, @"[!@#$%^&*(),.?""':{}|<>]"))
+        if (!SpecialCharRegex().IsMatch(password))
             return Result<string>.Failure("Password must contain at least one special character");
 
         return Result<string>.Success(password);
@@ -141,16 +155,6 @@ public static class DtoValidator
         if (string.IsNullOrWhiteSpace(input))
             return false;
 
-        var suspiciousPatterns = new[]
-        {
-            @"<script", @"javascript:", @"onerror=", @"onclick=",
-            @"\$where", @"\$ne", @"\$gt", @"\$lt", // MongoDB operators
-            @"UNION\s+SELECT", @"DROP\s+TABLE", @"INSERT\s+INTO", // SQL injection
-            @"\.\.\/", @"\.\.\\", // Path traversal
-            @"eval\(", @"exec\(", @"system\(" // Code execution
-        };
-
-        return suspiciousPatterns.Any(pattern =>
-            Regex.IsMatch(input, pattern, RegexOptions.IgnoreCase));
+        return SuspiciousPatternRegex().IsMatch(input);
     }
 }

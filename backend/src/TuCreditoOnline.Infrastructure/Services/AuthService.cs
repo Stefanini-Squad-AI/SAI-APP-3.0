@@ -139,10 +139,14 @@ public class AuthService
         var jwtSettings = _configuration.GetSection("JwtSettings");
         var secretKey = jwtSettings["Secret"];
 
-        // Fall back to a default if the secret is missing or too short (warn in production)
+        // Fall back to a random per-session secret — mirrors the behavior in Program.cs so
+        // tokens signed here are always validated with the same key.
         if (string.IsNullOrEmpty(secretKey) || secretKey.Length < 32)
         {
-            secretKey = "TuCreditoOnline-SecretKey-32chars-minimum-security-2026-production";
+            var randomFallback = _configuration["JwtSettings:RuntimeFallbackSecret"];
+            if (string.IsNullOrEmpty(randomFallback))
+                throw new InvalidOperationException("JwtSettings:Secret is not configured and no runtime fallback is available. Ensure Program.cs has set JwtSettings:RuntimeFallbackSecret before the first token is issued.");
+            secretKey = randomFallback;
         }
 
         var issuer = jwtSettings["Issuer"] ?? "TuCreditoOnline";
@@ -172,12 +176,12 @@ public class AuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private string HashPassword(string password)
+    private static string HashPassword(string password)
     {
         return BCryptNet.HashPassword(password);
     }
 
-    private bool VerifyPassword(string password, string hashedPassword)
+    private static bool VerifyPassword(string password, string hashedPassword)
     {
         return BCryptNet.Verify(password, hashedPassword);
     }
@@ -188,7 +192,7 @@ public class AuthService
         return int.TryParse(expirationMinutes, out var minutes) ? minutes : 60;
     }
 
-    private string GenerateRefreshToken()
+    private static string GenerateRefreshToken()
     {
         var randomNumber = new byte[32];
         using var rng = RandomNumberGenerator.Create();

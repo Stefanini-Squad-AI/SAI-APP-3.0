@@ -35,7 +35,7 @@ const LanguageSelector = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-4 py-2 rounded-lg border-2 border-primary-600 text-primary-600 hover:bg-primary-50 transition font-medium"
-        aria-haspopup="listbox"
+        aria-haspopup="true"
         aria-expanded={isOpen}
         aria-label={t('language.select')}
       >
@@ -46,22 +46,22 @@ const LanguageSelector = () => {
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {isOpen && (
-        <ul
-          className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
-          role="listbox"
-        >
+        <ul className="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
           {LANGUAGES.map((lang) => (
-            <li key={lang.code} role="option" aria-selected={i18n.language === lang.code}>
+            <li key={lang.code}>
               <button
                 onClick={() => handleLanguageChange(lang.code)}
                 className={`w-full px-4 py-2 text-left hover:bg-primary-50 transition ${
-                  i18n.language === lang.code ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700'
+                  i18n.language === lang.code
+                    ? 'bg-primary-50 text-primary-700 font-semibold'
+                    : 'text-gray-700'
                 }`}
               >
                 {t(lang.labelKey)}

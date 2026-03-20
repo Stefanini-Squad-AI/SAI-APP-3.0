@@ -35,9 +35,12 @@ Create a `.env.local` file in this directory:
 
 ```env
 VITE_API_URL=http://localhost:5000/api
+VITE_ENABLE_MOCK_BACKEND=false
 ```
 
 The default value is `http://localhost:5000/api` if the variable is not set.
+
+Set `VITE_ENABLE_MOCK_BACKEND=true` to run the admin area entirely with frontend mock responses (no backend API required). In this demo mode, admin login accepts any non-empty credentials for easy access.
 
 ## Project Structure
 

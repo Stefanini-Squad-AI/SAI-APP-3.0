@@ -19,7 +19,7 @@ const ServicesManagementPage = () => {
       setLoading(true);
       const data = await serviceService.getAll();
       setServices(data);
-    } catch (error) {
+    } catch {
       Swal.fire('Error', 'Failed to load services', 'error');
     } finally {
       setLoading(false);

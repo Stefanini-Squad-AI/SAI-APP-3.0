@@ -206,10 +206,10 @@ const MessageDetailModal = ({ message, onClose, onUpdateStatus }) => {
   const nextStatusOptions = contactMessageService.getNextStatusOptions(message.status);
 
   const handleSubmit = () => {
-    if (selectedStatus !== message.status) {
-      onUpdateStatus(message.id, selectedStatus, adminNotes);
-    } else {
+    if (selectedStatus === message.status) {
       onClose();
+    } else {
+      onUpdateStatus(message.id, selectedStatus, adminNotes);
     }
   };
 

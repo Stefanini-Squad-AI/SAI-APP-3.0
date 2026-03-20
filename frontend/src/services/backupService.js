@@ -8,7 +8,7 @@ const backupService = {
       });
 
       const blob = new Blob([response.data], { type: 'application/zip' });
-      const url = window.URL.createObjectURL(blob);
+      const url = globalThis.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
 
@@ -23,7 +23,7 @@ const backupService = {
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(url);
+      globalThis.URL.revokeObjectURL(url);
 
       return { success: true, message: 'Backup downloaded successfully' };
     } catch (error) {

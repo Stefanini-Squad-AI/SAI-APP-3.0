@@ -69,19 +69,19 @@ const CreditRequestDetailModal = ({ isOpen, onClose, creditRequest }) => {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">ID Number</p>
-                <p className="text-sm text-gray-900 mt-1">{creditRequest.identificationNumber}</p>
+                <p className="text-sm text-gray-900 mt-1">{creditRequest.identificationNumber ?? 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Email</p>
-                <p className="text-sm text-gray-900 mt-1">{creditRequest.email}</p>
+                <p className="text-sm text-gray-900 mt-1">{creditRequest.email ?? 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Phone</p>
-                <p className="text-sm text-gray-900 mt-1">{creditRequest.phone}</p>
+                <p className="text-sm text-gray-900 mt-1">{creditRequest.phone ?? 'N/A'}</p>
               </div>
               <div className="md:col-span-2">
                 <p className="text-sm font-medium text-gray-500">Address</p>
-                <p className="text-sm text-gray-900 mt-1">{creditRequest.address}</p>
+                <p className="text-sm text-gray-900 mt-1">{creditRequest.address ?? 'N/A'}</p>
               </div>
             </div>
           </div>
@@ -91,15 +91,21 @@ const CreditRequestDetailModal = ({ isOpen, onClose, creditRequest }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm font-medium text-gray-500">Employment Status</p>
-                <p className="text-sm text-gray-900 mt-1">{creditRequest.employmentStatus}</p>
+                <p className="text-sm text-gray-900 mt-1">{creditRequest.employmentStatus ?? 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Monthly Salary</p>
-                <p className="text-sm text-gray-900 mt-1">{formatCurrency(creditRequest.monthlySalary)}</p>
+                <p className="text-sm text-gray-900 mt-1">{creditRequest.monthlySalary == null ? 'N/A' : formatCurrency(creditRequest.monthlySalary)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Years of Employment</p>
-                <p className="text-sm text-gray-900 mt-1">{creditRequest.yearsOfEmployment} yr{creditRequest.yearsOfEmployment !== 1 ? 's' : ''}</p>
+                <p className="text-sm text-gray-900 mt-1">
+                  {(() => {
+                    if (creditRequest.yearsOfEmployment == null) return 'N/A';
+                    const plural = creditRequest.yearsOfEmployment === 1 ? '' : 's';
+                    return `${creditRequest.yearsOfEmployment} yr${plural}`;
+                  })()}
+                </p>
               </div>
             </div>
           </div>
@@ -109,23 +115,29 @@ const CreditRequestDetailModal = ({ isOpen, onClose, creditRequest }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium text-gray-500">Credit Type</p>
-                <p className="text-sm text-gray-900 mt-1">{creditRequest.creditType}</p>
+                <p className="text-sm text-gray-900 mt-1">{creditRequest.creditType ?? 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Purpose</p>
-                <p className="text-sm text-gray-900 mt-1">{creditRequest.useOfMoney}</p>
+                <p className="text-sm text-gray-900 mt-1">{creditRequest.useOfMoney ?? 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Requested Amount</p>
-                <p className="text-lg font-bold text-primary-600 mt-1">{formatCurrency(creditRequest.requestedAmount)}</p>
+                <p className="text-lg font-bold text-primary-600 mt-1">{creditRequest.requestedAmount == null ? 'N/A' : formatCurrency(creditRequest.requestedAmount)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Term</p>
-                <p className="text-sm text-gray-900 mt-1">{creditRequest.termYears} yr{creditRequest.termYears !== 1 ? 's' : ''} ({creditRequest.termYears * 12} months)</p>
+                <p className="text-sm text-gray-900 mt-1">
+                  {(() => {
+                    if (creditRequest.termYears == null) return 'N/A';
+                    const plural = creditRequest.termYears === 1 ? '' : 's';
+                    return `${creditRequest.termYears} yr${plural} (${creditRequest.termYears * 12} months)`;
+                  })()}
+                </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Interest Rate</p>
-                <p className="text-sm text-gray-900 mt-1">{creditRequest.interestRate}%</p>
+                <p className="text-sm text-gray-900 mt-1">{creditRequest.interestRate == null ? 'N/A' : `${creditRequest.interestRate}%`}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Monthly Payment</p>
@@ -139,11 +151,11 @@ const CreditRequestDetailModal = ({ isOpen, onClose, creditRequest }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Payment</p>
-                <p className="text-lg font-bold text-gray-900">{formatCurrency(creditRequest.totalPayment)}</p>
+                <p className="text-lg font-bold text-gray-900">{creditRequest.totalPayment == null ? 'N/A' : formatCurrency(creditRequest.totalPayment)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Interest</p>
-                <p className="text-lg font-bold text-orange-600">{formatCurrency(creditRequest.totalInterest)}</p>
+                <p className="text-lg font-bold text-orange-600">{creditRequest.totalInterest == null ? 'N/A' : formatCurrency(creditRequest.totalInterest)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600">Monthly Payment</p>

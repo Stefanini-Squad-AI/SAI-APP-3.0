@@ -80,7 +80,7 @@ public class DashboardService
         }
     }
 
-    private List<MonthlyStatsDto> GetMonthlyStats(IEnumerable<Domain.Entities.CreditRequest> requests, int monthsBack)
+    private static List<MonthlyStatsDto> GetMonthlyStats(IEnumerable<Domain.Entities.CreditRequest> requests, int monthsBack)
     {
         var monthlyStats = new List<MonthlyStatsDto>();
         var now = DateTime.UtcNow;

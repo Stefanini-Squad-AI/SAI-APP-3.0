@@ -7,15 +7,17 @@ const ServicesPage = () => {
   const { t } = useTranslation();
   const [creditTypes, setCreditTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const fetchCreditTypes = async () => {
       try {
         setLoading(true);
+        setError(false);
         const data = await creditTypeService.getAll(true);
         setCreditTypes(data);
-      } catch (error) {
-        console.error('Error loading credit types:', error);
+      } catch {
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -34,7 +36,7 @@ const ServicesPage = () => {
 
   // Selects an icon based on keywords in the credit type name
   const getIcon = (name) => {
-    const nameLower = name.toLowerCase();
+    const nameLower = (name ?? '').toLowerCase();
 
     if (nameLower.includes('express') || nameLower.includes('rápido') || nameLower.includes('quick') || nameLower.includes('fast')) {
       return (
@@ -76,21 +78,13 @@ const ServicesPage = () => {
   };
 
   const getFeatures = (creditType) => {
-    const features = [];
-    
-    if (creditType.minTermMonths <= 3) {
-      features.push(t('servicesPage.feature1'));
-    }
-    if (creditType.baseInterestRate <= 15) {
-      features.push(t('servicesPage.feature2'));
-    }
-    if (creditType.maxAmount >= 100000) {
-      features.push(t('servicesPage.feature3'));
-    }
-    features.push(t('servicesPage.feature4'));
-    features.push(t('servicesPage.feature5'));
-    
-    return features;
+    return [
+      ...(creditType.minTermMonths <= 3 ? [t('servicesPage.feature1')] : []),
+      ...(creditType.baseInterestRate <= 15 ? [t('servicesPage.feature2')] : []),
+      ...(creditType.maxAmount >= 100000 ? [t('servicesPage.feature3')] : []),
+      t('servicesPage.feature4'),
+      t('servicesPage.feature5'),
+    ];
   };
 
   const getRequirements = () => {
@@ -102,25 +96,21 @@ const ServicesPage = () => {
     ];
   };
 
-  return (
-    <div className="py-16">
-      {/* Hero */}
-      <section className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">{t('servicesPage.heroTitle')}</h1>
-          <p className="text-xl text-primary-100 max-w-3xl mx-auto">
-            {t('servicesPage.heroSubtitle')}
-          </p>
-        </div>
-      </section>
-
-      {/* Services Grid */}
-      <section className="container mx-auto px-4 py-16">
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-primary-500"></div>
-          </div>
-        ) : creditTypes.length > 0 ? (
+  let gridContent;
+  if (error) {
+    gridContent = (
+      <div className="text-center py-20">
+        <p className="text-xl text-gray-600">{t('servicesPage.noServicesDesc')}</p>
+      </div>
+    );
+  } else if (loading) {
+    gridContent = (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-primary-500"></div>
+      </div>
+    );
+  } else if (creditTypes.length > 0) {
+    gridContent = (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {creditTypes.map((creditType) => (
               <div key={creditType.id} className="bg-white rounded-xl shadow-soft hover:shadow-medium transition">
@@ -158,8 +148,8 @@ const ServicesPage = () => {
 
                   <h3 className="font-semibold text-lg mb-3">{t('servicesPage.characteristics')}</h3>
                   <ul className="space-y-2 mb-6">
-                    {getFeatures(creditType).map((feature, idx) => (
-                      <li key={idx} className="flex items-start text-gray-600">
+                    {getFeatures(creditType).map((feature) => (
+                      <li key={feature} className="flex items-start text-gray-600">
                         <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -170,8 +160,8 @@ const ServicesPage = () => {
 
                   <h3 className="font-semibold text-lg mb-3">{t('servicesPage.requirements')}</h3>
                   <ul className="space-y-2 mb-6">
-                    {getRequirements().map((req, idx) => (
-                      <li key={idx} className="flex items-start text-gray-600 text-sm">
+                    {getRequirements().map((req) => (
+                      <li key={req} className="flex items-start text-gray-600 text-sm">
                         <span className="text-primary-600 mr-2">•</span>
                         {req}
                       </li>
@@ -188,17 +178,36 @@ const ServicesPage = () => {
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-20">
-            <svg className="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="text-2xl font-semibold text-gray-700 mb-2">{t('servicesPage.noServices')}</h3>
-            <p className="text-gray-600">
-              {t('servicesPage.noServicesDesc')}
-            </p>
-          </div>
-        )}
+    );
+  } else {
+    gridContent = (
+      <div className="text-center py-20">
+        <svg className="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 className="text-2xl font-semibold text-gray-700 mb-2">{t('servicesPage.noServices')}</h3>
+        <p className="text-gray-600">
+          {t('servicesPage.noServicesDesc')}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-16">
+      {/* Hero */}
+      <section className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-5xl font-bold mb-6">{t('servicesPage.heroTitle')}</h1>
+          <p className="text-xl text-primary-100 max-w-3xl mx-auto">
+            {t('servicesPage.heroSubtitle')}
+          </p>
+        </div>
+      </section>
+
+      {/* Services Grid */}
+      <section className="container mx-auto px-4 py-16">
+        {gridContent}
       </section>
 
       {/* CTA Section */}

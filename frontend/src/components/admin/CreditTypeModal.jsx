@@ -33,7 +33,11 @@ const CreditTypeModal = ({ isOpen, onClose, onSave, creditType }) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'number' ? parseFloat(value) || 0 : value,
+      [name]: (() => {
+        if (type === 'checkbox') return checked;
+        if (type === 'number') return Number.parseFloat(value) || 0;
+        return value;
+      })(),
     }));
   };
 

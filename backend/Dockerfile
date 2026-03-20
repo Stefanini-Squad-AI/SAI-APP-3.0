@@ -32,12 +32,10 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS final
 WORKDIR /app
 EXPOSE 8080
 
-# Create non-root user for security
+# Create non-root user for security and install MongoDB Database Tools (mongodump)
 RUN addgroup -g 1000 appuser && \
-    adduser -u 1000 -G appuser -s /bin/sh -D appuser
-
-# Install MongoDB Database Tools (mongodump) - Alpine version
-RUN apk add --no-cache mongodb-tools
+    adduser -u 1000 -G appuser -s /bin/sh -D appuser && \
+    apk add --no-cache mongodb-tools
 
 # Copy published app
 COPY --from=publish --chown=appuser:appuser /app/publish .

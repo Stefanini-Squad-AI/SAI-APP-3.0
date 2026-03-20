@@ -159,9 +159,9 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
               <h3 className="text-xl font-bold mb-4">Personal Information</h3>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <label htmlFor="wiz-fullName" className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                 <input
-                  type="text" name="fullName" value={formData.fullName} onChange={handleInputChange}
+                  id="wiz-fullName" type="text" name="fullName" value={formData.fullName} onChange={handleInputChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.fullName ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="John Doe"
                 />
@@ -169,9 +169,9 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ID Number *</label>
+                <label htmlFor="wiz-identificationNumber" className="block text-sm font-medium text-gray-700 mb-1">ID Number *</label>
                 <input
-                  type="text" name="identificationNumber" value={formData.identificationNumber} onChange={handleInputChange}
+                  id="wiz-identificationNumber" type="text" name="identificationNumber" value={formData.identificationNumber} onChange={handleInputChange}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.identificationNumber ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="National ID / Passport"
                 />
@@ -180,9 +180,9 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <label htmlFor="wiz-email" className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                   <input
-                    type="email" name="email" value={formData.email} onChange={handleInputChange}
+                    id="wiz-email" type="email" name="email" value={formData.email} onChange={handleInputChange}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="you@example.com"
                   />
@@ -190,9 +190,9 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                  <label htmlFor="wiz-phone" className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
                   <input
-                    type="tel" name="phone" value={formData.phone} onChange={handleInputChange}
+                    id="wiz-phone" type="tel" name="phone" value={formData.phone} onChange={handleInputChange}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
                     placeholder="+1 555 0100"
                   />
@@ -201,9 +201,9 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Address *</label>
+                <label htmlFor="wiz-address" className="block text-sm font-medium text-gray-700 mb-1">Full Address *</label>
                 <textarea
-                  name="address" value={formData.address} onChange={handleInputChange} rows={3}
+                  id="wiz-address" name="address" value={formData.address} onChange={handleInputChange} rows={3}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
                   placeholder="Street, Number, City, State, ZIP"
                 />
@@ -217,9 +217,9 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
               <h3 className="text-xl font-bold mb-4">Financial Information</h3>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employment Status *</label>
+                <label htmlFor="wiz-employmentStatus" className="block text-sm font-medium text-gray-700 mb-1">Employment Status *</label>
                 <select
-                  name="employmentStatus" value={formData.employmentStatus} onChange={handleInputChange}
+                  id="wiz-employmentStatus" name="employmentStatus" value={formData.employmentStatus} onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="Employed">Employed</option>
@@ -228,11 +228,11 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Net Salary *</label>
+                <label htmlFor="wiz-monthlySalary" className="block text-sm font-medium text-gray-700 mb-1">Monthly Net Salary *</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
                   <input
-                    type="number" name="monthlySalary" value={formData.monthlySalary} onChange={handleInputChange}
+                    id="wiz-monthlySalary" type="number" name="monthlySalary" value={formData.monthlySalary} onChange={handleInputChange}
                     min="0" step="100"
                     className={`w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.monthlySalary ? 'border-red-500' : 'border-gray-300'}`}
                   />
@@ -241,9 +241,9 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Years of Employment *</label>
+                <label htmlFor="wiz-yearsOfEmployment" className="block text-sm font-medium text-gray-700 mb-1">Years of Employment *</label>
                 <input
-                  type="number" name="yearsOfEmployment" value={formData.yearsOfEmployment} onChange={handleInputChange}
+                  id="wiz-yearsOfEmployment" type="number" name="yearsOfEmployment" value={formData.yearsOfEmployment} onChange={handleInputChange}
                   min="0" step="0.5"
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${errors.yearsOfEmployment ? 'border-red-500' : 'border-gray-300'}`}
                 />
@@ -277,7 +277,7 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
                     <div><span className="text-gray-600">Monthly Salary:</span><p className="font-medium">{formatCurrency(formData.monthlySalary)}</p></div>
                     <div>
                       <span className="text-gray-600">Years of Employment:</span>
-                      <p className="font-medium">{formData.yearsOfEmployment} yr{formData.yearsOfEmployment !== 1 ? 's' : ''}</p>
+                      <p className="font-medium">{formData.yearsOfEmployment} yr{formData.yearsOfEmployment === 1 ? '' : 's'}</p>
                     </div>
                   </div>
                 </div>
@@ -288,7 +288,7 @@ const CreditRequestWizard = ({ isOpen, onClose, calculatorData }) => {
                     <div><span className="text-gray-600">Amount Requested:</span><p className="font-medium text-primary-600">{formatCurrency(formData.requestedAmount)}</p></div>
                     <div>
                       <span className="text-gray-600">Term:</span>
-                      <p className="font-medium">{formData.termYears} yr{formData.termYears !== 1 ? 's' : ''} ({formData.termYears * 12} months)</p>
+                      <p className="font-medium">{formData.termYears} yr{formData.termYears === 1 ? '' : 's'} ({formData.termYears * 12} months)</p>
                     </div>
                     <div><span className="text-gray-600">Interest Rate:</span><p className="font-medium">{formData.interestRate.toFixed(2)}% annual</p></div>
                     <div className="col-span-2 bg-primary-50 p-3 rounded-lg">

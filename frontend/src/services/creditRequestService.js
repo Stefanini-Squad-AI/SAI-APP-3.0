@@ -5,7 +5,7 @@ const creditRequestService = {
     try {
       const response = await apiClient.post('/creditrequests', data);
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch {
       // Simulate a successful submission when the backend is unreachable (e.g. GitHub Pages)
       return {
         success: true,

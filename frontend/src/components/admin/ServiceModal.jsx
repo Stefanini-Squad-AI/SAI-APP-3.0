@@ -29,7 +29,11 @@ const ServiceModal = ({ isOpen, onClose, onSave, service }) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : type === 'number' ? parseInt(value) || 0 : value,
+      [name]: (() => {
+        if (type === 'checkbox') return checked;
+        if (type === 'number') return Number.parseInt(value) || 0;
+        return value;
+      })(),
     }));
   };
 

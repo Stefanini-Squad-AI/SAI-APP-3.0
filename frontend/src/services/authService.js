@@ -2,7 +2,8 @@ import apiClient, { API_BASE_URL } from './apiClient';
 
 const RAW_API_URL = String(import.meta.env.VITE_API_URL || '').trim();
 const ENABLE_MOCK_AUTH = String(import.meta.env.VITE_ENABLE_MOCK_AUTH || 'false').toLowerCase() === 'true';
-const USE_MOCK_AUTH = ENABLE_MOCK_AUTH && RAW_API_URL.length === 0;
+const ENABLE_MOCK_BACKEND = String(import.meta.env.VITE_ENABLE_MOCK_BACKEND || 'false').toLowerCase() === 'true';
+const USE_MOCK_AUTH = ENABLE_MOCK_BACKEND || (ENABLE_MOCK_AUTH && RAW_API_URL.length === 0);
 const DEFAULT_ADMIN_EMAIL = (import.meta.env.VITE_DEFAULT_ADMIN_EMAIL || 'admin@tucreditoonline.local').trim().toLowerCase();
 const DEFAULT_ADMIN_PASSWORD = (import.meta.env.VITE_DEFAULT_ADMIN_PASSWORD || 'Admin123!').trim();
 
@@ -25,11 +26,15 @@ const createMockJwt = ({ email, fullName, role }) => {
   return `${toBase64Url(JSON.stringify(header))}.${toBase64Url(JSON.stringify(payload))}.mock-signature`;
 };
 
-const buildMockLoginResponse = () => {
+const buildMockLoginResponse = ({
+  email = DEFAULT_ADMIN_EMAIL,
+  fullName = 'System Administrator',
+  role = 'Admin'
+} = {}) => {
   const token = createMockJwt({
-    email: DEFAULT_ADMIN_EMAIL,
-    fullName: 'System Administrator',
-    role: 'Admin'
+    email,
+    fullName,
+    role
   });
   const expiresAt = new Date(Date.now() + 60 * 60 * 24 * 1000).toISOString();
 
@@ -37,9 +42,9 @@ const buildMockLoginResponse = () => {
     success: true,
     data: {
       token,
-      email: DEFAULT_ADMIN_EMAIL,
-      fullName: 'System Administrator',
-      role: 'Admin',
+      email,
+      fullName,
+      role,
       expiresAt
     }
   };
@@ -55,6 +60,24 @@ const authService = {
       normalizedPassword === DEFAULT_ADMIN_PASSWORD;
 
     if (USE_MOCK_AUTH) {
+      // Demo mode: keep login permissive so previews work without backend dependencies.
+      if (ENABLE_MOCK_BACKEND) {
+        if (!normalizedEmail || !normalizedPassword) {
+          return {
+            success: false,
+            error: 'Email and password are required'
+          };
+        }
+        const inferredName = normalizedEmail.split('@')[0]
+          .replaceAll(/[._-]+/g, ' ')
+          .replaceAll(/\b\w/g, (char) => char.toUpperCase()) || 'Demo Admin';
+        return buildMockLoginResponse({
+          email: normalizedEmail,
+          fullName: inferredName,
+          role: 'Admin'
+        });
+      }
+
       if (!canUseMockCredentials) {
         return {
           success: false,
@@ -73,7 +96,7 @@ const authService = {
       const isReachabilityError = !error.response || status === 404 || status === 405;
 
       // Fallback mode: if mock auth is enabled and backend is unreachable, allow demo login.
-      if (ENABLE_MOCK_AUTH && isReachabilityError && canUseMockCredentials) {
+      if ((ENABLE_MOCK_AUTH || ENABLE_MOCK_BACKEND) && isReachabilityError && canUseMockCredentials) {
         return buildMockLoginResponse();
       }
 

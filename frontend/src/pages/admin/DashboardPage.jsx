@@ -141,7 +141,7 @@ const DashboardPage = () => {
             <div>
               <p className="text-sm text-gray-600 font-medium">Total Approved Amount</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                ${stats.totalApprovedAmount.toLocaleString('en-US')}
+                ${(stats.totalApprovedAmount ?? 0).toLocaleString('en-US')}
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -157,7 +157,7 @@ const DashboardPage = () => {
             <div>
               <p className="text-sm text-gray-600 font-medium">Average per Request</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                ${stats.averageRequestAmount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                ${(stats.averageRequestAmount ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
               </p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -201,7 +201,7 @@ const DashboardPage = () => {
                   dataKey="count"
                 >
                   {statusDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[entry.status] || statusColors[index % statusColors.length]} />
+                    <Cell key={entry.status} fill={COLORS[entry.status] || statusColors[index % statusColors.length]} />
                   ))}
                 </Pie>
                 <Tooltip />

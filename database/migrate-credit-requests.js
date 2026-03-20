@@ -1,8 +1,8 @@
 // Migration script to convert field names from PascalCase to camelCase
 // and convert string values to proper numeric types
 
-db.creditRequests.find().forEach(function(doc) {
-  db.creditRequests.updateOne(
+db.creditrequests.find().forEach(function(doc) {
+  db.creditrequests.updateOne(
     { _id: doc._id },
     {
       $set: {
