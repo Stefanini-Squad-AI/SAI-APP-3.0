@@ -67,10 +67,27 @@
     </section>
 
     <section class="card">
+      <h2 data-i18n="publicNavMap">Public navigation map</h2>
+      <table>
+        <thead><tr><th data-i18n="thNav">Nav item</th><th data-i18n="thRoute">Route</th><th data-i18n="thDesc">Description</th></tr></thead>
+        <tbody>
+          <tr><td>Home</td><td><code>/</code></td><td data-i18n="navHome">Landing page with hero, services preview, and CTA blocks.</td></tr>
+          <tr><td>Services</td><td><code>/services</code></td><td data-i18n="navServices">Credit product catalog with rates and requirements.</td></tr>
+          <tr><td>Calculator</td><td><code>/calculator</code></td><td data-i18n="navCalc">Installment simulation tool.</td></tr>
+          <tr><td>About</td><td><code>/about</code></td><td data-i18n="navAbout">Company story and trust-building section.</td></tr>
+          <tr><td>FAQ</td><td><code>/faq</code></td><td data-i18n="navFaq">Accordion FAQ by category.</td></tr>
+          <tr><td>Contact</td><td><code>/contact</code></td><td data-i18n="navContact">Inquiry form and support channels.</td></tr>
+          <tr><td data-i18n="navLegalLabel">Legal</td><td><code>/legal</code></td><td data-i18n="navLegal">Legal Information page: regulatory framework, liability disclaimer, applicable law, and legal inquiries. Added in SAIAPP3-26. Accessible from primary header navigation after Contact tab.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
       <h2 data-i18n="i18nStrict">Internationalization (strict)</h2>
       <ul>
         <li>Supported runtime locales are strictly: <code>en</code>, <code>es</code>, and <code>pt</code>.</li>
         <li>Language switch is provided in the header selector and persisted with <code>tco-user-language</code>.</li>
+        <li data-i18n="i18nLegal">The <code>legalPage.*</code> i18n namespace covers the Legal Information page content. Keys <code>header.legal</code> and <code>footer.legalInformation</code> provide the nav label and footer link text in all three locales.</li>
       </ul>
     </section>
 
@@ -88,9 +105,9 @@
   </div>
   <script>
     const i18n = {
-      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
-      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
-      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
+      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", publicNavMap: "Public navigation map", thNav: "Nav item", thRoute: "Route", thDesc: "Description", navHome: "Landing page with hero, services preview, and CTA blocks.", navServices: "Credit product catalog with rates and requirements.", navCalc: "Installment simulation tool.", navAbout: "Company story and trust-building section.", navFaq: "Accordion FAQ by category.", navContact: "Inquiry form and support channels.", navLegalLabel: "Legal", navLegal: "Legal Information page: regulatory framework, liability disclaimer, applicable law, and legal inquiries. Added in SAIAPP3-26. Accessible from primary header navigation after Contact tab.", i18nStrict: "Internationalization (strict)", i18nLegal: "The <code>legalPage.*</code> i18n namespace covers the Legal Information page content. Keys <code>header.legal</code> and <code>footer.legalInformation</code> provide the nav label and footer link text in all three locales.", docMap: "Documentation map" },
+      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", publicNavMap: "Mapa de navegación pública", thNav: "Ítem de navegación", thRoute: "Ruta", thDesc: "Descripción", navHome: "Página de inicio con hero, vista previa de servicios y bloques CTA.", navServices: "Catálogo de productos de crédito con tasas y requisitos.", navCalc: "Herramienta de simulación de cuotas.", navAbout: "Historia de la empresa y sección de confianza.", navFaq: "FAQ en acordeón por categoría.", navContact: "Formulario de consultas y canales de soporte.", navLegalLabel: "Legal", navLegal: "Página de Información Legal: marco regulatorio, limitación de responsabilidad, ley aplicable y consultas legales. Agregada en SAIAPP3-26. Accesible desde la navegación principal del encabezado después de la pestaña Contacto.", i18nStrict: "Internacionalización (estricta)", i18nLegal: "El espacio de nombres i18n <code>legalPage.*</code> cubre el contenido de la página de Información Legal. Las claves <code>header.legal</code> y <code>footer.legalInformation</code> proveen la etiqueta de navegación y el texto del enlace en el pie de página en los tres idiomas.", docMap: "Mapa de documentación" },
+      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", publicNavMap: "Mapa de navegação pública", thNav: "Item de navegação", thRoute: "Rota", thDesc: "Descrição", navHome: "Página inicial com hero, prévia de serviços e blocos CTA.", navServices: "Catálogo de produtos de crédito com taxas e requisitos.", navCalc: "Ferramenta de simulação de parcelas.", navAbout: "História da empresa e seção de confiança.", navFaq: "FAQ em acordeão por categoria.", navContact: "Formulário de consultas e canais de suporte.", navLegalLabel: "Legal", navLegal: "Página de Informações Legais: marco regulatório, limitação de responsabilidade, lei aplicável e consultas jurídicas. Adicionada em SAIAPP3-26. Acessível pela navegação principal do cabeçalho após a aba Contato.", i18nStrict: "Internacionalização (estrita)", i18nLegal: "O namespace i18n <code>legalPage.*</code> cobre o conteúdo da página de Informações Legais. As chaves <code>header.legal</code> e <code>footer.legalInformation</code> fornecem o rótulo de navegação e o texto do link no rodapé nos três idiomas.", docMap: "Mapa de documentação" }
     };
     const select = document.getElementById("lang-select");
     const key = "docs-hub-lang";

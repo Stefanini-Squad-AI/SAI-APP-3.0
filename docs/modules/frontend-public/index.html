@@ -75,6 +75,7 @@
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="vLegal">Legal Information</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
         </tbody>
       </table>
@@ -150,6 +151,13 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/legal</code></td>
+            <td data-i18n="rLegalPurpose">Expose regulatory framework, liability disclaimer, applicable law, and legal inquiry contact in a structured page accessible from primary navigation.</td>
+            <td data-i18n="rLegalContains">Hero section, four named sections (Regulatory Framework, Liability Disclaimer, Applicable Law, Legal Inquiries) sourced from i18n keys <code>legalPage.*</code>, plus Contact Us and Back to Home links.</td>
+            <td data-i18n="rLegalActions">Read legal disclosures, navigate to contact page, return to home.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
@@ -190,6 +198,7 @@
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
+        vLegal: "Legal Information",
         vNotFound: "Not found",
         rHomePurpose: "Present brand value and convert visitors into simulation and contact flows.",
         rHomeContains: "Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.",
@@ -215,6 +224,9 @@
         rTermsPurpose: "Describe contract and usage conditions for platform services.",
         rTermsContains: "Five terms sections with update date, plus contact and back-home links.",
         rTermsActions: "Review legal obligations, then navigate to contact/home pages.",
+        rLegalPurpose: "Expose regulatory framework, liability disclaimer, applicable law, and legal inquiry contact in a structured page accessible from primary navigation.",
+        rLegalContains: "Hero section, four named sections (Regulatory Framework, Liability Disclaimer, Applicable Law, Legal Inquiries) sourced from i18n keys <code>legalPage.*</code>, plus Contact Us and Back to Home links.",
+        rLegalActions: "Read legal disclosures, navigate to contact page, return to home.",
         r404Purpose: "Handle unknown URLs and recover navigation.",
         r404Contains: "404 code, explanatory text, and CTA back to home.",
         r404Actions: "Return safely to root route.",
@@ -250,7 +262,11 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
+        vLegal: "Información Legal",
         vNotFound: "No encontrado",
+        rLegalPurpose: "Expone el marco regulatorio, la limitación de responsabilidad, la ley aplicable y el contacto de consultas legales en una página estructurada accesible desde la navegación principal.",
+        rLegalContains: "Sección hero, cuatro secciones (Marco Regulatorio, Limitación de Responsabilidad, Ley Aplicable, Consultas Legales) desde las claves i18n <code>legalPage.*</code>, más enlaces a Contacto e Inicio.",
+        rLegalActions: "Leer divulgaciones legales, navegar a la página de contacto, volver al inicio.",
         noApi: "Sin llamadas al backend.",
         authYes: "Sí",
         authNo: "No"
@@ -283,7 +299,11 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
+        vLegal: "Informações Legais",
         vNotFound: "Não encontrado",
+        rLegalPurpose: "Expõe o marco regulatório, a limitação de responsabilidade, a lei aplicável e o contato de consultas jurídicas em uma página estruturada acessível pela navegação principal.",
+        rLegalContains: "Seção hero, quatro seções (Marco Regulatório, Limitação de Responsabilidade, Lei Aplicável, Consultas Jurídicas) a partir das chaves i18n <code>legalPage.*</code>, mais links para Contato e Início.",
+        rLegalActions: "Ler divulgações legais, navegar para a página de contato, voltar ao início.",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
         authNo: "Não"
