@@ -75,6 +75,7 @@
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="vLegal">Legal Information</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
         </tbody>
       </table>
@@ -150,11 +151,58 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/legal</code></td>
+            <td data-i18n="rLegalPurpose">Present legal notice, liability limitations, intellectual property rights, and applicable jurisdiction.</td>
+            <td data-i18n="rLegalContains">Four sections (legal notice, liability, intellectual property, jurisdiction/contact), header navigation link after Contact, footer link corrected from /terms to /legal.</td>
+            <td data-i18n="rLegalActions">Read legal information, navigate to contact page, return to home.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
             <td data-i18n="r404Actions">Return safely to root route.</td>
             <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="legalPageTitle">LegalPage — Acceptance criteria coverage (SAIAPP3-21)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thAc">AC</th>
+            <th data-i18n="thDesc">Description</th>
+            <th data-i18n="thImpl">Implementation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>AC1</td>
+            <td data-i18n="ac1desc">Route <code>/legal</code> registered inside <code>MainLayout</code> renders <code>LegalPage.jsx</code> without errors.</td>
+            <td><code>App.jsx</code> — <code>&lt;Route path="legal" element={&lt;LegalPage /&gt;} /&gt;</code></td>
+          </tr>
+          <tr>
+            <td>AC2</td>
+            <td data-i18n="ac2desc">Header navigation entry "Legal" added after Contact link on desktop and mobile menus, with <code>aria-label</code>.</td>
+            <td><code>Header.jsx</code> — desktop + mobile <code>&lt;Link to="/legal"&gt;</code></td>
+          </tr>
+          <tr>
+            <td>AC3</td>
+            <td data-i18n="ac3desc">All visible texts use <code>legalPage.*</code> i18n keys defined in <code>es.json</code>, <code>en.json</code>, <code>pt.json</code>; no raw keys rendered.</td>
+            <td><code>i18n/locales/*.json</code> — <code>header.legal</code> + <code>legalPage.*</code> keys</td>
+          </tr>
+          <tr>
+            <td>AC4</td>
+            <td data-i18n="ac4desc">Footer "Aviso Legal / Legal Notice / Aviso Legal" link corrected from <code>/terms</code> to <code>/legal</code>.</td>
+            <td><code>Footer.jsx</code> — <code>to="/legal"</code></td>
+          </tr>
+          <tr>
+            <td>AC5</td>
+            <td data-i18n="ac5desc">Navigation link has visible text "Legal" and <code>aria-label</code>. Page uses <code>h1</code> for main title and <code>h2</code> for each of four sections.</td>
+            <td><code>LegalPage.jsx</code> — heading hierarchy; <code>Header.jsx</code> — aria-label attribute</td>
           </tr>
         </tbody>
       </table>
@@ -190,6 +238,7 @@
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
+        vLegal: "Legal Information",
         vNotFound: "Not found",
         rHomePurpose: "Present brand value and convert visitors into simulation and contact flows.",
         rHomeContains: "Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.",
@@ -215,6 +264,18 @@
         rTermsPurpose: "Describe contract and usage conditions for platform services.",
         rTermsContains: "Five terms sections with update date, plus contact and back-home links.",
         rTermsActions: "Review legal obligations, then navigate to contact/home pages.",
+        rLegalPurpose: "Present legal notice, liability limitations, intellectual property rights, and applicable jurisdiction.",
+        rLegalContains: "Four sections (legal notice, liability, intellectual property, jurisdiction/contact), header navigation link after Contact, footer link corrected from /terms to /legal.",
+        rLegalActions: "Read legal information, navigate to contact page, return to home.",
+        legalPageTitle: "LegalPage — Acceptance criteria coverage (SAIAPP3-21)",
+        thAc: "AC",
+        thDesc: "Description",
+        thImpl: "Implementation",
+        ac1desc: "Route /legal registered inside MainLayout renders LegalPage.jsx without errors.",
+        ac2desc: "Header navigation entry \"Legal\" added after Contact link on desktop and mobile menus, with aria-label.",
+        ac3desc: "All visible texts use legalPage.* i18n keys defined in es.json, en.json, pt.json; no raw keys rendered.",
+        ac4desc: "Footer \"Aviso Legal / Legal Notice / Aviso Legal\" link corrected from /terms to /legal.",
+        ac5desc: "Navigation link has visible text \"Legal\" and aria-label. Page uses h1 for main title and h2 for each of four sections.",
         r404Purpose: "Handle unknown URLs and recover navigation.",
         r404Contains: "404 code, explanatory text, and CTA back to home.",
         r404Actions: "Return safely to root route.",
@@ -250,7 +311,20 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
+        vLegal: "Información Legal",
         vNotFound: "No encontrado",
+        rLegalPurpose: "Presentar el aviso legal, limitaciones de responsabilidad, derechos de propiedad intelectual y jurisdicción aplicable.",
+        rLegalContains: "Cuatro secciones (aviso legal, responsabilidad, propiedad intelectual, jurisdicción/contacto), enlace de navegación en encabezado después de Contacto, enlace de pie de página corregido de /terms a /legal.",
+        rLegalActions: "Leer información legal, navegar a la página de contacto, regresar al inicio.",
+        legalPageTitle: "LegalPage — Cobertura de criterios de aceptación (SAIAPP3-21)",
+        thAc: "AC",
+        thDesc: "Descripción",
+        thImpl: "Implementación",
+        ac1desc: "Ruta /legal registrada dentro de MainLayout renderiza LegalPage.jsx sin errores.",
+        ac2desc: "Enlace de navegación \"Legal\" agregado después de Contacto en escritorio y móvil, con aria-label.",
+        ac3desc: "Todos los textos visibles usan claves legalPage.* definidas en es.json, en.json, pt.json; sin claves sin traducir.",
+        ac4desc: "Enlace \"Aviso Legal\" del pie de página corregido de /terms a /legal.",
+        ac5desc: "El enlace de navegación tiene texto visible \"Legal\" y aria-label. La página usa h1 para el título principal y h2 para cada una de las cuatro secciones.",
         noApi: "Sin llamadas al backend.",
         authYes: "Sí",
         authNo: "No"
@@ -283,7 +357,20 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
+        vLegal: "Informação Legal",
         vNotFound: "Não encontrado",
+        rLegalPurpose: "Apresentar o aviso legal, limitações de responsabilidade, direitos de propriedade intelectual e jurisdição aplicável.",
+        rLegalContains: "Quatro seções (aviso legal, responsabilidade, propriedade intelectual, jurisdição/contato), link de navegação no cabeçalho após Contato, link do rodapé corrigido de /terms para /legal.",
+        rLegalActions: "Ler informações legais, navegar para a página de contato, retornar ao início.",
+        legalPageTitle: "LegalPage — Cobertura de critérios de aceitação (SAIAPP3-21)",
+        thAc: "CA",
+        thDesc: "Descrição",
+        thImpl: "Implementação",
+        ac1desc: "Rota /legal registrada dentro de MainLayout renderiza LegalPage.jsx sem erros.",
+        ac2desc: "Link de navegação \"Legal\" adicionado após Contato no desktop e mobile, com aria-label.",
+        ac3desc: "Todos os textos visíveis usam chaves legalPage.* definidas em es.json, en.json, pt.json; sem chaves sem tradução.",
+        ac4desc: "Link \"Aviso Legal\" do rodapé corrigido de /terms para /legal.",
+        ac5desc: "O link de navegação tem texto visível \"Legal\" e aria-label. A página usa h1 para o título principal e h2 para cada uma das quatro seções.",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
         authNo: "Não"

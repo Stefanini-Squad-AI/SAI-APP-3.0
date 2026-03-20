@@ -75,6 +75,57 @@
     </section>
 
     <section class="card">
+      <h2 data-i18n="legalFeatureTitle">SAIAPP3-21 — Legal Information Page</h2>
+      <p data-i18n="legalFeatureDesc">The <code>/legal</code> route was introduced as part of SAIAPP3-21, adding a dedicated Legal Information page accessible from both the header navigation (after Contact) and the footer (replacing the previous /terms link for the "Aviso Legal" entry). The following changes were made across the <code>frontend-public</code> module:</p>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="thFile">File</th>
+            <th data-i18n="thChange">Change</th>
+            <th data-i18n="thAcCov">AC coverage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>pages/LegalPage.jsx</code></td>
+            <td data-i18n="lf1">New component with hero section (h1), four content sections (h2 each): Legal Notice, Limitation of Liability, Intellectual Property, Jurisdiction &amp; Contact.</td>
+            <td>AC1, AC3, AC5</td>
+          </tr>
+          <tr>
+            <td><code>App.jsx</code></td>
+            <td data-i18n="lf2">New route <code>/legal</code> registered inside <code>MainLayout</code>.</td>
+            <td>AC1</td>
+          </tr>
+          <tr>
+            <td><code>Header.jsx</code></td>
+            <td data-i18n="lf3">"Legal" link added after "Contact" in both desktop and mobile menus, with <code>aria-label</code> for accessibility.</td>
+            <td>AC2, AC5</td>
+          </tr>
+          <tr>
+            <td><code>Footer.jsx</code></td>
+            <td data-i18n="lf4">"Aviso Legal / Legal Notice" link destination changed from <code>/terms</code> to <code>/legal</code>.</td>
+            <td>AC4</td>
+          </tr>
+          <tr>
+            <td><code>i18n/locales/es.json</code></td>
+            <td data-i18n="lf5">Added <code>header.legal</code> and <code>legalPage.*</code> keys in Spanish.</td>
+            <td>AC3</td>
+          </tr>
+          <tr>
+            <td><code>i18n/locales/en.json</code></td>
+            <td data-i18n="lf6">Added <code>header.legal</code> and <code>legalPage.*</code> keys in English.</td>
+            <td>AC3</td>
+          </tr>
+          <tr>
+            <td><code>i18n/locales/pt.json</code></td>
+            <td data-i18n="lf7">Added <code>header.legal</code> and <code>legalPage.*</code> keys in Portuguese.</td>
+            <td>AC3</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
       <h2 data-i18n="docMap">Documentation map</h2>
       <ul>
         <li><code>docs/index.html</code>: documentation hub.</li>
@@ -88,9 +139,9 @@
   </div>
   <script>
     const i18n = {
-      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
-      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
-      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
+      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map", legalFeatureTitle: "SAIAPP3-21 — Legal Information Page", legalFeatureDesc: "The /legal route was introduced as part of SAIAPP3-21, adding a dedicated Legal Information page accessible from both the header navigation (after Contact) and the footer (replacing the previous /terms link for the \"Aviso Legal\" entry). The following changes were made across the frontend-public module:", thFile: "File", thChange: "Change", thAcCov: "AC coverage", lf1: "New component with hero section (h1), four content sections (h2 each): Legal Notice, Limitation of Liability, Intellectual Property, Jurisdiction &amp; Contact.", lf2: "New route /legal registered inside MainLayout.", lf3: "\"Legal\" link added after \"Contact\" in both desktop and mobile menus, with aria-label for accessibility.", lf4: "\"Aviso Legal / Legal Notice\" link destination changed from /terms to /legal.", lf5: "Added header.legal and legalPage.* keys in Spanish.", lf6: "Added header.legal and legalPage.* keys in English.", lf7: "Added header.legal and legalPage.* keys in Portuguese." },
+      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación", legalFeatureTitle: "SAIAPP3-21 — Página de Información Legal", legalFeatureDesc: "La ruta /legal fue introducida como parte de SAIAPP3-21, agregando una página dedicada de Información Legal accesible desde la navegación del encabezado (después de Contacto) y el pie de página (reemplazando el enlace /terms anterior para \"Aviso Legal\"). Los siguientes cambios se realizaron en el módulo frontend-public:", thFile: "Archivo", thChange: "Cambio", thAcCov: "Cobertura AC", lf1: "Nuevo componente con sección hero (h1), cuatro secciones de contenido (h2 cada una): Aviso Legal, Limitación de Responsabilidad, Propiedad Intelectual, Jurisdicción y Contacto.", lf2: "Nueva ruta /legal registrada dentro de MainLayout.", lf3: "Enlace \"Legal\" agregado después de \"Contacto\" en menús de escritorio y móvil, con aria-label para accesibilidad.", lf4: "Destino del enlace \"Aviso Legal\" cambiado de /terms a /legal.", lf5: "Claves header.legal y legalPage.* agregadas en español.", lf6: "Claves header.legal y legalPage.* agregadas en inglés.", lf7: "Claves header.legal y legalPage.* agregadas en portugués." },
+      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação", legalFeatureTitle: "SAIAPP3-21 — Página de Informação Legal", legalFeatureDesc: "A rota /legal foi introduzida como parte do SAIAPP3-21, adicionando uma página dedicada de Informação Legal acessível a partir da navegação do cabeçalho (após Contato) e do rodapé (substituindo o link /terms anterior para \"Aviso Legal\"). As seguintes alterações foram feitas no módulo frontend-public:", thFile: "Arquivo", thChange: "Alteração", thAcCov: "Cobertura CA", lf1: "Novo componente com seção hero (h1), quatro seções de conteúdo (h2 cada): Aviso Legal, Limitação de Responsabilidade, Propriedade Intelectual, Jurisdição e Contato.", lf2: "Nova rota /legal registrada dentro de MainLayout.", lf3: "Link \"Legal\" adicionado após \"Contato\" nos menus de desktop e mobile, com aria-label para acessibilidade.", lf4: "Destino do link \"Aviso Legal\" alterado de /terms para /legal.", lf5: "Chaves header.legal e legalPage.* adicionadas em espanhol.", lf6: "Chaves header.legal e legalPage.* adicionadas em inglês.", lf7: "Chaves header.legal e legalPage.* adicionadas em português." }
     };
     const select = document.getElementById("lang-select");
     const key = "docs-hub-lang";
