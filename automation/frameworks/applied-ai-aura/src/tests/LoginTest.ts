@@ -7,9 +7,14 @@
  *   npx ts-node src/tests/LoginTest.ts --tag @smoke
  */
 import * as path from 'path';
+import { config as dotenvConfig } from 'dotenv';
 import { execSync } from 'child_process';
 import { TailwindReportEngine } from '../core/reporting/TailwindReportEngine';
 import { ConfluenceExporter } from '../core/changelog/ConfluenceExporter';
+
+const rootEnv = path.resolve(__dirname, '..', '..', '..', '..', '..', '.env');
+dotenvConfig({ path: rootEnv });
+dotenvConfig();
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 

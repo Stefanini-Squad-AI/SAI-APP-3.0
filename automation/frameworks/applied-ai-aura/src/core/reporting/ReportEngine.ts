@@ -185,6 +185,11 @@ export class ReportEngine {
 
 // CLI entrypoint: `ts-node src/core/reporting/ReportEngine.ts`
 if (require.main === module) {
+  const { config: dotenvConfig } = require('dotenv');
+  const rootEnv = path.resolve(__dirname, '..', '..', '..', '..', '..', '..', '.env');
+  dotenvConfig({ path: rootEnv });
+  dotenvConfig();
+
   const inputPath = process.env['AURA_REPORT_INPUT'] ?? 'reports/cucumber-report.json';
   const outputDir = process.env['AURA_REPORT_OUTPUT'] ?? 'reports';
   const title = process.env['AURA_REPORT_TITLE'] ?? 'SAI Test Report';

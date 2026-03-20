@@ -1,0 +1,1511 @@
+{
+	"@programName": "ZAP",
+	"@version": "2.17.0",
+	"@generated": "Thu, 19 Mar 2026 21:28:42",
+	"created": "2026-03-19T21:28:42.579258194Z",
+	"insights":[
+		{
+			"level": "Low",
+			"reason": "Exceeded High",
+			"site": "http://host.docker.internal:5000",
+			"key": "insight.code.4xx",
+			"description": "Percentage of responses with status code 4xx",
+			"statistic": "95"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:5000",
+			"key": "insight.code.2xx",
+			"description": "Percentage of responses with status code 2xx",
+			"statistic": "4"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:5000",
+			"key": "insight.endpoint.ctype.application/json",
+			"description": "Percentage of endpoints with content type application/json",
+			"statistic": "15"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:5000",
+			"key": "insight.endpoint.ctype.text/html",
+			"description": "Percentage of endpoints with content type text/html",
+			"statistic": "1"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:5000",
+			"key": "insight.endpoint.method.DELETE",
+			"description": "Percentage of endpoints with method DELETE",
+			"statistic": "7"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:5000",
+			"key": "insight.endpoint.method.GET",
+			"description": "Percentage of endpoints with method GET",
+			"statistic": "60"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:5000",
+			"key": "insight.endpoint.method.PATCH",
+			"description": "Percentage of endpoints with method PATCH",
+			"statistic": "3"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:5000",
+			"key": "insight.endpoint.method.POST",
+			"description": "Percentage of endpoints with method POST",
+			"statistic": "23"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:5000",
+			"key": "insight.endpoint.method.PUT",
+			"description": "Percentage of endpoints with method PUT",
+			"statistic": "5"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "http://host.docker.internal:5000",
+			"key": "insight.endpoint.total",
+			"description": "Count of total endpoints",
+			"statistic": "111"
+		}
+	],
+	"site":[ 
+		{
+			"@name": "http://host.docker.internal:5000",
+			"@host": "host.docker.internal",
+			"@port": "5000",
+			"@ssl": "false",
+			"alerts": [ 
+				{
+					"pluginid": "90004",
+					"alertRef": "90004-1",
+					"alert": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+					"name": "Cross-Origin-Resource-Policy Header Missing or Invalid",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>Cross-Origin-Resource-Policy header is an opt-in header designed to counter side-channels attacks like Spectre. Resource should be specifically set as shareable amongst different origins.</p>",
+					"instances":[ 
+						{
+							"id": "60",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes?isActive=true",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes (isActive)",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "61",
+							"uri": "http://host.docker.internal:5000/api/Health",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Health",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "62",
+							"uri": "http://host.docker.internal:5000/api/Services?isActive=true",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services (isActive)",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "69",
+							"uri": "http://host.docker.internal:5000/swagger/v1/swagger.json",
+							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/v1\/swagger.json",
+							"method": "GET",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "54",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages ()({name,email,subject,message})",
+							"method": "POST",
+							"param": "Cross-Origin-Resource-Policy",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "<p>Ensure that the application/web server sets the Cross-Origin-Resource-Policy header appropriately, and that it sets the Cross-Origin-Resource-Policy header to 'same-origin' for all web pages.</p><p>'same-site' is considered as less secured and should be avoided.</p><p>If resources must be shared, set the header to 'cross-origin'.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Resource-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-resource-policy).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy</p>",
+					"cweid": "693",
+					"wascid": "14",
+					"sourceid": "31"
+				},
+				{
+					"pluginid": "100001",
+					"alertRef": "100001",
+					"alert": "Unexpected Content-Type was returned",
+					"name": "Unexpected Content-Type was returned",
+					"riskcode": "1",
+					"confidence": "3",
+					"riskdesc": "Low (High)",
+					"desc": "<p>A Content-Type of text/html was returned by the server.</p><p>This is not one of the types expected to be returned by an API.</p><p>Raised by the 'Alert on Unexpected Content Types' script</p>",
+					"instances":[ 
+						{
+							"id": "7916",
+							"uri": "http://host.docker.internal:5000/swagger/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "text/html",
+							"otherinfo": ""
+						},
+						{
+							"id": "7915",
+							"uri": "http://host.docker.internal:5000/swagger/index.html",
+							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/index.html",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "text/html",
+							"otherinfo": ""
+						}
+					],
+					"count": "2",
+					"systemic": false,
+					"solution": "",
+					"otherinfo": "",
+					"reference": "",
+					"cweid": "-1",
+					"wascid": "-1",
+					"sourceid": "8343"
+				},
+				{
+					"pluginid": "10021",
+					"alertRef": "10021",
+					"alert": "X-Content-Type-Options Header Missing",
+					"name": "X-Content-Type-Options Header Missing",
+					"riskcode": "1",
+					"confidence": "2",
+					"riskdesc": "Low (Medium)",
+					"desc": "<p>The Anti-MIME-Sniffing header X-Content-Type-Options was not set to 'nosniff'. This allows older versions of Internet Explorer and Chrome to perform MIME-sniffing on the response body, potentially causing the response body to be interpreted and displayed as a content type other than the declared content type. Current (early 2014) and legacy versions of Firefox will use the declared content type (if one is set), rather than performing MIME-sniffing.</p>",
+					"instances":[ 
+						{
+							"id": "64",
+							"uri": "http://host.docker.internal:5000/swagger/v1/swagger.json",
+							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/v1\/swagger.json",
+							"method": "GET",
+							"param": "x-content-type-options",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.\nAt \"High\" threshold this scan rule will not alert on client or server error responses."
+						}
+					],
+					"count": "1",
+					"systemic": true,
+					"solution": "<p>Ensure that the application/web server sets the Content-Type header appropriately, and that it sets the X-Content-Type-Options header to 'nosniff' for all web pages.</p><p>If possible, ensure that the end user uses a standards-compliant and modern web browser that does not perform MIME-sniffing at all, or that can be directed by the web application/web server to not perform MIME-sniffing.</p>",
+					"otherinfo": "<p>This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.</p><p>At \"High\" threshold this scan rule will not alert on client or server error responses.</p>",
+					"reference": "<p>https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85)</p><p>https://owasp.org/www-community/Security_Headers</p>",
+					"cweid": "693",
+					"wascid": "15",
+					"sourceid": "1"
+				},
+				{
+					"pluginid": "100000",
+					"alertRef": "100000",
+					"alert": "A Client Error response code was returned by the server",
+					"name": "A Client Error response code was returned by the server",
+					"riskcode": "0",
+					"confidence": "3",
+					"riskdesc": "Informational (High)",
+					"desc": "<p>A response code of 401 was returned by the server.</p><p>This may indicate that the application is failing to handle unexpected input correctly.</p><p>Raised by the 'Alert on HTTP Response Code Error' script</p>",
+					"instances":[ 
+						{
+							"id": "6",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id",
+							"method": "DELETE",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7866",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id\/",
+							"method": "DELETE",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "20",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id",
+							"method": "DELETE",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7876",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id\/",
+							"method": "DELETE",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "26",
+							"uri": "http://host.docker.internal:5000/api/Services/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id",
+							"method": "DELETE",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7875",
+							"uri": "http://host.docker.internal:5000/api/Services/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id\/",
+							"method": "DELETE",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "31",
+							"uri": "http://host.docker.internal:5000/api/Users/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id",
+							"method": "DELETE",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7872",
+							"uri": "http://host.docker.internal:5000/api/Users/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id\/",
+							"method": "DELETE",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "72",
+							"uri": "http://host.docker.internal:5000",
+							"nodeName": "http:\/\/host.docker.internal:5000",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7883",
+							"uri": "http://host.docker.internal:5000/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "33",
+							"uri": "http://host.docker.internal:5000/7497255458037251885",
+							"nodeName": "http:\/\/host.docker.internal:5000\/7497255458037251885",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "87",
+							"uri": "http://host.docker.internal:5000/api",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7886",
+							"uri": "http://host.docker.internal:5000/api/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "34",
+							"uri": "http://host.docker.internal:5000/api/1982074943818524439",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/1982074943818524439",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "99",
+							"uri": "http://host.docker.internal:5000/api/Auth",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7888",
+							"uri": "http://host.docker.internal:5000/api/Auth/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "35",
+							"uri": "http://host.docker.internal:5000/api/Auth/9163892107524385011",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/9163892107524385011",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "8883",
+							"uri": "http://host.docker.internal:5000/api/Auth/actuator/health",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/actuator\/health",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "121",
+							"uri": "http://host.docker.internal:5000/api/Backup",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7892",
+							"uri": "http://host.docker.internal:5000/api/Backup/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "36",
+							"uri": "http://host.docker.internal:5000/api/Backup/7431826248939173581",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/7431826248939173581",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "2",
+							"uri": "http://host.docker.internal:5000/api/Backup/generate",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/generate",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7889",
+							"uri": "http://host.docker.internal:5000/api/Backup/generate/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/generate\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "3",
+							"uri": "http://host.docker.internal:5000/api/Backup/status",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/status",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7890",
+							"uri": "http://host.docker.internal:5000/api/Backup/status/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/status\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "126",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7077",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages?status=%23set%28%24engine%3D%22%22%29%0A%23set%28%24proc%3D%24engine.getClass%28%29.forName%28%22java.lang.Runtime%22%29.getRuntime%28%29.exec%28%22sleep+15%22%29%29%0A%23set%28%24null%3D%24proc.waitFor%28%29%29%0A%24%7Bnull%7D",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages (status)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "4",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages?status=10",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages (status)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7895",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "37",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/1415945545189795778",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/1415945545189795778",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "5",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7896",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "38",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/id/2428250275316215668",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id\/2428250275316215668",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/pending",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/pending",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7893",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/pending/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/pending\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "8",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/stats",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/stats",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7898",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/stats/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/stats\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "10",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7894",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "39",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/8210538901719566659",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/8210538901719566659",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "12",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7899",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "40",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/5284654500185848190",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/5284654500185848190",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "141",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/status",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/status",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7901",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/status/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/status\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "49",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/status/2868881577113513921",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/status\/2868881577113513921",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "13",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/status/status",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/status\/status",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7902",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/status/status/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/status\/status\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "170",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes?isActive=http%3A%2F%2Fwww.google.com%2F",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes (isActive)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "56",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes/3189039061969017267",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/3189039061969017267",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "18",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7904",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "168",
+							"uri": "http://host.docker.internal:5000/api/Dashboard",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7907",
+							"uri": "http://host.docker.internal:5000/api/Dashboard/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "63",
+							"uri": "http://host.docker.internal:5000/api/Dashboard/3112365890407353598",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/3112365890407353598",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "21",
+							"uri": "http://host.docker.internal:5000/api/Dashboard/stats",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/stats",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7906",
+							"uri": "http://host.docker.internal:5000/api/Dashboard/stats/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/stats\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "22",
+							"uri": "http://host.docker.internal:5000/api/Dashboard/status-distribution",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/status-distribution",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7905",
+							"uri": "http://host.docker.internal:5000/api/Dashboard/status-distribution/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/status-distribution\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "228",
+							"uri": "http://host.docker.internal:5000/api/Services?isActive=http%3A%2F%2Fwww.google.com%2F",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services (isActive)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "67",
+							"uri": "http://host.docker.internal:5000/api/Services/9009625190431229681",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/9009625190431229681",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "24",
+							"uri": "http://host.docker.internal:5000/api/Services/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7909",
+							"uri": "http://host.docker.internal:5000/api/Services/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "227",
+							"uri": "http://host.docker.internal:5000/api/Users",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7106",
+							"uri": "http://host.docker.internal:5000/api/Users?page=%23set%28%24engine%3D%22%22%29%0A%23set%28%24proc%3D%24engine.getClass%28%29.forName%28%22java.lang.Runtime%22%29.getRuntime%28%29.exec%28%22sleep+15%22%29%29%0A%23set%28%24null%3D%24proc.waitFor%28%29%29%0A%24%7Bnull%7D&pageSize=10&search=ZAP",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users (page,pageSize,search)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "27",
+							"uri": "http://host.docker.internal:5000/api/Users?page=1&pageSize=10&search=ZAP",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users (page,pageSize,search)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7911",
+							"uri": "http://host.docker.internal:5000/api/Users/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "68",
+							"uri": "http://host.docker.internal:5000/api/Users/5182984746147422048",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/5182984746147422048",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "29",
+							"uri": "http://host.docker.internal:5000/api/Users/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7910",
+							"uri": "http://host.docker.internal:5000/api/Users/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "70",
+							"uri": "http://host.docker.internal:5000/swagger/3516924292307509156",
+							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/3516924292307509156",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "276",
+							"uri": "http://host.docker.internal:5000/swagger/v1",
+							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/v1",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7914",
+							"uri": "http://host.docker.internal:5000/swagger/v1/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/v1\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "71",
+							"uri": "http://host.docker.internal:5000/swagger/v1/42188669104685380",
+							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/v1\/42188669104685380",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "9",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/id/status",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id\/status ()({status,adminNotes})",
+							"method": "PATCH",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7869",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/id/status/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id\/status\/ ()({status,adminNotes})",
+							"method": "PATCH",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "14",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/status",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/status ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"method": "PATCH",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7878",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/status/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/status\/ ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"method": "PATCH",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "0",
+							"uri": "http://host.docker.internal:5000/api/Auth/login",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/login ()({email,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7864",
+							"uri": "http://host.docker.internal:5000/api/Auth/login/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/login\/ ()({email,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "1",
+							"uri": "http://host.docker.internal:5000/api/Auth/register",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/register ()({email,password,fullName,role})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7865",
+							"uri": "http://host.docker.internal:5000/api/Auth/register/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/register\/ ()({email,password,fullName,role})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "244",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages ()({name,email,subject,message})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "11",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests ()({fullName,identificationNumber,email,phone,address,employmentStatus,monthlySalary,yearsOfEmployment,creditType,useOfMoney,requestedAmount,termYears,interestRate,monthlyPayment,totalPayment,totalInterest})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "7877",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/ ()({fullName,identificationNumber,email,phone,address,employmentStatus,monthlySalary,yearsOfEmployment,creditType,useOfMoney,requestedAmount,termYears,interestRate,monthlyPayment,totalPayment,totalInterest})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "15",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/approve",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/approve ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7868",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/approve/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/approve\/ ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "16",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/reject",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/reject ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7867",
+							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/reject/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/reject\/ ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "17",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7874",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/ ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "23",
+							"uri": "http://host.docker.internal:5000/api/Services",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services ()({title,description,icon,displayOrder,isActive})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7871",
+							"uri": "http://host.docker.internal:5000/api/Services/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/ ()({title,description,icon,displayOrder,isActive})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "28",
+							"uri": "http://host.docker.internal:5000/api/Users",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users ()({email,password,fullName,role,isActive})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7880",
+							"uri": "http://host.docker.internal:5000/api/Users/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/ ()({email,password,fullName,role,isActive})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "32",
+							"uri": "http://host.docker.internal:5000/api/Users/change-password",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/change-password ()({userId,newPassword})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7870",
+							"uri": "http://host.docker.internal:5000/api/Users/change-password/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/change-password\/ ()({userId,newPassword})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "5884",
+							"uri": "http://host.docker.internal:5000/computeMetadata/v1/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/computeMetadata\/v1\/ ()({email,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "5856",
+							"uri": "http://host.docker.internal:5000/latest/meta-data/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/latest\/meta-data\/ ()({email,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "5996",
+							"uri": "http://host.docker.internal:5000/metadata/instance",
+							"nodeName": "http:\/\/host.docker.internal:5000\/metadata\/instance ()({email,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "6014",
+							"uri": "http://host.docker.internal:5000/metadata/v1",
+							"nodeName": "http:\/\/host.docker.internal:5000\/metadata\/v1 ()({email,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "5891",
+							"uri": "http://host.docker.internal:5000/opc/v1/instance/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/opc\/v1\/instance\/ ()({email,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "5926",
+							"uri": "http://host.docker.internal:5000/opc/v2/instance/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/opc\/v2\/instance\/ ()({email,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "6032",
+							"uri": "http://host.docker.internal:5000/openstack/latest/meta_data.json",
+							"nodeName": "http:\/\/host.docker.internal:5000\/openstack\/latest\/meta_data.json ()({email,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "19",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
+							"method": "PUT",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7873",
+							"uri": "http://host.docker.internal:5000/api/CreditTypes/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id\/ ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
+							"method": "PUT",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "25",
+							"uri": "http://host.docker.internal:5000/api/Services/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id ()({title,description,icon,displayOrder,isActive})",
+							"method": "PUT",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7881",
+							"uri": "http://host.docker.internal:5000/api/Services/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id\/ ()({title,description,icon,displayOrder,isActive})",
+							"method": "PUT",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "30",
+							"uri": "http://host.docker.internal:5000/api/Users/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id ()({fullName,role,isActive})",
+							"method": "PUT",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7882",
+							"uri": "http://host.docker.internal:5000/api/Users/id/",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id\/ ()({fullName,role,isActive})",
+							"method": "PUT",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						}
+					],
+					"count": "110",
+					"systemic": false,
+					"solution": "",
+					"otherinfo": "",
+					"reference": "",
+					"cweid": "388",
+					"wascid": "20",
+					"sourceid": "16"
+				},
+				{
+					"pluginid": "10111",
+					"alertRef": "10111",
+					"alert": "Authentication Request Identified",
+					"name": "Authentication Request Identified",
+					"riskcode": "0",
+					"confidence": "1",
+					"riskdesc": "Informational (Low)",
+					"desc": "<p>The given request has been identified as an authentication request. The 'Other Info' field contains a set of key=value lines which identify any relevant fields. If the request is in a context which has an Authentication Method set to \"Auto-Detect\" then this rule will change the authentication to match the request identified.</p>",
+					"instances":[ 
+						{
+							"id": "65",
+							"uri": "http://host.docker.internal:5000/api/Users",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users ()({email,password,fullName,role,isActive})",
+							"method": "POST",
+							"param": "email",
+							"attack": "",
+							"evidence": "password",
+							"otherinfo": "userParam=email\nuserValue=zaproxy@example.com\npasswordParam=password"
+						},
+						{
+							"id": "66",
+							"uri": "http://host.docker.internal:5000/api/Users/change-password",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/change-password ()({userId,newPassword})",
+							"method": "POST",
+							"param": "userId",
+							"attack": "",
+							"evidence": "newPassword",
+							"otherinfo": "userParam=userId\nuserValue=John Doe\npasswordParam=newPassword"
+						},
+						{
+							"id": "50",
+							"uri": "http://host.docker.internal:5000/api/Auth/login",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/login ()({email,password})",
+							"method": "POST",
+							"param": "email",
+							"attack": "",
+							"evidence": "password",
+							"otherinfo": "userParam=email\nuserValue=zaproxy@example.com\npasswordParam=password"
+						}
+					],
+					"count": "3",
+					"systemic": false,
+					"solution": "<p>This is an informational alert rather than a vulnerability and so there is nothing to fix.</p>",
+					"otherinfo": "<p>userParam=email</p><p>userValue=zaproxy@example.com</p><p>passwordParam=password</p>",
+					"reference": "<p>https://www.zaproxy.org/docs/desktop/addons/authentication-helper/auth-req-id/</p>",
+					"cweid": "-1",
+					"wascid": "-1",
+					"sourceid": "48"
+				},
+				{
+					"pluginid": "10049",
+					"alertRef": "10049-1",
+					"alert": "Non-Storable Content",
+					"name": "Non-Storable Content",
+					"riskcode": "0",
+					"confidence": "2",
+					"riskdesc": "Informational (Medium)",
+					"desc": "<p>The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.</p>",
+					"instances":[ 
+						{
+							"id": "43",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id",
+							"method": "DELETE",
+							"param": "",
+							"attack": "",
+							"evidence": "DELETE ",
+							"otherinfo": ""
+						},
+						{
+							"id": "47",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/id",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "44",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages/stats",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/stats",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "53",
+							"uri": "http://host.docker.internal:5000/api/Auth/login",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/login ()({email,password})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "51",
+							"uri": "http://host.docker.internal:5000/api/Auth/register",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/register ()({email,password,fullName,role})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						}
+					],
+					"count": "5",
+					"systemic": true,
+					"solution": "<p>The content may be marked as storable by ensuring that the following conditions are satisfied:</p><p>The request method must be understood by the cache and defined as being cacheable (\"GET\", \"HEAD\", and \"POST\" are currently defined as cacheable)</p><p>The response status code must be understood by the cache (one of the 1XX, 2XX, 3XX, 4XX, or 5XX response classes are generally understood)</p><p>The \"no-store\" cache directive must not appear in the request or response header fields</p><p>For caching by \"shared\" caches such as \"proxy\" caches, the \"private\" response directive must not appear in the response</p><p>For caching by \"shared\" caches such as \"proxy\" caches, the \"Authorization\" header field must not appear in the request, unless the response explicitly allows it (using one of the \"must-revalidate\", \"public\", or \"s-maxage\" Cache-Control response directives)</p><p>In addition to the conditions above, at least one of the following conditions must also be satisfied by the response:</p><p>It must contain an \"Expires\" header field</p><p>It must contain a \"max-age\" response directive</p><p>For \"shared\" caches such as \"proxy\" caches, it must contain a \"s-maxage\" response directive</p><p>It must contain a \"Cache Control Extension\" that allows it to be cached</p><p>It must have a status code that is defined as cacheable by default (200, 203, 204, 206, 300, 301, 404, 405, 410, 414, 501).</p>",
+					"otherinfo": "",
+					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
+					"cweid": "524",
+					"wascid": "13",
+					"sourceid": "16"
+				},
+				{
+					"pluginid": "10049",
+					"alertRef": "10049-3",
+					"alert": "Storable and Cacheable Content",
+					"name": "Storable and Cacheable Content",
+					"riskcode": "0",
+					"confidence": "2",
+					"riskdesc": "Informational (Medium)",
+					"desc": "<p>The response contents are storable by caching components such as proxy servers, and may be retrieved directly from the cache, rather than from the origin server by the caching servers, in response to similar requests from other users. If the response data is sensitive, personal or user-specific, this may result in sensitive information being leaked. In some cases, this may even result in a user gaining complete control of the session of another user, depending on the configuration of the caching components in use in their environment. This is primarily an issue where \"shared\" caching servers such as \"proxy\" caches are configured on the local network. This configuration is typically found in corporate or educational environments, for instance.</p>",
+					"instances":[ 
+						{
+							"id": "52",
+							"uri": "http://host.docker.internal:5000/api/ContactMessages",
+							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages ()({name,email,subject,message})",
+							"method": "POST",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
+						}
+					],
+					"count": "1",
+					"systemic": true,
+					"solution": "<p>Validate that the response does not contain sensitive, personal or user-specific information. If it does, consider the use of the following HTTP response headers, to limit, or prevent the content being stored and retrieved from the cache by another user:</p><p>Cache-Control: no-cache, no-store, must-revalidate, private</p><p>Pragma: no-cache</p><p>Expires: 0</p><p>This configuration directs both HTTP 1.0 and HTTP 1.1 compliant caching servers to not store the response, and to not retrieve the response (without validation) from the cache, in response to a similar request.</p>",
+					"otherinfo": "<p>In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234.</p>",
+					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
+					"cweid": "524",
+					"wascid": "13",
+					"sourceid": "13"
+				}
+			]
+		}
+	],
+	"sequences":[
+	]
+
+}
