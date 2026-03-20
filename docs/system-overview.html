@@ -67,10 +67,33 @@
     </section>
 
     <section class="card">
+      <h2 data-i18n="publicRoutes">Public informational routes</h2>
+      <table>
+        <thead><tr><th data-i18n="thPath">Path</th><th data-i18n="thDesc">Description</th><th data-i18n="thI18n">i18n</th></tr></thead>
+        <tbody>
+          <tr><td><code>/privacy</code></td><td data-i18n="routePrivacy">Privacy Policy — five data-handling sections</td><td>Yes</td></tr>
+          <tr><td><code>/terms</code></td><td data-i18n="routeTerms">Terms and Conditions — five contract sections</td><td>Yes</td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="routeLegal">Legal Information — Regulatory Framework, Intellectual Property, Limitation of Liability, Governing Law</td><td>Yes</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="userJourneys">User journeys</h2>
+      <ul>
+        <li data-i18n="journey1">Credit simulation: <code>/</code> → <code>/services</code> → <code>/calculator</code> → credit request wizard.</li>
+        <li data-i18n="journey2">Support contact: any page → <code>/contact</code> → form submission.</li>
+        <li data-i18n="journey3">Legal review: header "Legal Information" link or footer "Legal Notice" → <code>/legal</code> → language switch for translated content.</li>
+        <li data-i18n="journey4">Policy review: footer links → <code>/privacy</code> or <code>/terms</code>.</li>
+      </ul>
+    </section>
+
+    <section class="card">
       <h2 data-i18n="i18nStrict">Internationalization (strict)</h2>
       <ul>
         <li>Supported runtime locales are strictly: <code>en</code>, <code>es</code>, and <code>pt</code>.</li>
         <li>Language switch is provided in the header selector and persisted with <code>tco-user-language</code>.</li>
+        <li>The <code>/legal</code> page exposes <code>legalPage.*</code> keys in all three locale bundles.</li>
       </ul>
     </section>
 
@@ -88,9 +111,9 @@
   </div>
   <script>
     const i18n = {
-      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
-      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
-      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
+      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", publicRoutes: "Public informational routes", thPath: "Path", thDesc: "Description", thI18n: "i18n", routePrivacy: "Privacy Policy — five data-handling sections", routeTerms: "Terms and Conditions — five contract sections", routeLegal: "Legal Information — Regulatory Framework, Intellectual Property, Limitation of Liability, Governing Law", userJourneys: "User journeys", journey1: "Credit simulation: <code>/</code> → <code>/services</code> → <code>/calculator</code> → credit request wizard.", journey2: "Support contact: any page → <code>/contact</code> → form submission.", journey3: "Legal review: header \"Legal Information\" link or footer \"Legal Notice\" → <code>/legal</code> → language switch for translated content.", journey4: "Policy review: footer links → <code>/privacy</code> or <code>/terms</code>.", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
+      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", publicRoutes: "Rutas informativas públicas", thPath: "Ruta", thDesc: "Descripción", thI18n: "i18n", routePrivacy: "Política de Privacidad — cinco secciones de manejo de datos", routeTerms: "Términos y Condiciones — cinco secciones del contrato", routeLegal: "Información Legal — Marco Regulatorio, Propiedad Intelectual, Limitación de Responsabilidad, Ley Aplicable", userJourneys: "Flujos de usuario", journey1: "Simulación de crédito: <code>/</code> → <code>/services</code> → <code>/calculator</code> → asistente de solicitud.", journey2: "Contacto de soporte: cualquier página → <code>/contact</code> → envío de formulario.", journey3: "Revisión legal: enlace \"Información Legal\" en header o \"Aviso Legal\" en footer → <code>/legal</code> → cambio de idioma para contenido traducido.", journey4: "Revisión de políticas: enlaces del footer → <code>/privacy</code> o <code>/terms</code>.", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
+      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", publicRoutes: "Rotas informativas públicas", thPath: "Rota", thDesc: "Descrição", thI18n: "i18n", routePrivacy: "Política de Privacidade — cinco seções de tratamento de dados", routeTerms: "Termos e Condições — cinco seções do contrato", routeLegal: "Informações Legais — Marco Regulatório, Propriedade Intelectual, Limitação de Responsabilidade, Lei Aplicável", userJourneys: "Jornadas do usuário", journey1: "Simulação de crédito: <code>/</code> → <code>/services</code> → <code>/calculator</code> → assistente de solicitação.", journey2: "Contato de suporte: qualquer página → <code>/contact</code> → envio de formulário.", journey3: "Revisão legal: link \"Informações Legais\" no header ou \"Aviso Legal\" no footer → <code>/legal</code> → troca de idioma para conteúdo traduzido.", journey4: "Revisão de políticas: links do footer → <code>/privacy</code> ou <code>/terms</code>.", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
     };
     const select = document.getElementById("lang-select");
     const key = "docs-hub-lang";

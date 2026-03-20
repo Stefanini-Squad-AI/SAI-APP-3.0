@@ -75,6 +75,7 @@
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="vLegal">Legal Information</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalInformationPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
         </tbody>
       </table>
@@ -150,6 +151,13 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/legal</code></td>
+            <td data-i18n="rLegalPurpose">Consolidate regulatory, IP, liability, and governing-law disclosures in one accessible page.</td>
+            <td data-i18n="rLegalContains">Four sections: Regulatory Framework, Intellectual Property, Limitation of Liability, and Governing Law — all rendered from i18n keys in the active locale.</td>
+            <td data-i18n="rLegalActions">Read consolidated legal disclosures, switch language to view translated content, navigate to contact or home page.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
@@ -190,6 +198,7 @@
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
+        vLegal: "Legal Information",
         vNotFound: "Not found",
         rHomePurpose: "Present brand value and convert visitors into simulation and contact flows.",
         rHomeContains: "Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.",
@@ -215,6 +224,9 @@
         rTermsPurpose: "Describe contract and usage conditions for platform services.",
         rTermsContains: "Five terms sections with update date, plus contact and back-home links.",
         rTermsActions: "Review legal obligations, then navigate to contact/home pages.",
+        rLegalPurpose: "Consolidate regulatory, IP, liability, and governing-law disclosures in one accessible page.",
+        rLegalContains: "Four sections: Regulatory Framework, Intellectual Property, Limitation of Liability, and Governing Law — all rendered from i18n keys in the active locale.",
+        rLegalActions: "Read consolidated legal disclosures, switch language to view translated content, navigate to contact or home page.",
         r404Purpose: "Handle unknown URLs and recover navigation.",
         r404Contains: "404 code, explanatory text, and CTA back to home.",
         r404Actions: "Return safely to root route.",
@@ -250,7 +262,11 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
+        vLegal: "Información Legal",
         vNotFound: "No encontrado",
+        rLegalPurpose: "Consolidar los avisos regulatorios, de propiedad intelectual, limitación de responsabilidad y ley aplicable en una página accesible.",
+        rLegalContains: "Cuatro secciones: Marco Regulatorio, Propiedad Intelectual, Limitación de Responsabilidad y Ley Aplicable — renderizadas desde claves i18n en el idioma activo.",
+        rLegalActions: "Leer los avisos legales consolidados, cambiar idioma para ver el contenido traducido, navegar a contacto o inicio.",
         noApi: "Sin llamadas al backend.",
         authYes: "Sí",
         authNo: "No"
@@ -283,7 +299,11 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
+        vLegal: "Informações Legais",
         vNotFound: "Não encontrado",
+        rLegalPurpose: "Consolidar os avisos regulatórios, de propriedade intelectual, limitação de responsabilidade e lei aplicável em uma página acessível.",
+        rLegalContains: "Quatro seções: Marco Regulatório, Propriedade Intelectual, Limitação de Responsabilidade e Lei Aplicável — renderizadas a partir de chaves i18n no idioma ativo.",
+        rLegalActions: "Ler os avisos legais consolidados, trocar idioma para ver o conteúdo traduzido, navegar para contato ou página inicial.",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
         authNo: "Não"
