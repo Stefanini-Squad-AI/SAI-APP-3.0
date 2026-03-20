@@ -45,12 +45,14 @@ builder.Services.AddCors(options =>
     {
         policy.SetIsOriginAllowed(origin =>
               {
+                  if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
+                  var host = uri.Host;
                   // Explicitly configured origins (e.g. from appsettings or env)
                   if (allowedOrigins.Contains(origin)) return true;
-                  // GitHub Pages deployments
-                  if (origin.Contains(".github.io")) return true;
-                  // Surge.sh PR preview deployments
-                  if (origin.EndsWith(".surge.sh")) return true;
+                  // GitHub Pages deployments: *.github.io only
+                  if (host.EndsWith(".github.io")) return true;
+                  // Surge.sh PR preview deployments: *.surge.sh only
+                  if (host.EndsWith(".surge.sh")) return true;
                   return false;
               })
               .WithHeaders("Content-Type", "Authorization", "Accept")
