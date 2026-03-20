@@ -75,6 +75,7 @@
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="vLegal">Legal Information</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
         </tbody>
       </table>
@@ -150,6 +151,13 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/legal</code></td>
+            <td data-i18n="rLegalPurpose">Consolidate all legal disclosures in a single dedicated page.</td>
+            <td data-i18n="rLegalContains">Hero section, introductory legal framework section, cross-link cards to Privacy Policy and Terms &amp; Conditions, and regulatory compliance section.</td>
+            <td data-i18n="rLegalActions">Read legal framework context, navigate to Privacy or Terms pages, return home.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
@@ -190,7 +198,11 @@
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
+        vLegal: "Legal Information",
         vNotFound: "Not found",
+        rLegalPurpose: "Consolidate all legal disclosures in a single dedicated page.",
+        rLegalContains: "Hero section, introductory legal framework section, cross-link cards to Privacy Policy and Terms & Conditions, and regulatory compliance section.",
+        rLegalActions: "Read legal framework context, navigate to Privacy or Terms pages, return home.",
         rHomePurpose: "Present brand value and convert visitors into simulation and contact flows.",
         rHomeContains: "Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.",
         rHomeActions: "Navigate to calculator/services pages, explore highlighted product cards, change language from global selector.",
@@ -250,7 +262,11 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
+        vLegal: "Información Legal",
         vNotFound: "No encontrado",
+        rLegalPurpose: "Consolidar todas las divulgaciones legales en una página dedicada.",
+        rLegalContains: "Sección hero, sección introductoria del marco legal, tarjetas de enlace a Política de Privacidad y Términos y Condiciones, y sección de cumplimiento normativo.",
+        rLegalActions: "Leer el contexto del marco legal, navegar a las páginas de Privacidad o Términos, volver al inicio.",
         noApi: "Sin llamadas al backend.",
         authYes: "Sí",
         authNo: "No"
@@ -283,7 +299,11 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
+        vLegal: "Informações Legais",
         vNotFound: "Não encontrado",
+        rLegalPurpose: "Consolidar todas as divulgações legais em uma página dedicada.",
+        rLegalContains: "Seção hero, seção introdutória do marco legal, cartões de link para Política de Privacidade e Termos e Condições, e seção de conformidade regulatória.",
+        rLegalActions: "Ler o contexto do marco legal, navegar para as páginas de Privacidade ou Termos, voltar ao início.",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
         authNo: "Não"
