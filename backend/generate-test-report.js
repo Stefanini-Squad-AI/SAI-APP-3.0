@@ -12,12 +12,19 @@
  *   PERPLEXITY_MODEL    — model to use (default: sonar)
  */
 
-const fs = require('fs');
-const path = require('path');
-const xml2js = require('xml2js');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parseStringPromise } from 'xml2js';
 
-try { require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') }); } catch {}
-try { require('dotenv').config({ path: path.resolve(__dirname, '.env') }); } catch {}
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load .env from repo root (optional — enables PERPLEXITY_API_KEY without manual export)
+try {
+  const { default: dotenv } = await import('dotenv');
+  dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+  dotenv.config({ path: path.resolve(__dirname, '.env') });
+} catch { /* dotenv is optional */ }
 
 const TRX_PATH = path.join(__dirname, 'TestResults', 'test-results.trx');
 const TEST_RESULTS_DIR = path.join(__dirname, 'TestResults');
@@ -47,8 +54,7 @@ async function parseTrxFile() {
     process.exit(1);
   }
   const trxContent = fs.readFileSync(TRX_PATH, 'utf-8');
-  const parser = new xml2js.Parser();
-  return parser.parseStringPromise(trxContent);
+  return parseStringPromise(trxContent);
 }
 
 async function parseCoberturaFile() {
@@ -59,8 +65,7 @@ async function parseCoberturaFile() {
   }
   console.log(`  Coverage file found: ${cobPath}`);
   const content = fs.readFileSync(cobPath, 'utf-8');
-  const parser = new xml2js.Parser();
-  return parser.parseStringPromise(content);
+  return parseStringPromise(content);
 }
 
 function extractTestInfo(trxData) {
@@ -77,12 +82,12 @@ function extractTestInfo(trxData) {
   });
 
   const tests = results.map(test => {
-    const a = test.$;
-    const def = defsMap[a.testId] || {};
+    const attrs = test.$;
+    const def = defsMap[attrs.testId] || {};
     return {
-      name: a.testName || 'Unknown Test',
-      outcome: a.outcome || 'Unknown',
-      duration: a.duration || '00:00:00',
+      name: attrs.testName || 'Unknown Test',
+      outcome: attrs.outcome || 'Unknown',
+      duration: attrs.duration || '00:00:00',
       className: def.className,
       fullName: def.fullName,
       errorMessage: test.Output?.[0]?.ErrorInfo?.[0]?.Message?.[0] || null,

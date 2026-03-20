@@ -48,7 +48,7 @@ services:
       - DefaultAdmin__Role=Admin
     depends_on:
       mongodb:
-        condition: service_started
+        condition: service_healthy
     networks:
       - tco-network
 

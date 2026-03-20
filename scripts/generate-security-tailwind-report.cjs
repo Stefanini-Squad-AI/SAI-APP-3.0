@@ -3,14 +3,14 @@
 /**
  * OWASP ZAP — Tailwind Dashboard v2 (AURA-homologous)
  *
- * Lee los JSON oficiales de ZAP y genera un reporte interactivo:
+ * Reads official ZAP JSON reports and generates an interactive dashboard:
  *   test-results/security/tailwind-dashboard/security-dashboard.html
  *   test-results/security/tailwind-dashboard/security-dashboard.md
  *
- * Características: TailwindCSS, Dark/Grey mode, i18n ES/EN/PT, Chart.js,
- * widgets KPI, resumen ejecutivo vía LLM (.env raíz: PERPLEXITY_API_KEY, PERPLEXITY_MODEL).
+ * Features: TailwindCSS, Dark/Grey mode, i18n ES/EN/PT, Chart.js,
+ * KPI widgets, AI executive summary via LLM (root .env: PERPLEXITY_API_KEY, PERPLEXITY_MODEL).
  *
- * Uso (desde la raíz del repo SAI-APP-3.0):
+ * Usage (from the SAI-APP-3.0 repo root):
  *   node scripts/generate-security-tailwind-report.cjs
  */
 
