@@ -74,6 +74,8 @@ if (string.IsNullOrEmpty(secretKey) || secretKey.Length < 32)
     // Development only: generate a random secret so the app starts without configuration.
     // Tokens will be invalidated on every restart — acceptable for local dev.
     secretKey = $"{Guid.NewGuid():N}{Guid.NewGuid():N}";
+    // Store the generated fallback so AuthService can use the same key for signing.
+    builder.Configuration["JwtSettings:RuntimeFallbackSecret"] = secretKey;
     Console.WriteLine("Warning: JwtSettings:Secret not configured. Using a random secret for this session.");
 }
 

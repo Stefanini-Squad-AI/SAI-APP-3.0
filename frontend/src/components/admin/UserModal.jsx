@@ -19,7 +19,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, mode }) => {
         password: '', // Never populate password on edit
         fullName: user.fullName || '',
         role: user.role || 'User',
-        isActive: user.isActive !== undefined ? user.isActive : true,
+        isActive: user.isActive === undefined ? true : user.isActive,
       });
     } else {
       setFormData({ email: '', password: '', fullName: '', role: 'User', isActive: true });

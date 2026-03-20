@@ -85,7 +85,7 @@ public class BackupService
             }
 
             // Verify backup files were created
-            if (!Directory.Exists(backupDir) || !Directory.GetFiles(backupDir, "*.*", SearchOption.AllDirectories).Any())
+            if (!Directory.Exists(backupDir) || Directory.GetFiles(backupDir, "*.*", SearchOption.AllDirectories).Length == 0)
             {
                 return Result.Failure<string>("No backup files were generated");
             }

@@ -31,7 +31,7 @@ public class RequestValidationMiddleware
         }
 
         // Validate query parameters
-        if (context.Request.Query.Any())
+        if (context.Request.Query.Count > 0)
         {
             foreach (var (key, value) in context.Request.Query)
             {

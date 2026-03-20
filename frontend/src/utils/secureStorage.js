@@ -43,7 +43,7 @@ class SecureStorage {
     if (typeof value !== 'string') return value;
     
     // Remove any HTML tags
-    return value.replace(/<[^>]*>/g, '');
+    return value.replaceAll(/<[^>]*>/g, '');
   }
 
   /**

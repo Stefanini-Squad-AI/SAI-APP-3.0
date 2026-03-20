@@ -137,6 +137,7 @@ const CreditRequestsPage = () => {
   };
 
   const formatDate = (date) => {
+    if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -226,7 +227,7 @@ const CreditRequestsPage = () => {
       {filteredRequests.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg shadow">
           <p className="text-gray-500 text-lg">
-            No requests {statusFilter !== 'all' ? `with status "${statusFilter}"` : ''}
+            No requests {statusFilter === 'all' ? '' : `with status "${statusFilter}"`}
           </p>
         </div>
       ) : (
@@ -258,7 +259,7 @@ const CreditRequestsPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{formatCurrency(request.requestedAmount)}</div>
-                        <div className="text-sm text-gray-500">{request.termYears} yr{request.termYears !== 1 ? 's' : ''}</div>
+                        <div className="text-sm text-gray-500">{request.termYears} yr{request.termYears === 1 ? '' : 's'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{formatCurrency(request.monthlyPayment)}</div>

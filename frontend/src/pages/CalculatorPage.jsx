@@ -104,7 +104,7 @@ const CalculatorPage = () => {
                       </option>
                     ))}
                   </select>
-                  {selectedCreditType && selectedCreditType.description && (
+                  {selectedCreditType?.description && (
                     <p className="text-xs text-gray-500 mt-1">{selectedCreditType.description}</p>
                   )}
                 </div>
@@ -161,14 +161,14 @@ const CalculatorPage = () => {
                     id="requestedAmount"
                     value={requestedAmount}
                     onChange={(e) => setRequestedAmount(Number(e.target.value))}
-                    min="5000"
-                    max="500000"
-                    step="5000"
+                    min={selectedCreditType?.minAmount ?? 1000}
+                    max={selectedCreditType?.maxAmount ?? 500000}
+                    step={Math.max(500, Math.floor((selectedCreditType?.maxAmount ?? 500000) / 100))}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
                   />
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>$5,000</span>
-                    <span>$500,000</span>
+                    <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(selectedCreditType?.minAmount ?? 1000)}</span>
+                    <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(selectedCreditType?.maxAmount ?? 500000)}</span>
                   </div>
                 </div>
 

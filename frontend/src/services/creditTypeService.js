@@ -4,15 +4,14 @@ import { MOCK_CREDIT_TYPES } from './mockData';
 const creditTypeService = {
   getAll: async (isActive = null) => {
     try {
-      const params = isActive !== null ? { isActive } : {};
+      const params = isActive === null ? {} : { isActive };
       const response = await apiClient.get('/credittypes', { params });
       return response.data;
-    } catch (error) {
+    } catch {
       // Return demo data when the backend is unreachable (e.g. GitHub Pages deployment)
-      const filtered = isActive !== null
-        ? MOCK_CREDIT_TYPES.filter(ct => ct.isActive === isActive)
-        : MOCK_CREDIT_TYPES;
-      return filtered;
+      return isActive === null
+        ? MOCK_CREDIT_TYPES
+        : MOCK_CREDIT_TYPES.filter(ct => ct.isActive === isActive);
     }
   },
 

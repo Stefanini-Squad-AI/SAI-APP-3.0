@@ -3,7 +3,7 @@ import apiClient from './apiClient';
 const serviceService = {
   getAll: async (isActive = null) => {
     try {
-      const params = isActive !== null ? { isActive } : {};
+      const params = isActive === null ? {} : { isActive };
       const response = await apiClient.get('/services', { params });
       return response.data;
     } catch (error) {
