@@ -275,6 +275,19 @@ jobs:
             if [ "$CREATE_HTTP" = "200" ] || [ "$CREATE_HTTP" = "201" ]; then
               GATE_ID=$(python3 -c "import json; print(str(json.load(open('/tmp/sonar-create-gate.json')).get('id','')))" 2>/dev/null || echo "")
               echo "::notice::Created Demo Gate with ID: $GATE_ID"
+            elif [ "$CREATE_HTTP" = "400" ]; then
+              # 400 means the gate already exists — fetch it by name directly
+              SHOW_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" \
+                -o /tmp/sonar-show-gate.json \
+                -w "%{http_code}" \
+                "${SONAR_HOST_URL}/api/qualitygates/show?name=Demo+Gate" || echo "000")
+              if [ "$SHOW_HTTP" = "200" ]; then
+                GATE_ID=$(python3 -c "import json; print(str(json.load(open('/tmp/sonar-show-gate.json')).get('id','')))" 2>/dev/null || echo "")
+                echo "::notice::Demo Gate already exists with ID: $GATE_ID"
+              else
+                echo "::warning::Demo Gate exists but could not be fetched (HTTP $SHOW_HTTP). Assignment skipped."
+                exit 0
+              fi
             else
               echo "::warning::Could not create Demo Gate (HTTP $CREATE_HTTP). Token may lack Administer Quality Gates permission."
               exit 0
