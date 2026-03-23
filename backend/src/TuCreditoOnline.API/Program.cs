@@ -7,35 +7,11 @@ using TuCreditoOnline.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Configure Swagger with detailed documentation
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "TuCreditoOnline API",
-        Version = "v1",
-        Description = "Credit management system API with MongoDB backend",
-        Contact = new Microsoft.OpenApi.Models.OpenApiContact
-        {
-            Name = "TuCreditoOnline Team",
-            Email = "support@tucreditoonline.com"
-        }
-    });
+ConfigureSwagger(builder);
 
-    // Include XML comments for better documentation
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if (File.Exists(xmlPath))
-    {
-        options.IncludeXmlComments(xmlPath);
-    }
-});
-
-// Add CORS
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
     ?? new[] { "http://localhost:3000", "http://frontend:3000" };
 
@@ -43,18 +19,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.SetIsOriginAllowed(origin =>
-              {
-                  if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
-                  var host = uri.Host;
-                  // Explicitly configured origins (e.g. from appsettings or env)
-                  if (allowedOrigins.Contains(origin)) return true;
-                  // GitHub Pages deployments: *.github.io only
-                  if (host.EndsWith(".github.io")) return true;
-                  // Surge.sh PR preview deployments: *.surge.sh only
-                  if (host.EndsWith(".surge.sh")) return true;
-                  return false;
-              })
+        policy.SetIsOriginAllowed(origin => IsOriginAllowed(origin, allowedOrigins))
               .WithHeaders("Content-Type", "Authorization", "Accept")
               .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
               .AllowCredentials()
@@ -62,24 +27,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["Secret"];
-
-if (string.IsNullOrEmpty(secretKey) || secretKey.Length < 32)
-{
-    if (builder.Environment.IsProduction())
-        throw new InvalidOperationException(
-            "JwtSettings:Secret must be set to a string of 32+ characters in production. " +
-            "Set it via the JWT_SECRET environment variable or appsettings.");
-
-    // Development only: generate a random secret so the app starts without configuration.
-    // Tokens will be invalidated on every restart — acceptable for local dev.
-    secretKey = $"{Guid.NewGuid():N}{Guid.NewGuid():N}";
-    // Store the generated fallback so AuthService can use the same key for signing.
-    builder.Configuration["JwtSettings:RuntimeFallbackSecret"] = secretKey;
-    Console.WriteLine("Warning: JwtSettings:Secret not configured. Using a random secret for this session.");
-}
+var secretKey = ResolveJwtSecret(builder);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -102,16 +51,11 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
-
-// Add Infrastructure services (MongoDB, Repositories, Services)
 builder.Services.AddInfrastructureServices(builder.Configuration);
-
-// Add Application services
 builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
-// Seed default admin account on startup (idempotent)
 try
 {
     await AdminUserSeeder.SeedAsync(app);
@@ -121,7 +65,6 @@ catch (Exception ex)
     Console.WriteLine($"Warning: default admin seed failed but startup will continue. Error: {ex.Message}");
 }
 
-// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -133,18 +76,73 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Security middlewares
 app.UseSecurityHeaders();
 app.UseRequestValidation();
-
 app.UseCors("AllowFrontend");
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
+
+// --- Local helpers ---
+
+static void ConfigureSwagger(WebApplicationBuilder b)
+{
+    b.Services.AddSwaggerGen(options =>
+    {
+        options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+        {
+            Title = "TuCreditoOnline API",
+            Version = "v1",
+            Description = "Credit management system API with MongoDB backend",
+            Contact = new Microsoft.OpenApi.Models.OpenApiContact
+            {
+                Name = "TuCreditoOnline Team",
+                Email = "support@tucreditoonline.com"
+            }
+        });
+
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (File.Exists(xmlPath))
+            options.IncludeXmlComments(xmlPath);
+    });
+}
+
+static bool IsOriginAllowed(string origin, string[] allowedOrigins)
+{
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
+    var host = uri.Host;
+    if (allowedOrigins.Contains(origin)) return true;
+    // GitHub Pages deployments: *.github.io only
+    if (host.EndsWith(".github.io")) return true;
+    // Surge.sh PR preview deployments: *.surge.sh only
+    if (host.EndsWith(".surge.sh")) return true;
+    return false;
+}
+
+static string ResolveJwtSecret(WebApplicationBuilder b)
+{
+    var secret = b.Configuration.GetSection("JwtSettings")["Secret"];
+    if (!string.IsNullOrEmpty(secret) && secret.Length >= 32)
+        return secret;
+
+    if (b.Environment.IsProduction())
+        throw new InvalidOperationException(
+            "JwtSettings:Secret must be set to a string of 32+ characters in production. " +
+            "Set it via the JWT_SECRET environment variable or appsettings.");
+
+    // Development only: generate a random secret so the app starts without configuration.
+    // Tokens will be invalidated on every restart — acceptable for local dev.
+    var fallback = $"{Guid.NewGuid():N}{Guid.NewGuid():N}";
+    b.Configuration["JwtSettings:RuntimeFallbackSecret"] = fallback;
+    Console.WriteLine("Warning: JwtSettings:Secret not configured. Using a random secret for this session.");
+    return fallback;
+}
 
 // Make the implicit Program class public so test projects can access it
-public partial class Program { }
+public partial class Program
+{
+    protected Program() { }
+}
