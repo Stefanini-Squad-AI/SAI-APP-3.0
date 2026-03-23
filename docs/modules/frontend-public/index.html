@@ -75,6 +75,7 @@
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>/informacion-legal</code></td><td data-i18n="vLegalInfo">Legal Information</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
         </tbody>
       </table>
@@ -150,6 +151,13 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/informacion-legal</code></td>
+            <td data-i18n="rLegalInfoPurpose">Centralize legal content for regulatory compliance and user transparency.</td>
+            <td data-i18n="rLegalInfoContains">Three sections with semantic h2 headings: Terms and Conditions, Privacy Policy, and Legal Notice, each with body text and last-updated date. CTA links to Contact and Home.</td>
+            <td data-i18n="rLegalInfoActions">Read legal content, navigate to contact or home.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
@@ -190,7 +198,11 @@
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
+        vLegalInfo: "Legal Information",
         vNotFound: "Not found",
+        rLegalInfoPurpose: "Centralize legal content for regulatory compliance and user transparency.",
+        rLegalInfoContains: "Three sections with semantic h2 headings: Terms and Conditions, Privacy Policy, and Legal Notice, each with body text and last-updated date. CTA links to Contact and Home.",
+        rLegalInfoActions: "Read legal content, navigate to contact or home.",
         rHomePurpose: "Present brand value and convert visitors into simulation and contact flows.",
         rHomeContains: "Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.",
         rHomeActions: "Navigate to calculator/services pages, explore highlighted product cards, change language from global selector.",
@@ -250,7 +262,11 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
+        vLegalInfo: "Información Legal",
         vNotFound: "No encontrado",
+        rLegalInfoPurpose: "Centralizar contenido legal para cumplimiento normativo y transparencia hacia el usuario.",
+        rLegalInfoContains: "Tres secciones con encabezados h2 semánticos: Términos y Condiciones, Política de Privacidad y Aviso Legal, cada una con texto y fecha de actualización. CTAs a Contacto e Inicio.",
+        rLegalInfoActions: "Leer contenido legal, navegar a contacto o inicio.",
         noApi: "Sin llamadas al backend.",
         authYes: "Sí",
         authNo: "No"
@@ -283,7 +299,11 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
+        vLegalInfo: "Informações Legais",
         vNotFound: "Não encontrado",
+        rLegalInfoPurpose: "Centralizar conteúdo legal para conformidade regulatória e transparência ao usuário.",
+        rLegalInfoContains: "Três seções com títulos h2 semânticos: Termos e Condições, Política de Privacidade e Aviso Legal, cada uma com texto e data de atualização. CTAs para Contato e Início.",
+        rLegalInfoActions: "Ler conteúdo legal, navegar para contato ou início.",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
         authNo: "Não"

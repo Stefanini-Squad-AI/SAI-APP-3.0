@@ -5,6 +5,7 @@ import AdminLayout from './components/layout/AdminLayout';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
+import LegalPage from './pages/LegalPage';
 import ServicesPage from './pages/ServicesPage';
 import FAQPage from './pages/FAQPage';
 import CalculatorPage from './pages/CalculatorPage';
@@ -34,6 +35,7 @@ function App() {
             <Route path="about" element={<AboutPage />} />
             <Route path="faq" element={<FAQPage />} />
             <Route path="contact" element={<ContactPage />} />
+            <Route path="informacion-legal" element={<LegalPage />} />
             <Route path="calculator" element={<CalculatorPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
             <Route path="terms" element={<TermsPage />} />

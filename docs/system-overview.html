@@ -67,6 +67,16 @@
     </section>
 
     <section class="card">
+      <h2 data-i18n="publicRoutes">Public route additions (SAIAPP3-39)</h2>
+      <table>
+        <thead><tr><th>Path</th><th data-i18n="routePurpose">Purpose</th><th>Component</th></tr></thead>
+        <tbody>
+          <tr><td><code>/informacion-legal</code></td><td data-i18n="legalInfoPurpose">Static legal information page: Terms and Conditions, Privacy Policy, Legal Notice. Accessible from the Header nav link next to "Contacto". No backend calls.</td><td><code>pages/LegalPage.jsx</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
       <h2 data-i18n="i18nStrict">Internationalization (strict)</h2>
       <ul>
         <li>Supported runtime locales are strictly: <code>en</code>, <code>es</code>, and <code>pt</code>.</li>
@@ -88,9 +98,9 @@
   </div>
   <script>
     const i18n = {
-      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
-      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
-      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
+      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", publicRoutes: "Public route additions (SAIAPP3-39)", routePurpose: "Purpose", legalInfoPurpose: "Static legal information page: Terms and Conditions, Privacy Policy, Legal Notice. Accessible from the Header nav link next to \"Contact\". No backend calls.", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
+      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", publicRoutes: "Rutas públicas agregadas (SAIAPP3-39)", routePurpose: "Propósito", legalInfoPurpose: "Página estática de información legal: Términos y Condiciones, Política de Privacidad, Aviso Legal. Accesible desde el enlace del Header junto a \"Contacto\". Sin llamadas al backend.", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
+      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", publicRoutes: "Rotas públicas adicionadas (SAIAPP3-39)", routePurpose: "Objetivo", legalInfoPurpose: "Página estática de informações legais: Termos e Condições, Política de Privacidade, Aviso Legal. Acessível pelo link do Header ao lado de \"Contato\". Sem chamadas ao backend.", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
     };
     const select = document.getElementById("lang-select");
     const key = "docs-hub-lang";
