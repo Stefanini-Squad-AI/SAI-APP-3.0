@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
 import contactMessageService from '../services/contactMessageService';
@@ -12,6 +12,20 @@ const ContactPage = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+
+  // Persist and restore tab selection
+  useEffect(() => {
+    const savedTab = localStorage.getItem('contactPage-activeTab');
+    if (savedTab !== null) {
+      setActiveTab(parseInt(savedTab, 10));
+    }
+  }, []);
+
+  const handleTabChange = (index) => {
+    setActiveTab(index);
+    localStorage.setItem('contactPage-activeTab', index.toString());
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -66,11 +80,45 @@ const ContactPage = () => {
         </div>
       </section>
 
+      {/* Tabs Navigation */}
+      <section className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          <div role="tablist" className="flex border-b border-gray-200">
+            <button
+              role="tab"
+              aria-selected={activeTab === 0}
+              tabIndex={activeTab === 0 ? 0 : -1}
+              onClick={() => handleTabChange(0)}
+              className={`px-6 py-3 font-semibold text-lg transition ${
+                activeTab === 0
+                  ? 'text-primary-600 border-b-2 border-primary-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {t('contactPage.tabContact')}
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === 1}
+              tabIndex={activeTab === 1 ? 0 : -1}
+              onClick={() => handleTabChange(1)}
+              className={`px-6 py-3 font-semibold text-lg transition ${
+                activeTab === 1
+                  ? 'text-primary-600 border-b-2 border-primary-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {t('contactPage.tabLegalInfo')}
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Contact Content */}
       <section className="container mx-auto px-4 py-16">
         <div className="max-w-6xl mx-auto">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        {activeTab === 0 && <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">{t('contactPage.sendMessage')}</h2>
             <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-xl shadow-soft">
@@ -205,9 +253,44 @@ const ContactPage = () => {
             </div>
           </div>
         </div>
-        </div>
+        </div>}
+
+        {activeTab === 1 && <div className="py-8">
+          <div className="space-y-8">
+            {/* Términos y Condiciones */}
+            <div className="bg-white p-8 rounded-xl shadow-soft border-l-4 border-primary-600">
+              <h2 className="text-2xl font-bold mb-4 text-gray-900">
+                {t('contactPage.legalTermsTitle')}
+              </h2>
+              <p className="text-gray-700 leading-relaxed">
+                {t('contactPage.legalTermsContent')}
+              </p>
+            </div>
+
+            {/* Política de Privacidad */}
+            <div className="bg-white p-8 rounded-xl shadow-soft border-l-4 border-primary-600">
+              <h2 className="text-2xl font-bold mb-4 text-gray-900">
+                {t('contactPage.legalPrivacyTitle')}
+              </h2>
+              <p className="text-gray-700 leading-relaxed">
+                {t('contactPage.legalPrivacyContent')}
+              </p>
+            </div>
+
+            {/* Información de Regulación */}
+            <div className="bg-white p-8 rounded-xl shadow-soft border-l-4 border-primary-600">
+              <h2 className="text-2xl font-bold mb-4 text-gray-900">
+                {t('contactPage.legalRegulatoryTitle')}
+              </h2>
+              <p className="text-gray-700 leading-relaxed">
+                {t('contactPage.legalRegulatoryContent')}
+              </p>
+            </div>
+          </div>
+        </div>}
       </section>
 
+      {activeTab === 0 && <>
       {/* Map Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
@@ -325,6 +408,7 @@ const ContactPage = () => {
           </div>
         </div>
       </section>
+      </>}
     </div>
   );
 };
