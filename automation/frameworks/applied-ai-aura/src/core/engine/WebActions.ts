@@ -511,6 +511,13 @@ export class WebActions {
     return (await this.resolveLocator(target).textContent()) ?? '';
   }
 
+  /** Visible text of the full page (`body` innerText), trimmed. */
+  async getPageText(): Promise<string> {
+    const body = this.page.locator('body');
+    await body.waitFor({ state: 'visible', timeout: TIMEOUT_ELEMENT_READY });
+    return ((await body.innerText()) ?? '').trim();
+  }
+
   /** Reads input value. */
   async getValue(target: string): Promise<string> {
     await this.waitForElement(target);

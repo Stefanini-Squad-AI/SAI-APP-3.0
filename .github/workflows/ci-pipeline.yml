@@ -1089,7 +1089,7 @@ jobs:
           ) &
           ZAP_API_PID=$!
 
-          TIMEOUT_SECONDS=600
+          TIMEOUT_SECONDS=240
           START_TIME=$(date +%s)
 
           while true; do
@@ -1097,7 +1097,7 @@ jobs:
             ELAPSED=$((CURRENT_TIME - START_TIME))
 
             if [ $ELAPSED -ge $TIMEOUT_SECONDS ]; then
-              echo "Timeout reached"
+              echo "Integration/security parallel phase reached 4-minute cap — stopping wait"
               kill $INTEGRATION_PID $ZAP_FRONTEND_PID $ZAP_API_PID 2>/dev/null || true
               break
             fi
