@@ -23,6 +23,9 @@ public static partial class InputSanitizer
     [GeneratedRegex(@"<[^>]+>")]
     private static partial Regex HtmlTagRegex();
 
+    [GeneratedRegex(@"\s+")]
+    private static partial Regex WhitespaceCollapseRegex();
+
     /// <summary>
     /// Sanitizes HTML content by removing all HTML tags and potentially malicious content
     /// </summary>
@@ -36,7 +39,7 @@ public static partial class InputSanitizer
         s = StyleBlockRegex().Replace(s, string.Empty);
         s = HtmlTagRegex().Replace(s, " ");
         s = WebUtility.HtmlDecode(s);
-        s = Regex.Replace(s, @"\s+", " ").Trim();
+        s = WhitespaceCollapseRegex().Replace(s, " ").Trim();
         return s;
     }
 
