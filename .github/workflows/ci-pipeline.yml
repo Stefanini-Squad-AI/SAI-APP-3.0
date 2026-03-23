@@ -416,23 +416,42 @@ print(str(data.get('id', '')))
         with:
           script: |
             async function updateDashboard(github, context, sections) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: context.issue.number,
-              });
-              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-              if (!c) return;
-              let body = c.body;
-              for (const [name, content] of Object.entries(sections)) {
-                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                const si = body.indexOf(s), ei = body.indexOf(e);
-                if (si !== -1 && ei !== -1)
-                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              const maxAttempts = 5;
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+                if (!c) return;
+                let body = c.body;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = body.indexOf(s), ei = body.indexOf(e);
+                  if (si !== -1 && ei !== -1)
+                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+                }
+                try {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner, repo: context.repo.repo,
+                    comment_id: c.id, body,
+                  });
+                } catch { continue; }
+                await new Promise(r => setTimeout(r, 800));
+                const { data: verify } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
+                let ok = true;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
+                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
+                }
+                if (ok) return;
               }
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                comment_id: c.id, body,
-              });
             }
 
             const qg = process.env.QG_STATUS;
@@ -597,23 +616,42 @@ print(str(data.get('id', '')))
         with:
           script: |
             async function updateDashboard(github, context, sections) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: context.issue.number,
-              });
-              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-              if (!c) return;
-              let body = c.body;
-              for (const [name, content] of Object.entries(sections)) {
-                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                const si = body.indexOf(s), ei = body.indexOf(e);
-                if (si !== -1 && ei !== -1)
-                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              const maxAttempts = 5;
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+                if (!c) return;
+                let body = c.body;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = body.indexOf(s), ei = body.indexOf(e);
+                  if (si !== -1 && ei !== -1)
+                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+                }
+                try {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner, repo: context.repo.repo,
+                    comment_id: c.id, body,
+                  });
+                } catch { continue; }
+                await new Promise(r => setTimeout(r, 800));
+                const { data: verify } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
+                let ok = true;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
+                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
+                }
+                if (ok) return;
               }
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                comment_id: c.id, body,
-              });
             }
 
             const qg = process.env.QG_STATUS;
@@ -744,23 +782,42 @@ print(str(data.get('id', '')))
         with:
           script: |
             async function updateDashboard(github, context, sections) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: context.issue.number,
-              });
-              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-              if (!c) return;
-              let body = c.body;
-              for (const [name, content] of Object.entries(sections)) {
-                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                const si = body.indexOf(s), ei = body.indexOf(e);
-                if (si !== -1 && ei !== -1)
-                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              const maxAttempts = 5;
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+                if (!c) return;
+                let body = c.body;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = body.indexOf(s), ei = body.indexOf(e);
+                  if (si !== -1 && ei !== -1)
+                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+                }
+                try {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner, repo: context.repo.repo,
+                    comment_id: c.id, body,
+                  });
+                } catch { continue; }
+                await new Promise(r => setTimeout(r, 800));
+                const { data: verify } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
+                let ok = true;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
+                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
+                }
+                if (ok) return;
               }
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                comment_id: c.id, body,
-              });
             }
 
             const url = process.env.REPORT_URL;
@@ -839,23 +896,42 @@ print(str(data.get('id', '')))
         with:
           script: |
             async function updateDashboard(github, context, sections) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: context.issue.number,
-              });
-              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-              if (!c) return;
-              let body = c.body;
-              for (const [name, content] of Object.entries(sections)) {
-                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                const si = body.indexOf(s), ei = body.indexOf(e);
-                if (si !== -1 && ei !== -1)
-                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              const maxAttempts = 5;
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+                if (!c) return;
+                let body = c.body;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = body.indexOf(s), ei = body.indexOf(e);
+                  if (si !== -1 && ei !== -1)
+                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+                }
+                try {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner, repo: context.repo.repo,
+                    comment_id: c.id, body,
+                  });
+                } catch { continue; }
+                await new Promise(r => setTimeout(r, 800));
+                const { data: verify } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
+                let ok = true;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
+                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
+                }
+                if (ok) return;
               }
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                comment_id: c.id, body,
-              });
             }
 
             const url = process.env.REPORT_URL;
@@ -1121,23 +1197,42 @@ print(str(data.get('id', '')))
         with:
           script: |
             async function updateDashboard(github, context, sections) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: context.issue.number,
-              });
-              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-              if (!c) return;
-              let body = c.body;
-              for (const [name, content] of Object.entries(sections)) {
-                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                const si = body.indexOf(s), ei = body.indexOf(e);
-                if (si !== -1 && ei !== -1)
-                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              const maxAttempts = 5;
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+                if (!c) return;
+                let body = c.body;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = body.indexOf(s), ei = body.indexOf(e);
+                  if (si !== -1 && ei !== -1)
+                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+                }
+                try {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner, repo: context.repo.repo,
+                    comment_id: c.id, body,
+                  });
+                } catch { continue; }
+                await new Promise(r => setTimeout(r, 800));
+                const { data: verify } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
+                let ok = true;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
+                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
+                }
+                if (ok) return;
               }
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                comment_id: c.id, body,
-              });
             }
 
             const integrationOk = process.env.INTEGRATION_OK === 'true';
@@ -1233,23 +1328,42 @@ print(str(data.get('id', '')))
         with:
           script: |
             async function updateDashboard(github, context, sections) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: context.issue.number,
-              });
-              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-              if (!c) return;
-              let body = c.body;
-              for (const [name, content] of Object.entries(sections)) {
-                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                const si = body.indexOf(s), ei = body.indexOf(e);
-                if (si !== -1 && ei !== -1)
-                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              const maxAttempts = 5;
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+                if (!c) return;
+                let body = c.body;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = body.indexOf(s), ei = body.indexOf(e);
+                  if (si !== -1 && ei !== -1)
+                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+                }
+                try {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner, repo: context.repo.repo,
+                    comment_id: c.id, body,
+                  });
+                } catch { continue; }
+                await new Promise(r => setTimeout(r, 800));
+                const { data: verify } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
+                let ok = true;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
+                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
+                }
+                if (ok) return;
               }
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                comment_id: c.id, body,
-              });
             }
 
             const url = process.env.PREVIEW_URL || process.env.EXPECTED_URL;
@@ -1334,23 +1448,42 @@ print(str(data.get('id', '')))
         with:
           script: |
             async function updateDashboard(github, context, sections) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: context.issue.number,
-              });
-              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-              if (!c) return;
-              let body = c.body;
-              for (const [name, content] of Object.entries(sections)) {
-                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                const si = body.indexOf(s), ei = body.indexOf(e);
-                if (si !== -1 && ei !== -1)
-                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              const maxAttempts = 5;
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+                if (!c) return;
+                let body = c.body;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = body.indexOf(s), ei = body.indexOf(e);
+                  if (si !== -1 && ei !== -1)
+                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+                }
+                try {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner, repo: context.repo.repo,
+                    comment_id: c.id, body,
+                  });
+                } catch { continue; }
+                await new Promise(r => setTimeout(r, 800));
+                const { data: verify } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
+                let ok = true;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
+                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
+                }
+                if (ok) return;
               }
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                comment_id: c.id, body,
-              });
             }
 
             const hasDocs = process.env.HAS_DOCS === 'true';
@@ -1486,23 +1619,42 @@ print(str(data.get('id', '')))
         with:
           script: |
             async function updateDashboard(github, context, sections) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner: context.repo.owner, repo: context.repo.repo,
-                issue_number: context.issue.number,
-              });
-              const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-              if (!c) return;
-              let body = c.body;
-              for (const [name, content] of Object.entries(sections)) {
-                const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                const si = body.indexOf(s), ei = body.indexOf(e);
-                if (si !== -1 && ei !== -1)
-                  body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+              const maxAttempts = 5;
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
+                if (!c) return;
+                let body = c.body;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = body.indexOf(s), ei = body.indexOf(e);
+                  if (si !== -1 && ei !== -1)
+                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
+                }
+                try {
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner, repo: context.repo.repo,
+                    comment_id: c.id, body,
+                  });
+                } catch { continue; }
+                await new Promise(r => setTimeout(r, 800));
+                const { data: verify } = await github.rest.issues.listComments({
+                  owner: context.repo.owner, repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                });
+                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
+                let ok = true;
+                for (const [name, content] of Object.entries(sections)) {
+                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
+                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
+                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
+                }
+                if (ok) return;
               }
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner, repo: context.repo.repo,
-                comment_id: c.id, body,
-              });
             }
 
             const url = process.env.REPORT_URL;
