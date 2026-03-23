@@ -8,4 +8,9 @@ public class ServiceRepository : MongoRepository<Service>
     public ServiceRepository(MongoDbContext context) : base(context, "services")
     {
     }
+
+    // Parameterless constructor required for mocking in tests
+    protected ServiceRepository() : base()
+    {
+    }
 }

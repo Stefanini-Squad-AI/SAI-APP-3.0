@@ -10,10 +10,15 @@ public class ContactMessageRepository : MongoRepository<ContactMessage>
     {
     }
 
+    // Parameterless constructor required for mocking in tests
+    protected ContactMessageRepository() : base()
+    {
+    }
+
     /// <summary>
     /// Returns messages filtered by status
     /// </summary>
-    public async Task<List<ContactMessage>> GetByStatusAsync(ContactMessageStatus status)
+    public virtual async Task<List<ContactMessage>> GetByStatusAsync(ContactMessageStatus status)
     {
         return await _collection
             .Find(m => m.Status == status && !m.IsDeleted)
@@ -24,7 +29,7 @@ public class ContactMessageRepository : MongoRepository<ContactMessage>
     /// <summary>
     /// Returns a count per status for all non-deleted messages
     /// </summary>
-    public async Task<Dictionary<ContactMessageStatus, int>> GetStatusCountsAsync()
+    public virtual async Task<Dictionary<ContactMessageStatus, int>> GetStatusCountsAsync()
     {
         var messages = await _collection
             .Find(m => !m.IsDeleted)
@@ -38,7 +43,7 @@ public class ContactMessageRepository : MongoRepository<ContactMessage>
     /// <summary>
     /// Returns messages that are New or InProgress (not yet replied or closed)
     /// </summary>
-    public async Task<List<ContactMessage>> GetPendingMessagesAsync()
+    public virtual async Task<List<ContactMessage>> GetPendingMessagesAsync()
     {
         return await _collection
             .Find(m => (m.Status == ContactMessageStatus.New || m.Status == ContactMessageStatus.InProgress)

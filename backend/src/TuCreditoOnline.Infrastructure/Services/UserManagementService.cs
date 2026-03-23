@@ -7,6 +7,8 @@ namespace TuCreditoOnline.Infrastructure.Services;
 
 public class UserManagementService
 {
+    private const string UserNotFound = "User not found";
+
     private readonly UserRepository _userRepository;
 
     public UserManagementService(UserRepository userRepository)
@@ -14,7 +16,7 @@ public class UserManagementService
         _userRepository = userRepository;
     }
 
-    public async Task<Result<UserListDto>> GetAllUsersAsync(int page = 1, int pageSize = 10, string? searchTerm = null)
+    public virtual async Task<Result<UserListDto>> GetAllUsersAsync(int page = 1, int pageSize = 10, string? searchTerm = null)
     {
         try
         {
@@ -61,13 +63,13 @@ public class UserManagementService
         }
     }
 
-    public async Task<Result<UserResponseDto>> GetUserByIdAsync(string id)
+    public virtual async Task<Result<UserResponseDto>> GetUserByIdAsync(string id)
     {
         try
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
-                return Result.Failure<UserResponseDto>("User not found");
+                return Result.Failure<UserResponseDto>(UserNotFound);
 
             var response = new UserResponseDto
             {
@@ -88,7 +90,7 @@ public class UserManagementService
         }
     }
 
-    public async Task<Result<UserResponseDto>> CreateUserAsync(CreateUserDto dto)
+    public virtual async Task<Result<UserResponseDto>> CreateUserAsync(CreateUserDto dto)
     {
         try
         {
@@ -133,13 +135,13 @@ public class UserManagementService
         }
     }
 
-    public async Task<Result<UserResponseDto>> UpdateUserAsync(string id, UpdateUserDto dto)
+    public virtual async Task<Result<UserResponseDto>> UpdateUserAsync(string id, UpdateUserDto dto)
     {
         try
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
-                return Result.Failure<UserResponseDto>("User not found");
+                return Result.Failure<UserResponseDto>(UserNotFound);
 
             var validRoles = new[] { "Admin", "User", "Analista" };
             if (!validRoles.Contains(dto.Role))
@@ -171,13 +173,13 @@ public class UserManagementService
         }
     }
 
-    public async Task<Result<bool>> DeleteUserAsync(string id)
+    public virtual async Task<Result<bool>> DeleteUserAsync(string id)
     {
         try
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
-                return Result.Failure<bool>("User not found");
+                return Result.Failure<bool>(UserNotFound);
 
             await _userRepository.DeleteAsync(id);
             return Result.Success(true);
@@ -188,13 +190,13 @@ public class UserManagementService
         }
     }
 
-    public async Task<Result<bool>> ChangePasswordAsync(ChangePasswordDto dto)
+    public virtual async Task<Result<bool>> ChangePasswordAsync(ChangePasswordDto dto)
     {
         try
         {
             var user = await _userRepository.GetByIdAsync(dto.UserId);
             if (user == null)
-                return Result.Failure<bool>("User not found");
+                return Result.Failure<bool>(UserNotFound);
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
             user.UpdatedAt = DateTime.UtcNow;

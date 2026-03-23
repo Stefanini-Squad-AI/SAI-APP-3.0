@@ -264,4 +264,107 @@ public class CreditRequestServiceTests
         result.IsSuccess.Should().BeTrue();
         result.Data.Should().HaveCount(3);
     }
+
+    [Fact]
+    public async Task GetAllCreditRequestsAsync_ShouldReturnAllRequests()
+    {
+        // Arrange
+        var requests = new List<CreditRequest>
+        {
+            new CreditRequest { Id = "1", Status = "Pending" },
+            new CreditRequest { Id = "2", Status = "Approved" }
+        };
+        _mockRepository
+            .Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(requests);
+
+        // Act
+        var result = await _service.GetAllCreditRequestsAsync();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Data.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetAllCreditRequestsAsync_WhenExceptionThrown_ShouldReturnFailure()
+    {
+        // Arrange
+        _mockRepository
+            .Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("DB error"));
+
+        // Act
+        var result = await _service.GetAllCreditRequestsAsync();
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Message.Should().Contain("Failed to fetch credit requests");
+    }
+
+    [Fact]
+    public async Task UpdateCreditRequestStatusAsync_WithInvalidStatus_ShouldReturnFailure()
+    {
+        // Arrange
+        var requestId = "request-id-123";
+        var creditRequest = new CreditRequest { Id = requestId, Status = "Pending", RequestedAmount = 50000, TermYears = 3 };
+
+        _mockRepository
+            .Setup(x => x.GetByIdAsync(requestId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(creditRequest);
+
+        var updateDto = new UpdateCreditRequestStatusDto { Status = "InvalidStatus" };
+
+        // Act
+        var result = await _service.UpdateCreditRequestStatusAsync(requestId, updateDto);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Message.Should().Contain("Invalid status");
+
+        _mockRepository.Verify(x => x.UpdateAsync(It.IsAny<CreditRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateCreditRequestStatusAsync_WithRejectedStatus_ShouldSetRejectedDate()
+    {
+        // Arrange
+        var requestId = "request-id-123";
+        var creditRequest = new CreditRequest { Id = requestId, Status = "Pending", RequestedAmount = 50000, TermYears = 3 };
+
+        _mockRepository
+            .Setup(x => x.GetByIdAsync(requestId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(creditRequest);
+
+        _mockRepository
+            .Setup(x => x.UpdateAsync(It.IsAny<CreditRequest>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var updateDto = new UpdateCreditRequestStatusDto { Status = "Rejected", Remarks = "Does not qualify" };
+
+        // Act
+        var result = await _service.UpdateCreditRequestStatusAsync(requestId, updateDto);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Data.Status.Should().Be("Rejected");
+        result.Data.RejectedDate.Should().NotBeNull();
+        result.Data.Remarks.Should().Be("Does not qualify");
+    }
+
+    [Fact]
+    public async Task GetCreditRequestByIdAsync_WhenExceptionThrown_ShouldReturnFailure()
+    {
+        // Arrange
+        _mockRepository
+            .Setup(x => x.GetByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("DB error"));
+
+        // Act
+        var result = await _service.GetCreditRequestByIdAsync("cr1");
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Message.Should().Contain("Failed to fetch credit request");
+    }
 }
