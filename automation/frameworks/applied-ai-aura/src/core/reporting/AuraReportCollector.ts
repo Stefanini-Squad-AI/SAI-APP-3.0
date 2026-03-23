@@ -1,13 +1,16 @@
 /**
  * AURA — Report Collector & Generator
- * Collects test execution data and generates rich HTML + JSON reports.
+ * Evidencias por paso (screenshots/videos) en la carpeta **única** de la ejecución.
  *
- * Folder structure:
- *   reports/<YYYY-MM-DD>/<scenario-name>/<vN>/
- *     ├─ aura-report.html
- *     ├─ aura-report.json
- *     ├─ screenshots/
+ * Estructura (una por corrida, no por escenario):
+ *   reports/<YYYY-MM-DD>/<suiteFolder>/vN/
+ *     ├─ automation-functional-report.html   ← informe único (TailwindReportEngine)
+ *     ├─ cucumber-report.json (copia opcional)
+ *     ├─ screenshots/   (prefijo = nombre escenario)
  *     └─ videos/
+ *
+ * HTML rico por escenario (AuraHtmlTemplate) solo si AURA_WRITE_SCENARIO_AURA_HTML=true.
+ * En modo normal, escribe JSONL completo para que TailwindReportEngine genere el reporte consolidado.
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -16,6 +19,7 @@ import { createLLMAdapter } from '../cognitive/LLMAdapterFactory';
 import type { AIAdapter } from '../cognitive/LLMAdapterFactory';
 import { renderAuraHtml } from './AuraHtmlTemplate';
 import type { IntentResult } from '../../types/index';
+import { allocateVersionedRunDirectory } from './reportRunDirectory';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -125,6 +129,11 @@ export class AuraReportCollector {
     this.addLog('INFO', `Starting step: ${keyword} ${text}`, text, keyword);
   }
 
+  /** Prefijo de archivo para no pisar capturas entre escenarios en la misma carpeta vN. */
+  private scenarioFilePrefix(): string {
+    return `${sanitize(this.scenarioName)}-`;
+  }
+
   /**
    * Captures a screenshot BEFORE a destructive action (e.g. click).
    * Called via the WebActions beforeClick hook so the evidence shows
@@ -132,7 +141,7 @@ export class AuraReportCollector {
    */
   async capturePreActionScreenshot(page: Page): Promise<void> {
     try {
-      const fileName = `step-${this.currentStepNumber}-pre-click.png`;
+      const fileName = `${this.scenarioFilePrefix()}step-${this.currentStepNumber}-pre-click.png`;
       const fullPath = path.join(this.screenshotsDir, fileName);
       await page.screenshot({ path: fullPath, fullPage: false });
       this.preActionScreenshot = `screenshots/${fileName}`;
@@ -182,7 +191,7 @@ export class AuraReportCollector {
       this.addLog('SUCCESS', 'Captured pre-action screenshot', undefined, 'screenshot');
     } else if (page && status !== 'skipped') {
       try {
-        const fileName = `step-${this.currentStepNumber}-${sanitize(keyword)}.png`;
+        const fileName = `${this.scenarioFilePrefix()}step-${this.currentStepNumber}-${sanitize(keyword)}.png`;
         const fullPath = path.join(this.screenshotsDir, fileName);
         await page.screenshot({ path: fullPath, fullPage: false });
         screenshotPath = `screenshots/${fileName}`;
@@ -240,7 +249,7 @@ export class AuraReportCollector {
 
     let videoRelPath: string | undefined;
     if (videoSourcePath && fs.existsSync(videoSourcePath)) {
-      const videoName = 'test-recording.webm';
+      const videoName = `${sanitize(this.scenarioName)}.webm`;
       const dest = path.join(this.videosDir, videoName);
       fs.copyFileSync(videoSourcePath, dest);
       videoRelPath = `videos/${videoName}`;
@@ -284,6 +293,16 @@ export class AuraReportCollector {
       videoRelPath,
       reportVersion: process.env['AURA_REPORT_VERSION'] ?? '1.0.0',
     };
+
+    const writeScenarioAura = process.env['AURA_WRITE_SCENARIO_AURA_HTML'] === 'true';
+    if (!writeScenarioAura) {
+      const jsonl = path.join(this.reportDir, 'aura-scenarios.jsonl');
+      fs.appendFileSync(jsonl, `${JSON.stringify(data)}\n`, 'utf8');
+      console.info(
+        `[AURA/Report] Datos escenario → ${jsonl} (informe consolidado: automation-functional-report.html)`,
+      );
+      return '';
+    }
 
     const executiveSummaries = await this.generateExecutiveSummaries(data);
     data.executiveSummaryByLang = executiveSummaries;
@@ -369,20 +388,16 @@ ${data.errorLogs.length > 0 ? 'Errors found:\n' + data.errorLogs.map(l => `  - $
   // ─── Folder Structure ───────────────────────────────────────────────────────
 
   private buildReportDir(): string {
-    const today = new Date().toISOString().slice(0, 10);
-    const scenarioDir = sanitize(this.scenarioName);
-    const datePath = path.join(this.baseDir, today, scenarioDir);
-
-    fs.mkdirSync(datePath, { recursive: true });
-
-    let version = 1;
-    while (fs.existsSync(path.join(datePath, `v${version}`))) {
-      version++;
+    const envDir = process.env['AURA_RUN_REPORT_DIR']?.trim();
+    if (envDir) {
+      const resolved = path.resolve(envDir);
+      fs.mkdirSync(resolved, { recursive: true });
+      return resolved;
     }
-
-    const versionDir = path.join(datePath, `v${version}`);
-    fs.mkdirSync(versionDir, { recursive: true });
-    return versionDir;
+    const suite = process.env['AURA_SUITE_FOLDER']?.trim() || 'Aura';
+    const runDir = allocateVersionedRunDirectory(this.baseDir, suite);
+    process.env['AURA_RUN_REPORT_DIR'] = runDir;
+    return runDir;
   }
 }
 

@@ -4,9 +4,6 @@
  */
 module.exports = {
   default: {
-    // ── Feature files ──────────────────────────────────────────────────────
-    paths: ['src/features/**/*.feature'],
-
     // ── TS module first, then support files ────────────────────────────────
     requireModule: ['ts-node/register'],
     require: [
@@ -16,11 +13,7 @@ module.exports = {
     ],
 
     // ── Reporters ───────────────────────────────────────────────────────────
-    format: [
-      'progress',
-      'json:reports/cucumber-report.json',
-      'html:reports/cucumber-report.html',
-    ],
+    format: ['progress', 'json:reports/cucumber-report.json'],
     formatOptions: {
       snippetInterface: 'async-await',
     },

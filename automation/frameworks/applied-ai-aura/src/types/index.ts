@@ -126,9 +126,21 @@ export interface ScenarioResult {
   readonly finishedAt: string;
 }
 
+/** Un “test” en AURA = un Feature Gherkin; contiene uno o más escenarios. */
+export interface FeatureSuiteStat {
+  readonly featureName: string;
+  readonly scenarioCount: number;
+  readonly passed: number;
+  readonly failed: number;
+  readonly skipped: number;
+  readonly pending: number;
+}
+
 export interface ReportSummary {
   readonly title: string;
   readonly generatedAt: string;
+  /** Número de features (tests) incluidos en esta ejecución. */
+  readonly totalFeatures: number;
   readonly totalScenarios: number;
   readonly passed: number;
   readonly failed: number;
@@ -137,6 +149,8 @@ export interface ReportSummary {
   readonly durationMs: number;
   readonly passRate: number;
   readonly scenarios: readonly ScenarioResult[];
+  /** Desglose por feature: escenarios y resultado por “test”. */
+  readonly featureStats: readonly FeatureSuiteStat[];
   readonly changelog: readonly ChangeEntry[];
 }
 
@@ -152,7 +166,7 @@ export interface AuraConfig {
   };
   readonly reporting: {
     readonly title: string;
-    readonly theme: 'dark' | 'light';
+    readonly theme: 'dark' | 'grey';
     readonly outputDir: string;
   };
 }

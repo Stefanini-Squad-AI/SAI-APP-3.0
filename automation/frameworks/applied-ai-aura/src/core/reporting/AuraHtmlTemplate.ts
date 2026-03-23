@@ -5,8 +5,10 @@
  * Coverage Overview, Failure Overview, and rich logs.
  */
 import type { AuraReportData, AuraStepData, AuraLogEntry } from './AuraReportCollector';
+import { resolveAuraReportTheme } from './ReportTheme';
 
 export function renderAuraHtml(data: AuraReportData): string {
+  const grey = resolveAuraReportTheme() === 'grey';
   const j = JSON.stringify(data).replace(/<\/script/g, '<\\/script');
   const d = data;
   const summaryByLang = {
@@ -25,7 +27,7 @@ export function renderAuraHtml(data: AuraReportData): string {
   const avg = d.steps.length ? Math.round(d.durationMs / d.steps.length) : 0;
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="${grey ? 'aura-theme-grey' : 'dark'}">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${e(d.testName)}</title>
@@ -45,37 +47,40 @@ export function renderAuraHtml(data: AuraReportData): string {
 .acc-chevron{transition:transform .2s}.acc-chevron.open{transform:rotate(90deg)}
 .search-input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:.5rem;padding:.5rem .75rem;color:#e5e7eb;font-size:.75rem;width:100%}
 .search-input:focus{outline:none;border-color:#6366f1}
-/* Force light mode */
-body{background:#f8fafc!important;color:#0f172a!important}
-.bg-gray-950{background:#f8fafc!important}
-.bg-gray-900,.bg-gray-900\\/50,.bg-gray-800\\/50,.bg-gray-800\\/30,.bg-gray-800\\/20,.bg-gray-800{background:#ffffff!important}
-.border-gray-800,.border-gray-700,.border-gray-700\\/50,.divide-gray-800\\/50>*{border-color:#e2e8f0!important}
-.text-gray-200,.text-gray-300,.text-gray-400,.text-gray-500{color:#475569!important}
-.text-white{color:#0f172a!important}
-.log-row:nth-child(even){background:#f8fafc!important}
-.search-input{background:#fff!important;border:1px solid #cbd5e1!important;color:#0f172a!important}
-.tab-btn.active{border-color:#3b82f6!important;color:#1d4ed8!important;background:#dbeafe!important}
-.tab-btn{color:#475569!important}
-.tab-btn:hover{color:#0f172a!important}
-.prose,.prose p,.prose li{color:#334155!important}
-.prose strong{color:#0f172a!important}
+${grey ? `/* GREY MODE — slate + tarjetas con borde (sin light mode plano) */
+.aura-theme-grey body{background:#f1f5f9!important;color:#1e293b!important}
+.aura-theme-grey .bg-gray-950{background:#f1f5f9!important}
+.aura-theme-grey main .bg-gray-900,.aura-theme-grey footer .border-t{border-color:#e2e8f0!important}
+.aura-theme-grey main .bg-gray-900,.aura-theme-grey main .bg-gray-800\\/30{background:#fff!important;box-shadow:0 1px 2px rgba(15,23,42,.06)!important}
+.aura-theme-grey main .border-gray-800,.aura-theme-grey main .border-gray-700\\/50,.aura-theme-grey main .divide-gray-800\\/50>*{border-color:#e2e8f0!important}
+.aura-theme-grey main .text-white,.aura-theme-grey footer .text-gray-400{color:#0f172a!important}
+.aura-theme-grey main .text-gray-200,.aura-theme-grey main .text-gray-300,.aura-theme-grey main .text-gray-400,.aura-theme-grey main .text-gray-500{color:#475569!important}
+.aura-theme-grey main .text-aura-300,.aura-theme-grey main .text-aura-400{color:#4f46e5!important}
+.aura-theme-grey .log-row:nth-child(even){background:#f8fafc!important}
+.aura-theme-grey .search-input{background:#fff!important;border:1px solid #cbd5e1!important;color:#0f172a!important}
+.aura-theme-grey .tab-btn.active{border-color:#6366f1!important;color:#4338ca!important;background:rgba(99,102,241,.12)!important}
+.aura-theme-grey .tab-btn:not(.active){color:#64748b!important}
+.aura-theme-grey .tab-btn:not(.active):hover{color:#0f172a!important}
+.aura-theme-grey main .prose,.aura-theme-grey main .prose p,.aura-theme-grey main .prose li{color:#334155!important}
+.aura-theme-grey main .prose strong{color:#0f172a!important}
+` : ''}
 </style>
 </head>
-<body class="bg-gray-50 text-slate-900 min-h-screen font-sans">
+<body class="${grey ? 'bg-slate-100 text-slate-800' : 'bg-gray-950 text-gray-200'} min-h-screen font-sans">
 
 <!-- ═══ HEADER ═══ -->
-<header class="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
+<header class="${grey ? 'bg-gradient-to-r from-indigo-600 to-indigo-900 border-b border-indigo-800' : 'bg-gray-900 border-b border-gray-800'} sticky top-0 z-40">
 <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
   <div class="flex items-center gap-3">
-    <div class="w-9 h-9 rounded-lg bg-aura-600 flex items-center justify-center font-bold text-white text-[10px] tracking-tight">SAI</div>
+    <div class="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center font-bold text-white text-[10px] tracking-tight">SAI</div>
     <div>
       <h1 class="text-lg font-bold text-white leading-tight">${e(d.testName)}</h1>
-      <p class="text-xs text-gray-400">${e(d.featureName)} · v${e(d.reportVersion)}</p>
+      <p class="text-xs text-white/70">${e(d.featureName)} · v${e(d.reportVersion)}</p>
     </div>
   </div>
   <div class="flex items-center gap-4">
-    <span class="px-3 py-1 rounded-full text-xs font-bold ${d.status==='PASSED'?'bg-emerald-900/50 text-emerald-300 border border-emerald-700':'bg-red-900/50 text-red-300 border border-red-700'}">${d.status}</span>
-    <select id="lang-select" onchange="switchLang(this.value)" class="bg-gray-800 border border-gray-700 text-gray-300 text-xs rounded-lg px-2 py-1.5">
+    <span class="px-3 py-1 rounded-full text-xs font-bold ${d.status==='PASSED'?'bg-emerald-500/20 text-emerald-100 border border-emerald-400/50':'bg-red-500/20 text-red-100 border border-red-400/50'}">${d.status}</span>
+    <select id="lang-select" onchange="switchLang(this.value)" class="${grey ? 'bg-white/10 border border-white/20 text-white' : 'bg-gray-800 border border-gray-700 text-gray-300'} text-xs rounded-lg px-2 py-1.5">
       <option value="es">🇪🇸 Español</option><option value="en">🇺🇸 English</option><option value="pt">🇧🇷 Português</option>
     </select>
   </div>
@@ -83,7 +88,7 @@ body{background:#f8fafc!important;color:#0f172a!important}
 </header>
 
 <!-- ═══ TABS ═══ -->
-<nav class="bg-gray-900/50 border-b border-gray-800 overflow-x-auto">
+<nav class="${grey ? 'bg-slate-200/60 border-b border-slate-300' : 'bg-gray-900/50 border-b border-gray-800'} overflow-x-auto">
 <div class="max-w-7xl mx-auto px-4 flex gap-1">
   ${tb('executive','bi-file-earmark-text','tabExecutive','Resumen Ejecutivo',true)}
   ${tb('overall','bi-graph-up','tabOverall','Resultados Generales')}
@@ -313,8 +318,8 @@ body{background:#f8fafc!important;color:#0f172a!important}
 </main>
 
 <!-- ═══ FOOTER ═══ -->
-<footer class="border-t border-gray-800 mt-8 py-6 text-center text-xs text-gray-500">
-  <p class="font-medium text-gray-400" data-i18n="footerMadeBy">Hecho por Applied AI Team</p>
+<footer class="${grey ? 'border-t border-slate-300 bg-slate-200/40' : 'border-t border-gray-800'} mt-8 py-6 text-center text-xs ${grey ? 'text-slate-600' : 'text-gray-500'}">
+  <p class="font-medium ${grey ? 'text-slate-700' : 'text-gray-400'}" data-i18n="footerMadeBy">Hecho por Applied AI Team</p>
   <p class="mt-1"><span data-i18n="generatedAt">Generado</span> ${new Date(d.endTime).toLocaleString('es-ES')} · v${e(d.reportVersion)}</p>
 </footer>
 

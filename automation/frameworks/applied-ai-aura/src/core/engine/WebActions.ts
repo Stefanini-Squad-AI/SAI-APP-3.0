@@ -10,7 +10,7 @@
  *  - Rich interactions with adaptive timeouts
  *  - IntentBuilder delegation for semantic resolution
  */
-import type { Page, Locator } from 'playwright';
+import type { Locator, Page } from 'playwright';
 import { IntentBuilder } from '../intent/IntentBuilder';
 import { IntentProxy } from '../intent/IntentProxy';
 import type { IntentResult } from '../../types/index';
@@ -66,10 +66,11 @@ export class WebActions {
     options: WebActionsOptions = {},
   ) {
     this.intentBuilder = intentBuilder ?? IntentBuilder.for(page);
+    const highlightDefault = process.env['AURA_HIGHLIGHT_ON_ACTION'] !== 'false';
     this.opts = {
       navigationBuffer:  options.navigationBuffer  ?? BUFFER_NAVIGATION,
       actionBuffer:      options.actionBuffer       ?? BUFFER_ACTION,
-      highlightOnAction: options.highlightOnAction  ?? true,
+      highlightOnAction: options.highlightOnAction  ?? highlightDefault,
       highlightColor:    options.highlightColor     ?? '#6366f1',
     };
 
@@ -83,6 +84,14 @@ export class WebActions {
    */
   setBeforeClickHook(hook: (page: Page) => Promise<void>): void {
     this.beforeClickHook = hook;
+  }
+
+  /**
+   * Resalta un locator de Playwright antes de un click manual (p. ej. steps con getByRole).
+   * Misma animación que IntentProxy en acciones semánticas — visible en vídeo y capturas.
+   */
+  async highlightLocator(locator: Locator, action: string): Promise<void> {
+    await this.highlightWithLocator(locator.first(), action);
   }
 
   // ─── Navigation ─────────────────────────────────────────────────────────────

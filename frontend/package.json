@@ -11,7 +11,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:report": "node generate-test-report.cjs"
+    "test:report": "node generate-test-report.cjs",
+    "test:report:with-coverage": "npm run test:coverage && node generate-test-report.cjs"
   },
   "dependencies": {
     "axios": "^1.13.5",

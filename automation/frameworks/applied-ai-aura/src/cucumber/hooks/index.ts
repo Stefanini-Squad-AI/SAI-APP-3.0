@@ -3,11 +3,16 @@
  * Lifecycle hooks that manage browser setup/teardown, step-level data
  * collection, screenshot capture, and AURA report generation.
  */
+import * as path from 'path';
 import { Before, After, BeforeStep, AfterStep, Status, setDefaultTimeout } from '@cucumber/cucumber';
 import type { GherkinDocument, PickleStep } from '@cucumber/messages';
 import type { AuraWorld } from '../world/AuraWorld';
+import { allocateVersionedRunDirectory } from '../../core/reporting/reportRunDirectory';
 
 setDefaultTimeout(120_000);
+
+/** Primera ejecución del worker: reserva reports/<fecha>/<suite>/vN/ si el runner no lo fijó (p. ej. cucumber-js directo). */
+let firstScenarioOfWorker = true;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,6 +45,19 @@ function toCoreStatus(cucumberStatus: typeof Status[keyof typeof Status]): StepS
 // ─── Scenario Lifecycle ───────────────────────────────────────────────────────
 
 Before(async function (this: AuraWorld, { pickle, gherkinDocument }) {
+  if (firstScenarioOfWorker) {
+    firstScenarioOfWorker = false;
+    if (!process.env['AURA_RUN_REPORT_DIR']?.trim()) {
+      const uri = gherkinDocument.uri ?? '';
+      const fromFile = uri ? path.basename(uri, path.extname(uri)) : '';
+      const suite = process.env['AURA_SUITE_FOLDER']?.trim() || fromFile || 'Aura';
+      const runDir = allocateVersionedRunDirectory('reports', suite);
+      process.env['AURA_RUN_REPORT_DIR'] = runDir;
+      process.env['AURA_SUITE_FOLDER'] = suite;
+      console.info(`[AURA/Report] Carpeta de ejecución: ${runDir}`);
+    }
+  }
+
   const featureName = gherkinDocument.feature?.name ?? 'Unknown Feature';
   const tags = (pickle.tags ?? []).map(t => t.name ?? '');
   await this.init(pickle.name, featureName, tags);
@@ -62,7 +80,9 @@ After(async function (this: AuraWorld, { result }) {
 
   try {
     const htmlPath = await this.report.generateReport(videoPath);
-    console.info(`[AURA/Report] ✓ Report → ${htmlPath}`);
+    if (htmlPath) {
+      console.info(`[AURA/Report] ✓ Report → ${htmlPath}`);
+    }
   } catch (err) {
     console.error('[AURA/Report] Report generation failed:', err);
   }
@@ -92,3 +112,4 @@ AfterStep(async function (this: AuraWorld, { pickleStep, result, gherkinDocument
 
   await this.report.endStep(keyword, pickleStep.text, status, this.page, error);
 });
+

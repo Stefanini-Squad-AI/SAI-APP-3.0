@@ -14,6 +14,8 @@ import type {
 } from '../../types/index';
 import { ChangelogRegistry } from '../changelog/ChangelogRegistry';
 import { HTMLDashboard } from './HTMLDashboard';
+import { parseReportThemeEnv } from './ReportTheme';
+import { buildFeatureSuiteStats } from './reportFeatureStats';
 
 // ─── Cucumber JSON Shape (subset we actually use) ─────────────────────────────
 
@@ -43,7 +45,7 @@ export class ReportEngine {
     private readonly inputPath: string,
     private readonly outputDir: string,
     private readonly reportTitle: string = 'SAI Test Report',
-    private readonly theme: 'dark' | 'light' = 'dark',
+    private readonly theme: 'dark' | 'grey' = 'dark',
   ) {}
 
   async generate(): Promise<ReportSummary> {
@@ -148,10 +150,12 @@ export class ReportEngine {
     const pending = scenarios.filter((s) => s.status === 'pending').length;
     const total = scenarios.length;
     const durationMs = scenarios.reduce((sum, s) => sum + s.durationMs, 0);
+    const { totalFeatures, featureStats } = buildFeatureSuiteStats(scenarios);
 
     return {
       title: this.reportTitle,
       generatedAt: new Date().toISOString(),
+      totalFeatures,
       totalScenarios: total,
       passed,
       failed,
@@ -160,6 +164,7 @@ export class ReportEngine {
       durationMs,
       passRate: total > 0 ? Math.round((passed / total) * 100) : 0,
       scenarios,
+      featureStats,
       changelog: ChangelogRegistry.getInstance().getAll(),
     };
   }
@@ -193,7 +198,7 @@ if (require.main === module) {
   const inputPath = process.env['AURA_REPORT_INPUT'] ?? 'reports/cucumber-report.json';
   const outputDir = process.env['AURA_REPORT_OUTPUT'] ?? 'reports';
   const title = process.env['AURA_REPORT_TITLE'] ?? 'SAI Test Report';
-  const theme = (process.env['AURA_REPORT_THEME'] ?? 'dark') as 'dark' | 'light';
+  const theme = parseReportThemeEnv(process.env['AURA_REPORT_THEME']);
 
   new ReportEngine(inputPath, outputDir, title, theme)
     .generate()

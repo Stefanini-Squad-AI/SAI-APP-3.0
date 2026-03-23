@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ╔══════════════════════════════════════════════════════════════════╗
  * ║                                                                  ║
  * ║   ⚡ AURA — Autonomous Understanding & Reasoning Automator       ║
@@ -86,6 +86,7 @@ export type {
   StepResult,
   ScenarioResult,
   ReportSummary,
+  FeatureSuiteStat,
   Selector,
   IntentText,
   StepId,
