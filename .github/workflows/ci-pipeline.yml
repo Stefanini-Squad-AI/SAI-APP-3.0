@@ -263,15 +263,7 @@ jobs:
           fi
 
           # Check if Demo Gate already exists
-          GATE_ID=$(python3 -c "
-import json
-with open('/tmp/sonar-gates.json') as f:
-    data = json.load(f)
-for gate in data.get('qualitygates', []):
-    if gate.get('name') == 'Demo Gate':
-        print(str(gate.get('id', '')))
-        break
-" 2>/dev/null || echo "")
+          GATE_ID=$(python3 -c "import json; gates=json.load(open('/tmp/sonar-gates.json')).get('qualitygates',[]); matches=[str(g.get('id','')) for g in gates if g.get('name')=='Demo Gate']; print(matches[0] if matches else '')" 2>/dev/null || echo "")
 
           # Create it if it doesn't exist (no conditions = always passes)
           if [ -z "$GATE_ID" ]; then
@@ -281,12 +273,7 @@ for gate in data.get('qualitygates', []):
               "${SONAR_HOST_URL}/api/qualitygates/create?name=Demo+Gate" || echo "000")
 
             if [ "$CREATE_HTTP" = "200" ] || [ "$CREATE_HTTP" = "201" ]; then
-              GATE_ID=$(python3 -c "
-import json
-with open('/tmp/sonar-create-gate.json') as f:
-    data = json.load(f)
-print(str(data.get('id', '')))
-" 2>/dev/null || echo "")
+              GATE_ID=$(python3 -c "import json; print(str(json.load(open('/tmp/sonar-create-gate.json')).get('id','')))" 2>/dev/null || echo "")
               echo "::notice::Created Demo Gate with ID: $GATE_ID"
             else
               echo "::warning::Could not create Demo Gate (HTTP $CREATE_HTTP). Token may lack Administer Quality Gates permission."
