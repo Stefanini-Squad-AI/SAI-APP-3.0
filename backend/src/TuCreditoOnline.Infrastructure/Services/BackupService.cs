@@ -34,7 +34,7 @@ public class BackupService
 
         try
         {
-            _logger.LogInformation("Starting MongoDB backup...");
+            _logger.LogInformation("Starting MongoDB backup to {BackupDir}", backupDir);
 
             // Create backup directory
             if (Directory.Exists(backupDir))
@@ -50,9 +50,6 @@ public class BackupService
             // Build mongodump command
             var mongodumpArgs = $"--uri=\"{connectionString}\" --db={databaseName} --out=\"{backupDir}\"";
 
-            _logger.LogInformation("Running mongodump with arguments: {Args}", mongodumpArgs);
-
-            
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = "mongodump",
@@ -70,7 +67,6 @@ public class BackupService
                     return Result.Failure<string>("Failed to start mongodump process");
                 }
 
-                var output = await process.StandardOutput.ReadToEndAsync();
                 var error = await process.StandardError.ReadToEndAsync();
 
                 await process.WaitForExitAsync();
@@ -80,8 +76,6 @@ public class BackupService
                     _logger.LogError("mongodump error: {Error}", error);
                     return Result.Failure<string>($"mongodump execution failed: {error}");
                 }
-
-                _logger.LogInformation("mongodump completed successfully");
             }
 
             // Verify backup files were created
@@ -89,9 +83,6 @@ public class BackupService
             {
                 return Result.Failure<string>("No backup files were generated");
             }
-
-            // Compress into ZIP archive
-            _logger.LogInformation("Compressing backup to ZIP...");
 
             if (File.Exists(zipFilePath))
             {

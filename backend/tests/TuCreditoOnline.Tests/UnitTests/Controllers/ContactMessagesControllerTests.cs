@@ -42,6 +42,16 @@ public class ContactMessagesControllerTests
     // ── Create ────────────────────────────────────────────────────────────────
 
     [Fact]
+    public async Task Create_WhenModelStateInvalid_ShouldReturnBadRequest()
+    {
+        _controller.ModelState.AddModelError("Email", "Email is required");
+
+        var result = await _controller.Create(new CreateContactMessageDto());
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
     public async Task Create_WhenSuccess_ShouldReturnOk()
     {
         var dto = new CreateContactMessageDto { Name = "U", Email = "u@a.com", Subject = "S", Message = "M" };
@@ -159,6 +169,16 @@ public class ContactMessagesControllerTests
     }
 
     // ── UpdateStatus ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task UpdateStatus_WhenModelStateInvalid_ShouldReturnBadRequest()
+    {
+        _controller.ModelState.AddModelError("Status", "Status is required");
+
+        var result = await _controller.UpdateStatus("m1", new UpdateContactMessageStatusDto());
+
+        result.Should().BeOfType<BadRequestObjectResult>();
+    }
 
     [Fact]
     public async Task UpdateStatus_WhenSuccess_ShouldReturnOk()

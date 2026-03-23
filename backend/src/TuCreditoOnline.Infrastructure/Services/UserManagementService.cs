@@ -7,6 +7,8 @@ namespace TuCreditoOnline.Infrastructure.Services;
 
 public class UserManagementService
 {
+    private const string UserNotFound = "User not found";
+
     private readonly UserRepository _userRepository;
 
     public UserManagementService(UserRepository userRepository)
@@ -67,7 +69,7 @@ public class UserManagementService
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
-                return Result.Failure<UserResponseDto>("User not found");
+                return Result.Failure<UserResponseDto>(UserNotFound);
 
             var response = new UserResponseDto
             {
@@ -139,7 +141,7 @@ public class UserManagementService
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
-                return Result.Failure<UserResponseDto>("User not found");
+                return Result.Failure<UserResponseDto>(UserNotFound);
 
             var validRoles = new[] { "Admin", "User", "Analista" };
             if (!validRoles.Contains(dto.Role))
@@ -177,7 +179,7 @@ public class UserManagementService
         {
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null)
-                return Result.Failure<bool>("User not found");
+                return Result.Failure<bool>(UserNotFound);
 
             await _userRepository.DeleteAsync(id);
             return Result.Success(true);
@@ -194,7 +196,7 @@ public class UserManagementService
         {
             var user = await _userRepository.GetByIdAsync(dto.UserId);
             if (user == null)
-                return Result.Failure<bool>("User not found");
+                return Result.Failure<bool>(UserNotFound);
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
             user.UpdatedAt = DateTime.UtcNow;

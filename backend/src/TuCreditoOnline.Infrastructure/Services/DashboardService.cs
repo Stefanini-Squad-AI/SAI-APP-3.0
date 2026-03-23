@@ -23,7 +23,7 @@ public class DashboardService
             var allUsers = await _userRepository.GetAllAsync();
 
             var now = DateTime.UtcNow;
-            var firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+            var firstDayOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
             var stats = new DashboardStatsDto
             {
@@ -88,7 +88,7 @@ public class DashboardService
         for (int i = monthsBack - 1; i >= 0; i--)
         {
             var targetMonth = now.AddMonths(-i);
-            var monthStart = new DateTime(targetMonth.Year, targetMonth.Month, 1);
+            var monthStart = new DateTime(targetMonth.Year, targetMonth.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             var monthEnd = monthStart.AddMonths(1);
 
             var monthRequests = requests.Where(r => r.CreatedAt >= monthStart && r.CreatedAt < monthEnd).ToList();
