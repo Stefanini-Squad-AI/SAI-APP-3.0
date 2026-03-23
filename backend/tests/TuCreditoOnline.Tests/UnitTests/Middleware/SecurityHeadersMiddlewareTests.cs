@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
 using TuCreditoOnline.API.Middleware;
 
 namespace TuCreditoOnline.Tests.UnitTests.Middleware;
@@ -34,7 +35,7 @@ public class SecurityHeadersMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        context.Response.Headers["X-Frame-Options"].ToString().Should().Be("DENY");
+        context.Response.Headers[HeaderNames.XFrameOptions].ToString().Should().Be("DENY");
     }
 
     [Fact]
@@ -46,7 +47,7 @@ public class SecurityHeadersMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        context.Response.Headers["X-Content-Type-Options"].ToString().Should().Be("nosniff");
+        context.Response.Headers[HeaderNames.XContentTypeOptions].ToString().Should().Be("nosniff");
     }
 
     [Fact]
@@ -58,7 +59,7 @@ public class SecurityHeadersMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        context.Response.Headers["X-XSS-Protection"].ToString().Should().Be("1; mode=block");
+        context.Response.Headers[HeaderNames.XXSSProtection].ToString().Should().Be("1; mode=block");
     }
 
     [Fact]
@@ -70,13 +71,13 @@ public class SecurityHeadersMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        context.Response.Headers.Should().ContainKey("X-Frame-Options");
-        context.Response.Headers.Should().ContainKey("X-Content-Type-Options");
-        context.Response.Headers.Should().ContainKey("X-XSS-Protection");
+        context.Response.Headers.Should().ContainKey(HeaderNames.XFrameOptions);
+        context.Response.Headers.Should().ContainKey(HeaderNames.XContentTypeOptions);
+        context.Response.Headers.Should().ContainKey(HeaderNames.XXSSProtection);
         context.Response.Headers.Should().ContainKey("Referrer-Policy");
-        context.Response.Headers.Should().ContainKey("Content-Security-Policy");
+        context.Response.Headers.Should().ContainKey(HeaderNames.ContentSecurityPolicy);
         context.Response.Headers.Should().ContainKey("Permissions-Policy");
-        context.Response.Headers.Should().ContainKey("Strict-Transport-Security");
+        context.Response.Headers.Should().ContainKey(HeaderNames.StrictTransportSecurity);
     }
 
     [Fact]
@@ -88,7 +89,7 @@ public class SecurityHeadersMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        context.Response.Headers["Strict-Transport-Security"].ToString()
+        context.Response.Headers[HeaderNames.StrictTransportSecurity].ToString()
                .Should().Contain("max-age=31536000");
     }
 }

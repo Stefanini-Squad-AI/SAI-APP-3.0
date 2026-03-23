@@ -1,3 +1,5 @@
+using Microsoft.Net.Http.Headers;
+
 namespace TuCreditoOnline.API.Middleware;
 
 public class SecurityHeadersMiddleware
@@ -12,23 +14,23 @@ public class SecurityHeadersMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         // Remove server information
-        context.Response.Headers.Remove("Server");
-        context.Response.Headers.Remove("X-Powered-By");
+        context.Response.Headers.Remove(HeaderNames.Server);
+        context.Response.Headers.Remove(HeaderNames.XPoweredBy);
         
         // Prevent clickjacking
-        context.Response.Headers.Append("X-Frame-Options", "DENY");
-        
+        context.Response.Headers.Append(HeaderNames.XFrameOptions, "DENY");
+
         // Prevent MIME type sniffing
-        context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
-        
+        context.Response.Headers.Append(HeaderNames.XContentTypeOptions, "nosniff");
+
         // Enable XSS protection
-        context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+        context.Response.Headers.Append(HeaderNames.XXSSProtection, "1; mode=block");
         
         // Referrer policy
         context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
         
         // Content Security Policy
-        context.Response.Headers.Append("Content-Security-Policy", 
+        context.Response.Headers.Append(HeaderNames.ContentSecurityPolicy, 
             "default-src 'self'; " +
             "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
             "style-src 'self' 'unsafe-inline'; " +
@@ -46,7 +48,7 @@ public class SecurityHeadersMiddleware
             "usb=()");
         
         // Strict Transport Security (HSTS)
-        context.Response.Headers.Append("Strict-Transport-Security",
+        context.Response.Headers.Append(HeaderNames.StrictTransportSecurity,
             "max-age=31536000; includeSubDomains");
 
         await _next(context);

@@ -36,7 +36,7 @@ public class DtoValidatorTests
     [Fact]
     public void ValidateEmail_WithTooLongEmail_ShouldReturnFailure()
     {
-        var longEmail = new string('a', 92) + "@x.com"; // > 100 chars
+        var longEmail = new string('a', 96) + "@x.com"; // 101 chars (> MaxEmailLength 100)
         var result = DtoValidator.ValidateEmail(longEmail);
 
         result.IsSuccess.Should().BeFalse();

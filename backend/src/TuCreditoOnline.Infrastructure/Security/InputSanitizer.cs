@@ -1,5 +1,5 @@
+using System.Net;
 using System.Text.RegularExpressions;
-using Ganss.Xss;
 
 namespace TuCreditoOnline.Infrastructure.Security;
 
@@ -13,15 +13,15 @@ public static partial class InputSanitizer
 
     [GeneratedRegex(@"[^\d]")]
     private static partial Regex NonDigitRegex();
-    private static readonly HtmlSanitizer _htmlSanitizer = new HtmlSanitizer();
-    
-    static InputSanitizer()
-    {
-        // Configure HTML sanitizer to be very restrictive
-        _htmlSanitizer.AllowedTags.Clear();
-        _htmlSanitizer.AllowedAttributes.Clear();
-        _htmlSanitizer.AllowedSchemes.Clear();
-    }
+
+    [GeneratedRegex(@"<script\b[^>]*>[\s\S]*?</script>", RegexOptions.IgnoreCase)]
+    private static partial Regex ScriptBlockRegex();
+
+    [GeneratedRegex(@"<style\b[^>]*>[\s\S]*?</style>", RegexOptions.IgnoreCase)]
+    private static partial Regex StyleBlockRegex();
+
+    [GeneratedRegex(@"<[^>]+>")]
+    private static partial Regex HtmlTagRegex();
 
     /// <summary>
     /// Sanitizes HTML content by removing all HTML tags and potentially malicious content
@@ -31,7 +31,13 @@ public static partial class InputSanitizer
         if (string.IsNullOrWhiteSpace(input))
             return string.Empty;
 
-        return _htmlSanitizer.Sanitize(input);
+        var s = input.Trim();
+        s = ScriptBlockRegex().Replace(s, string.Empty);
+        s = StyleBlockRegex().Replace(s, string.Empty);
+        s = HtmlTagRegex().Replace(s, " ");
+        s = WebUtility.HtmlDecode(s);
+        s = Regex.Replace(s, @"\s+", " ").Trim();
+        return s;
     }
 
     /// <summary>
@@ -44,10 +50,10 @@ public static partial class InputSanitizer
 
         // Remove HTML tags
         var sanitized = SanitizeHtml(input);
-        
+
         // Remove control characters except newline and tab
         sanitized = ControlCharsRegex().Replace(sanitized, string.Empty);
-        
+
         // Trim whitespace
         return sanitized.Trim();
     }
@@ -61,7 +67,7 @@ public static partial class InputSanitizer
             return string.Empty;
 
         var sanitized = SanitizeString(email).ToLowerInvariant();
-        
+
         // Basic email validation
         if (!EmailFormatRegex().IsMatch(sanitized))
             return string.Empty;
@@ -91,7 +97,7 @@ public static partial class InputSanitizer
 
         // Remove all non-digit characters
         var digitsOnly = NonDigitRegex().Replace(phone, string.Empty);
-        
+
         // Validate length (10 digits for Mexican phone numbers)
         if (digitsOnly.Length < 10 || digitsOnly.Length > 15)
             return string.Empty;
