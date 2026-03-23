@@ -5,6 +5,8 @@ namespace TuCreditoOnline.Infrastructure.Security;
 
 public static partial class InputSanitizer
 {
+    /// <summary>Upper bound for dynamic regex evaluation to mitigate ReDoS (Sonar S6444).</summary>
+    private static readonly TimeSpan AlphanumericRegexMatchTimeout = TimeSpan.FromMilliseconds(250);
     [GeneratedRegex(@"[\x00-\x08\x0B\x0C\x0E-\x1F]")]
     private static partial Regex ControlCharsRegex();
 
@@ -87,7 +89,19 @@ public static partial class InputSanitizer
             return string.Empty;
 
         var pattern = $@"[^a-zA-Z0-9{Regex.Escape(allowedSpecialChars)}]";
-        return Regex.Replace(input.Trim(), pattern, string.Empty);
+        try
+        {
+            return Regex.Replace(
+                input.Trim(),
+                pattern,
+                string.Empty,
+                RegexOptions.None,
+                AlphanumericRegexMatchTimeout);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return string.Empty;
+        }
     }
 
     /// <summary>
