@@ -1305,6 +1305,23 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
+      - name: Wait for preview to be reachable
+        run: |
+          URL="${{ env.PREVIEW_URL }}"
+          MAX_WAIT=60
+          ELAPSED=0
+          echo "Waiting for $URL to respond..."
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 10 "$URL" || echo "000")
+            if [ "$STATUS" = "200" ] || [ "$STATUS" = "301" ] || [ "$STATUS" = "302" ]; then
+              echo "Preview is up (HTTP $STATUS) after ${ELAPSED}s"
+              exit 0
+            fi
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+          done
+          echo "Preview did not respond within ${MAX_WAIT}s — link will be posted anyway"
+
       - name: Actualizar panel de resultados
         if: always()
         uses: actions/github-script@v8
