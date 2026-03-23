@@ -25,7 +25,7 @@ public class BackupService
         }
     }
 
-    public async Task<Result<string>> GenerateBackupAsync()
+    public virtual async Task<Result<string>> GenerateBackupAsync()
     {
         var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
         var backupName = $"backup_{timestamp}";
@@ -132,7 +132,7 @@ public class BackupService
         }
     }
 
-    public void CleanupOldBackups(int daysToKeep = 7)
+    public virtual void CleanupOldBackups(int daysToKeep = 7)
     {
         try
         {

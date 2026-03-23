@@ -14,7 +14,7 @@ public class ServiceManagementService
         _serviceRepository = serviceRepository;
     }
 
-    public async Task<Result<List<ServiceResponseDto>>> GetAllAsync(bool? isActive = null)
+    public virtual async Task<Result<List<ServiceResponseDto>>> GetAllAsync(bool? isActive = null)
     {
         try
         {
@@ -44,7 +44,7 @@ public class ServiceManagementService
         }
     }
 
-    public async Task<Result<ServiceResponseDto>> GetByIdAsync(string id)
+    public virtual async Task<Result<ServiceResponseDto>> GetByIdAsync(string id)
     {
         try
         {
@@ -73,7 +73,7 @@ public class ServiceManagementService
         }
     }
 
-    public async Task<Result<ServiceResponseDto>> CreateAsync(CreateServiceDto dto)
+    public virtual async Task<Result<ServiceResponseDto>> CreateAsync(CreateServiceDto dto)
     {
         try
         {
@@ -109,7 +109,7 @@ public class ServiceManagementService
         }
     }
 
-    public async Task<Result<ServiceResponseDto>> UpdateAsync(string id, UpdateServiceDto dto)
+    public virtual async Task<Result<ServiceResponseDto>> UpdateAsync(string id, UpdateServiceDto dto)
     {
         try
         {
@@ -147,11 +147,11 @@ public class ServiceManagementService
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(string id)
-    {
-        try
+    public virtual async Task<Result<bool>> DeleteAsync(string id)
         {
-            var service = await _serviceRepository.GetByIdAsync(id);
+            try
+            {
+                var service = await _serviceRepository.GetByIdAsync(id);
             if (service == null)
             {
                 return Result.Failure<bool>("Service not found");

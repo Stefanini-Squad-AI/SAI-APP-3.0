@@ -22,7 +22,7 @@ public class ContactMessageService
     /// <summary>
     /// Creates a new contact message
     /// </summary>
-    public async Task<Result<ContactMessageDto>> CreateAsync(CreateContactMessageDto dto)
+    public virtual async Task<Result<ContactMessageDto>> CreateAsync(CreateContactMessageDto dto)
     {
         try
         {
@@ -53,7 +53,7 @@ public class ContactMessageService
     /// <summary>
     /// Returns all messages, optionally filtered by status
     /// </summary>
-    public async Task<Result<List<ContactMessageDto>>> GetAllAsync(int? status = null)
+    public virtual async Task<Result<List<ContactMessageDto>>> GetAllAsync(int? status = null)
     {
         try
         {
@@ -87,7 +87,7 @@ public class ContactMessageService
     /// <summary>
     /// Returns a single message by ID
     /// </summary>
-    public async Task<Result<ContactMessageDto>> GetByIdAsync(string id)
+    public virtual async Task<Result<ContactMessageDto>> GetByIdAsync(string id)
     {
         try
         {
@@ -107,7 +107,7 @@ public class ContactMessageService
     /// <summary>
     /// Updates the status of a message
     /// </summary>
-    public async Task<Result<ContactMessageDto>> UpdateStatusAsync(
+    public virtual async Task<Result<ContactMessageDto>> UpdateStatusAsync(
         string id,
         UpdateContactMessageStatusDto dto,
         string adminEmail)
@@ -168,7 +168,7 @@ public class ContactMessageService
     /// <summary>
     /// Returns pending messages (New or InProgress)
     /// </summary>
-    public async Task<Result<List<ContactMessageDto>>> GetPendingMessagesAsync()
+    public virtual async Task<Result<List<ContactMessageDto>>> GetPendingMessagesAsync()
     {
         try
         {
@@ -186,7 +186,7 @@ public class ContactMessageService
     /// <summary>
     /// Returns message statistics
     /// </summary>
-    public async Task<Result<ContactMessageStatsDto>> GetStatsAsync()
+    public virtual async Task<Result<ContactMessageStatsDto>> GetStatsAsync()
     {
         try
         {
@@ -227,7 +227,7 @@ public class ContactMessageService
     /// <summary>
     /// Soft-deletes a message by ID
     /// </summary>
-    public async Task<Result<bool>> DeleteAsync(string id)
+    public virtual async Task<Result<bool>> DeleteAsync(string id)
     {
         try
         {

@@ -14,7 +14,7 @@ public class UserManagementService
         _userRepository = userRepository;
     }
 
-    public async Task<Result<UserListDto>> GetAllUsersAsync(int page = 1, int pageSize = 10, string? searchTerm = null)
+    public virtual async Task<Result<UserListDto>> GetAllUsersAsync(int page = 1, int pageSize = 10, string? searchTerm = null)
     {
         try
         {
@@ -61,7 +61,7 @@ public class UserManagementService
         }
     }
 
-    public async Task<Result<UserResponseDto>> GetUserByIdAsync(string id)
+    public virtual async Task<Result<UserResponseDto>> GetUserByIdAsync(string id)
     {
         try
         {
@@ -88,7 +88,7 @@ public class UserManagementService
         }
     }
 
-    public async Task<Result<UserResponseDto>> CreateUserAsync(CreateUserDto dto)
+    public virtual async Task<Result<UserResponseDto>> CreateUserAsync(CreateUserDto dto)
     {
         try
         {
@@ -133,7 +133,7 @@ public class UserManagementService
         }
     }
 
-    public async Task<Result<UserResponseDto>> UpdateUserAsync(string id, UpdateUserDto dto)
+    public virtual async Task<Result<UserResponseDto>> UpdateUserAsync(string id, UpdateUserDto dto)
     {
         try
         {
@@ -171,7 +171,7 @@ public class UserManagementService
         }
     }
 
-    public async Task<Result<bool>> DeleteUserAsync(string id)
+    public virtual async Task<Result<bool>> DeleteUserAsync(string id)
     {
         try
         {
@@ -188,7 +188,7 @@ public class UserManagementService
         }
     }
 
-    public async Task<Result<bool>> ChangePasswordAsync(ChangePasswordDto dto)
+    public virtual async Task<Result<bool>> ChangePasswordAsync(ChangePasswordDto dto)
     {
         try
         {

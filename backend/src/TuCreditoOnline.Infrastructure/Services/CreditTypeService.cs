@@ -14,7 +14,7 @@ public class CreditTypeService
         _creditTypeRepository = creditTypeRepository;
     }
 
-    public async Task<Result<List<CreditTypeResponseDto>>> GetAllAsync(bool? isActive = null)
+    public virtual async Task<Result<List<CreditTypeResponseDto>>> GetAllAsync(bool? isActive = null)
     {
         try
         {
@@ -47,7 +47,7 @@ public class CreditTypeService
         }
     }
 
-    public async Task<Result<CreditTypeResponseDto>> GetByIdAsync(string id)
+    public virtual async Task<Result<CreditTypeResponseDto>> GetByIdAsync(string id)
     {
         try
         {
@@ -79,7 +79,7 @@ public class CreditTypeService
         }
     }
 
-    public async Task<Result<CreditTypeResponseDto>> CreateAsync(CreateCreditTypeDto dto)
+    public virtual async Task<Result<CreditTypeResponseDto>> CreateAsync(CreateCreditTypeDto dto)
     {
         try
         {
@@ -121,7 +121,7 @@ public class CreditTypeService
         }
     }
 
-    public async Task<Result<CreditTypeResponseDto>> UpdateAsync(string id, UpdateCreditTypeDto dto)
+    public virtual async Task<Result<CreditTypeResponseDto>> UpdateAsync(string id, UpdateCreditTypeDto dto)
     {
         try
         {
@@ -165,11 +165,11 @@ public class CreditTypeService
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(string id)
-    {
-        try
+    public virtual async Task<Result<bool>> DeleteAsync(string id)
         {
-            var creditType = await _creditTypeRepository.GetByIdAsync(id);
+            try
+            {
+                var creditType = await _creditTypeRepository.GetByIdAsync(id);
             if (creditType == null)
             {
                 return Result.Failure<bool>("Credit type not found");

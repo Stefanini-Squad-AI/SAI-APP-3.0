@@ -24,7 +24,7 @@ public class AuthService
         _configuration = configuration;
     }
 
-    public async Task<Result<LoginResponseDto>> LoginAsync(LoginRequestDto request)
+    public virtual async Task<Result<LoginResponseDto>> LoginAsync(LoginRequestDto request)
     {
         try
         {
@@ -78,7 +78,7 @@ public class AuthService
         }
     }
 
-    public async Task<Result<AuthResponseDto>> RegisterAsync(RegisterRequestDto request)
+    public virtual async Task<Result<AuthResponseDto>> RegisterAsync(RegisterRequestDto request)
     {
         try
         {

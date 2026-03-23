@@ -15,7 +15,7 @@ public class DashboardService
         _userRepository = userRepository;
     }
 
-    public async Task<Result<DashboardStatsDto>> GetDashboardStatsAsync()
+    public virtual async Task<Result<DashboardStatsDto>> GetDashboardStatsAsync()
     {
         try
         {
@@ -49,7 +49,7 @@ public class DashboardService
         }
     }
 
-    public async Task<Result<List<StatusDistributionDto>>> GetStatusDistributionAsync()
+    public virtual async Task<Result<List<StatusDistributionDto>>> GetStatusDistributionAsync()
     {
         try
         {

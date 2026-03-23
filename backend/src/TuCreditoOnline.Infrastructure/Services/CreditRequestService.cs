@@ -15,7 +15,7 @@ public class CreditRequestService
         _repository = repository;
     }
 
-    public async Task<Result<CreditRequestResponseDto>> CreateCreditRequestAsync(CreateCreditRequestDto dto)
+    public virtual async Task<Result<CreditRequestResponseDto>> CreateCreditRequestAsync(CreateCreditRequestDto dto)
     {
         try
         {
@@ -95,7 +95,7 @@ public class CreditRequestService
         }
     }
 
-    public async Task<Result<IEnumerable<CreditRequest>>> GetAllCreditRequestsAsync()
+    public virtual async Task<Result<IEnumerable<CreditRequest>>> GetAllCreditRequestsAsync()
     {
         try
         {
@@ -108,7 +108,7 @@ public class CreditRequestService
         }
     }
 
-    public async Task<Result<CreditRequest>> GetCreditRequestByIdAsync(string id)
+    public virtual async Task<Result<CreditRequest>> GetCreditRequestByIdAsync(string id)
     {
         try
         {
@@ -125,7 +125,7 @@ public class CreditRequestService
         }
     }
 
-    public async Task<Result<CreditRequest>> UpdateCreditRequestStatusAsync(string id, UpdateCreditRequestStatusDto dto)
+    public virtual async Task<Result<CreditRequest>> UpdateCreditRequestStatusAsync(string id, UpdateCreditRequestStatusDto dto)
     {
         try
         {
@@ -164,7 +164,7 @@ public class CreditRequestService
         }
     }
 
-    public async Task<Result<IEnumerable<CreditRequest>>> GetCreditRequestsByStatusAsync(string status)
+    public virtual async Task<Result<IEnumerable<CreditRequest>>> GetCreditRequestsByStatusAsync(string status)
     {
         try
         {
