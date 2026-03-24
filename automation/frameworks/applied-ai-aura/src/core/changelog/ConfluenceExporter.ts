@@ -5,8 +5,8 @@
  *
  * Naming: changelog-{YYYYMMDD}-v{version}.html
  */
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import type { ChangeEntry, ChangeKind } from '../../types/index';
 import { ChangelogRegistry } from './ChangelogRegistry';
 
@@ -160,7 +160,7 @@ ${this.renderScript(entries, stats)}
     _entries: readonly ChangeEntry[],
   ): string {
     const versionLinks = [...grouped.keys()].map((v) =>
-      `<a href="#v${v.replace(/\./g, '-')}" class="flex items-center justify-between py-1.5 px-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition text-xs">
+      `<a href="#v${v.replaceAll('.', '-')}" class="flex items-center justify-between py-1.5 px-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition text-xs">
         <span class="font-mono">v${v}</span>
         <span class="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500">${grouped.get(v)?.length}</span>
       </a>`,
@@ -291,7 +291,7 @@ ${this.renderScript(entries, stats)}
 
   private renderTimeline(grouped: Map<string, ChangeEntry[]>): string {
     const sections = [...grouped.entries()].map(([version, entries]) => {
-      const anchorId = `v${version.replace(/\./g, '-')}`;
+      const anchorId = `v${version.replaceAll('.', '-')}`;
       const cards = entries.map((e) => this.renderEntryCard(e)).join('');
 
       return `
@@ -402,11 +402,11 @@ document.querySelectorAll('.filter-btn:not(#filter-all)').forEach(b => b.classLi
   }
 
   private datePart(): string {
-    return new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    return new Date().toISOString().slice(0, 10).replaceAll('-', '');
   }
 
   private escape(s: string): string {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
   }
 }
 

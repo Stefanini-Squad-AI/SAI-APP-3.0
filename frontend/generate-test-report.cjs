@@ -387,6 +387,8 @@ Mention explicitly the gap between "tests ejecutados" and "código fuente sin cu
 }
 
 function parseSummaryJson(raw) {
+  if (raw == null || typeof raw !== 'string') return null;
+
   const tryParse = (str) => {
     try {
       const p = JSON.parse(str.trim());
@@ -395,12 +397,44 @@ function parseSummaryJson(raw) {
       const pt = typeof p.pt === 'string' ? p.pt.trim() : '';
       if (!en && !es && !pt) return null;
       return { en: en || es || pt, es: es || en || pt, pt: pt || en || es };
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   };
-  const direct = tryParse(raw);
-  if (direct) return direct;
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  return fenced?.[1] ? tryParse(fenced[1]) : null;
+
+  const s = raw.trim();
+  const candidates = [];
+  const push = (x) => {
+    const t = typeof x === 'string' ? x.trim() : '';
+    if (t && !candidates.includes(t)) candidates.push(t);
+  };
+
+  push(s);
+
+  // Models sometimes wrap JSON in Python-style """json ... """ instead of ```json ... ```
+  if (/^"""/.test(s)) {
+    let inner = s.replace(/^"""\s*(?:json\s*)?/i, '').trim();
+    if (inner.endsWith('"""')) inner = inner.slice(0, -3).trim();
+    push(inner);
+  }
+
+  // Markdown fence: pair opening ``` with the *last* closing ``` so a greedy inner ``` does not truncate JSON
+  const fenceOpen = s.match(/```(?:json)?\s*/i);
+  if (fenceOpen) {
+    const start = fenceOpen.index + fenceOpen[0].length;
+    const close = s.lastIndexOf('```');
+    if (close > start) push(s.slice(start, close).trim());
+  }
+
+  const b0 = s.indexOf('{');
+  const b1 = s.lastIndexOf('}');
+  if (b0 !== -1 && b1 > b0) push(s.slice(b0, b1 + 1));
+
+  for (const c of candidates) {
+    const parsed = tryParse(c);
+    if (parsed) return parsed;
+  }
+  return null;
 }
 
 // ─── Markdown to HTML (executive summary — headings ## / ###, lists) ─────────

@@ -169,7 +169,7 @@ export class WebActions {
     await locator.clear();
 
     for (const char of value) {
-      await locator.type(char, { delay: delayMs });
+      await locator.pressSequentially(char, { delay: delayMs });
     }
     await this.wait(BUFFER_MINI);
   }
@@ -252,11 +252,14 @@ export class WebActions {
 
   /** Page scroll: 'up' | 'down' | number of pixels. */
   async scrollPage(direction: 'up' | 'down' | number = 'down'): Promise<void> {
-    const pixels = direction === 'up'
-      ? -500
-      : direction === 'down'
-      ? 500
-      : direction;
+    let pixels: number;
+    if (direction === 'up') {
+      pixels = -500;
+    } else if (direction === 'down') {
+      pixels = 500;
+    } else {
+      pixels = direction;
+    }
 
     await this.page.evaluate((px: number) => {
       window.scrollBy({ top: px, behavior: 'smooth' });
@@ -302,15 +305,20 @@ export class WebActions {
     await this.intentBuilder.on(target).expect().toBeChecked();
   }
 
-  async expectUrlContains(text: string): Promise<void> {
-    const url = this.page.url();
-    console.info(`[AURA/WebActions] ◆ expectUrlContains("${text}") — current: "${url}"`);
-    if (!url.includes(text)) {
-      throw new Error(
-        `[AURA/WebActions] Expected URL to contain "${text}" but got "${url}"`,
-      );
+  async expectUrlContains(text: string, timeoutMs = 15000): Promise<void> {
+    console.info(`[AURA/WebActions] ◆ expectUrlContains("${text}") — current: "${this.page.url()}"`);
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (this.page.url().includes(text)) {
+        console.info(`[AURA/WebActions] ✓ URL contains "${text}"`);
+        return;
+      }
+      await this.page.waitForTimeout(250);
     }
-    console.info(`[AURA/WebActions] ✓ URL contains "${text}"`);
+    const finalUrl = this.page.url();
+    throw new Error(
+      `[AURA/WebActions] Expected URL to contain "${text}" but got "${finalUrl}"`,
+    );
   }
 
   async expectTitleContains(text: string): Promise<void> {
@@ -589,7 +597,7 @@ export class WebActions {
 
   /** Executes JavaScript directly in the page context. */
   async evaluate<T>(script: string): Promise<T> {
-    return this.page.evaluate(script) as Promise<T>;
+    return this.page.evaluate(script);
   }
 
   // ─── Private Helpers ─────────────────────────────────────────────────────────

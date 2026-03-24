@@ -39,6 +39,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
       - ConnectionStrings__MongoDB=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-admin123}@mongodb:27017/${MONGO_DATABASE:-tucreditoonline}?authSource=admin
+      - MongoDbSettings__ConnectionString=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-admin123}@mongodb:27017/${MONGO_DATABASE:-tucreditoonline}?authSource=admin
+      - MongoDbSettings__DatabaseName=${MONGO_DATABASE:-tucreditoonline}
       - JwtSettings__Secret=${JWT_SECRET:-TuCreditoOnline-SecretKey-32chars-minimum-security-local-dev}
       - JwtSettings__Issuer=TuCreditoOnline
       - JwtSettings__Audience=TuCreditoOnline.Client

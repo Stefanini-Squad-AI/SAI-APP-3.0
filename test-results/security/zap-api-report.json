@@ -1,13 +1,13 @@
 {
 	"@programName": "ZAP",
 	"@version": "2.17.0",
-	"@generated": "Thu, 19 Mar 2026 21:28:42",
-	"created": "2026-03-19T21:28:42.579258194Z",
+	"@generated": "Tue, 24 Mar 2026 20:19:29",
+	"created": "2026-03-24T20:19:29.479138594Z",
 	"insights":[
 		{
 			"level": "Low",
 			"reason": "Exceeded High",
-			"site": "http://host.docker.internal:5000",
+			"site": "http://tco-backend:8080",
 			"key": "insight.code.4xx",
 			"description": "Percentage of responses with status code 4xx",
 			"statistic": "95"
@@ -15,7 +15,7 @@
 		{
 			"level": "Info",
 			"reason": "Informational",
-			"site": "http://host.docker.internal:5000",
+			"site": "http://tco-backend:8080",
 			"key": "insight.code.2xx",
 			"description": "Percentage of responses with status code 2xx",
 			"statistic": "4"
@@ -23,7 +23,7 @@
 		{
 			"level": "Info",
 			"reason": "Informational",
-			"site": "http://host.docker.internal:5000",
+			"site": "http://tco-backend:8080",
 			"key": "insight.endpoint.ctype.application/json",
 			"description": "Percentage of endpoints with content type application/json",
 			"statistic": "15"
@@ -31,7 +31,7 @@
 		{
 			"level": "Info",
 			"reason": "Informational",
-			"site": "http://host.docker.internal:5000",
+			"site": "http://tco-backend:8080",
 			"key": "insight.endpoint.ctype.text/html",
 			"description": "Percentage of endpoints with content type text/html",
 			"statistic": "1"
@@ -39,7 +39,7 @@
 		{
 			"level": "Info",
 			"reason": "Informational",
-			"site": "http://host.docker.internal:5000",
+			"site": "http://tco-backend:8080",
 			"key": "insight.endpoint.method.DELETE",
 			"description": "Percentage of endpoints with method DELETE",
 			"statistic": "7"
@@ -47,7 +47,7 @@
 		{
 			"level": "Info",
 			"reason": "Informational",
-			"site": "http://host.docker.internal:5000",
+			"site": "http://tco-backend:8080",
 			"key": "insight.endpoint.method.GET",
 			"description": "Percentage of endpoints with method GET",
 			"statistic": "60"
@@ -55,7 +55,7 @@
 		{
 			"level": "Info",
 			"reason": "Informational",
-			"site": "http://host.docker.internal:5000",
+			"site": "http://tco-backend:8080",
 			"key": "insight.endpoint.method.PATCH",
 			"description": "Percentage of endpoints with method PATCH",
 			"statistic": "3"
@@ -63,7 +63,7 @@
 		{
 			"level": "Info",
 			"reason": "Informational",
-			"site": "http://host.docker.internal:5000",
+			"site": "http://tco-backend:8080",
 			"key": "insight.endpoint.method.POST",
 			"description": "Percentage of endpoints with method POST",
 			"statistic": "23"
@@ -71,7 +71,7 @@
 		{
 			"level": "Info",
 			"reason": "Informational",
-			"site": "http://host.docker.internal:5000",
+			"site": "http://tco-backend:8080",
 			"key": "insight.endpoint.method.PUT",
 			"description": "Percentage of endpoints with method PUT",
 			"statistic": "5"
@@ -79,7 +79,7 @@
 		{
 			"level": "Info",
 			"reason": "Informational",
-			"site": "http://host.docker.internal:5000",
+			"site": "http://tco-backend:8080",
 			"key": "insight.endpoint.total",
 			"description": "Count of total endpoints",
 			"statistic": "111"
@@ -87,9 +87,9 @@
 	],
 	"site":[ 
 		{
-			"@name": "http://host.docker.internal:5000",
-			"@host": "host.docker.internal",
-			"@port": "5000",
+			"@name": "http://tco-backend:8080",
+			"@host": "tco-backend",
+			"@port": "8080",
 			"@ssl": "false",
 			"alerts": [ 
 				{
@@ -103,9 +103,9 @@
 					"desc": "<p>Cross-Origin-Resource-Policy header is an opt-in header designed to counter side-channels attacks like Spectre. Resource should be specifically set as shareable amongst different origins.</p>",
 					"instances":[ 
 						{
-							"id": "60",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes?isActive=true",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes (isActive)",
+							"id": "856",
+							"uri": "http://tco-backend:8080/api/CreditTypes?isActive=true",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes (isActive)",
 							"method": "GET",
 							"param": "Cross-Origin-Resource-Policy",
 							"attack": "",
@@ -113,9 +113,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "61",
-							"uri": "http://host.docker.internal:5000/api/Health",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Health",
+							"id": "851",
+							"uri": "http://tco-backend:8080/api/Health",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Health",
 							"method": "GET",
 							"param": "Cross-Origin-Resource-Policy",
 							"attack": "",
@@ -123,9 +123,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "62",
-							"uri": "http://host.docker.internal:5000/api/Services?isActive=true",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services (isActive)",
+							"id": "848",
+							"uri": "http://tco-backend:8080/api/Services?isActive=true",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services (isActive)",
 							"method": "GET",
 							"param": "Cross-Origin-Resource-Policy",
 							"attack": "",
@@ -133,9 +133,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "69",
-							"uri": "http://host.docker.internal:5000/swagger/v1/swagger.json",
-							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/v1\/swagger.json",
+							"id": "859",
+							"uri": "http://tco-backend:8080/swagger/v1/swagger.json",
+							"nodeName": "http:\/\/tco-backend:8080\/swagger\/v1\/swagger.json",
 							"method": "GET",
 							"param": "Cross-Origin-Resource-Policy",
 							"attack": "",
@@ -143,9 +143,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "54",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages ()({name,email,subject,message})",
+							"id": "853",
+							"uri": "http://tco-backend:8080/api/ContactMessages",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages ()({name,email,subject,message})",
 							"method": "POST",
 							"param": "Cross-Origin-Resource-Policy",
 							"attack": "",
@@ -173,9 +173,9 @@
 					"desc": "<p>A Content-Type of text/html was returned by the server.</p><p>This is not one of the types expected to be returned by an API.</p><p>Raised by the 'Alert on Unexpected Content Types' script</p>",
 					"instances":[ 
 						{
-							"id": "7916",
-							"uri": "http://host.docker.internal:5000/swagger/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/",
+							"id": "7933",
+							"uri": "http://tco-backend:8080/swagger/",
+							"nodeName": "http:\/\/tco-backend:8080\/swagger\/",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -183,9 +183,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7915",
-							"uri": "http://host.docker.internal:5000/swagger/index.html",
-							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/index.html",
+							"id": "7932",
+							"uri": "http://tco-backend:8080/swagger/index.html",
+							"nodeName": "http:\/\/tco-backend:8080\/swagger\/index.html",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -213,9 +213,9 @@
 					"desc": "<p>The Anti-MIME-Sniffing header X-Content-Type-Options was not set to 'nosniff'. This allows older versions of Internet Explorer and Chrome to perform MIME-sniffing on the response body, potentially causing the response body to be interpreted and displayed as a content type other than the declared content type. Current (early 2014) and legacy versions of Firefox will use the declared content type (if one is set), rather than performing MIME-sniffing.</p>",
 					"instances":[ 
 						{
-							"id": "64",
-							"uri": "http://host.docker.internal:5000/swagger/v1/swagger.json",
-							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/v1\/swagger.json",
+							"id": "854",
+							"uri": "http://tco-backend:8080/swagger/v1/swagger.json",
+							"nodeName": "http:\/\/tco-backend:8080\/swagger\/v1\/swagger.json",
 							"method": "GET",
 							"param": "x-content-type-options",
 							"attack": "",
@@ -244,8 +244,8 @@
 					"instances":[ 
 						{
 							"id": "6",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id",
+							"uri": "http://tco-backend:8080/api/ContactMessages/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/id",
 							"method": "DELETE",
 							"param": "",
 							"attack": "",
@@ -253,9 +253,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7866",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id\/",
+							"id": "7881",
+							"uri": "http://tco-backend:8080/api/ContactMessages/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/id\/",
 							"method": "DELETE",
 							"param": "",
 							"attack": "",
@@ -264,8 +264,8 @@
 						},
 						{
 							"id": "20",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id",
+							"uri": "http://tco-backend:8080/api/CreditTypes/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes\/id",
 							"method": "DELETE",
 							"param": "",
 							"attack": "",
@@ -273,9 +273,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7876",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id\/",
+							"id": "7889",
+							"uri": "http://tco-backend:8080/api/CreditTypes/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes\/id\/",
 							"method": "DELETE",
 							"param": "",
 							"attack": "",
@@ -284,8 +284,8 @@
 						},
 						{
 							"id": "26",
-							"uri": "http://host.docker.internal:5000/api/Services/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id",
+							"uri": "http://tco-backend:8080/api/Services/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services\/id",
 							"method": "DELETE",
 							"param": "",
 							"attack": "",
@@ -293,9 +293,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7875",
-							"uri": "http://host.docker.internal:5000/api/Services/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id\/",
+							"id": "7890",
+							"uri": "http://tco-backend:8080/api/Services/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services\/id\/",
 							"method": "DELETE",
 							"param": "",
 							"attack": "",
@@ -304,8 +304,8 @@
 						},
 						{
 							"id": "31",
-							"uri": "http://host.docker.internal:5000/api/Users/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id",
+							"uri": "http://tco-backend:8080/api/Users/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/id",
 							"method": "DELETE",
 							"param": "",
 							"attack": "",
@@ -313,9 +313,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7872",
-							"uri": "http://host.docker.internal:5000/api/Users/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id\/",
+							"id": "7892",
+							"uri": "http://tco-backend:8080/api/Users/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/id\/",
 							"method": "DELETE",
 							"param": "",
 							"attack": "",
@@ -323,9 +323,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "72",
-							"uri": "http://host.docker.internal:5000",
-							"nodeName": "http:\/\/host.docker.internal:5000",
+							"id": "48",
+							"uri": "http://tco-backend:8080",
+							"nodeName": "http:\/\/tco-backend:8080",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -333,9 +333,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7883",
-							"uri": "http://host.docker.internal:5000/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/",
+							"id": "7899",
+							"uri": "http://tco-backend:8080/",
+							"nodeName": "http:\/\/tco-backend:8080\/",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -344,8 +344,8 @@
 						},
 						{
 							"id": "33",
-							"uri": "http://host.docker.internal:5000/7497255458037251885",
-							"nodeName": "http:\/\/host.docker.internal:5000\/7497255458037251885",
+							"uri": "http://tco-backend:8080/942283100145427520",
+							"nodeName": "http:\/\/tco-backend:8080\/942283100145427520",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -353,9 +353,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "87",
-							"uri": "http://host.docker.internal:5000/api",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api",
+							"id": "56",
+							"uri": "http://tco-backend:8080/api",
+							"nodeName": "http:\/\/tco-backend:8080\/api",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -363,9 +363,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7886",
-							"uri": "http://host.docker.internal:5000/api/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/",
+							"id": "7902",
+							"uri": "http://tco-backend:8080/api/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -374,8 +374,8 @@
 						},
 						{
 							"id": "34",
-							"uri": "http://host.docker.internal:5000/api/1982074943818524439",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/1982074943818524439",
+							"uri": "http://tco-backend:8080/api/377714378718724039",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/377714378718724039",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -383,9 +383,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "99",
-							"uri": "http://host.docker.internal:5000/api/Auth",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth",
+							"id": "74",
+							"uri": "http://tco-backend:8080/api/Auth",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Auth",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -393,9 +393,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7888",
-							"uri": "http://host.docker.internal:5000/api/Auth/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/",
+							"id": "7905",
+							"uri": "http://tco-backend:8080/api/Auth/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Auth\/",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -404,8 +404,8 @@
 						},
 						{
 							"id": "35",
-							"uri": "http://host.docker.internal:5000/api/Auth/9163892107524385011",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/9163892107524385011",
+							"uri": "http://tco-backend:8080/api/Auth/6026183632686631223",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Auth\/6026183632686631223",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -413,9 +413,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "8883",
-							"uri": "http://host.docker.internal:5000/api/Auth/actuator/health",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/actuator\/health",
+							"id": "8900",
+							"uri": "http://tco-backend:8080/api/Auth/actuator/health",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Auth\/actuator\/health",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -423,439 +423,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "121",
-							"uri": "http://host.docker.internal:5000/api/Backup",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "7892",
-							"uri": "http://host.docker.internal:5000/api/Backup/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "36",
-							"uri": "http://host.docker.internal:5000/api/Backup/7431826248939173581",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/7431826248939173581",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "2",
-							"uri": "http://host.docker.internal:5000/api/Backup/generate",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/generate",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7889",
-							"uri": "http://host.docker.internal:5000/api/Backup/generate/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/generate\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "3",
-							"uri": "http://host.docker.internal:5000/api/Backup/status",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/status",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7890",
-							"uri": "http://host.docker.internal:5000/api/Backup/status/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Backup\/status\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "126",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7077",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages?status=%23set%28%24engine%3D%22%22%29%0A%23set%28%24proc%3D%24engine.getClass%28%29.forName%28%22java.lang.Runtime%22%29.getRuntime%28%29.exec%28%22sleep+15%22%29%29%0A%23set%28%24null%3D%24proc.waitFor%28%29%29%0A%24%7Bnull%7D",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages (status)",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "400",
-							"otherinfo": ""
-						},
-						{
-							"id": "4",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages?status=10",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages (status)",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7895",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "37",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/1415945545189795778",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/1415945545189795778",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "5",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7896",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "38",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/id/2428250275316215668",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id\/2428250275316215668",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "7",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/pending",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/pending",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7893",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/pending/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/pending\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "8",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/stats",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/stats",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7898",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/stats/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/stats\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "10",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7894",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "39",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/8210538901719566659",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/8210538901719566659",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "12",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7899",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "40",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/5284654500185848190",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/5284654500185848190",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "141",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/status",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/status",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7901",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/status/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/status\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "49",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/status/2868881577113513921",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/status\/2868881577113513921",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "13",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/status/status",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/status\/status",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7902",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/status/status/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/status\/status\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "170",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes?isActive=http%3A%2F%2Fwww.google.com%2F",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes (isActive)",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "400",
-							"otherinfo": ""
-						},
-						{
-							"id": "56",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes/3189039061969017267",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/3189039061969017267",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "18",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "7904",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "168",
-							"uri": "http://host.docker.internal:5000/api/Dashboard",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "7907",
-							"uri": "http://host.docker.internal:5000/api/Dashboard/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "63",
-							"uri": "http://host.docker.internal:5000/api/Dashboard/3112365890407353598",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/3112365890407353598",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "21",
-							"uri": "http://host.docker.internal:5000/api/Dashboard/stats",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/stats",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7906",
-							"uri": "http://host.docker.internal:5000/api/Dashboard/stats/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/stats\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "22",
-							"uri": "http://host.docker.internal:5000/api/Dashboard/status-distribution",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/status-distribution",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "7905",
-							"uri": "http://host.docker.internal:5000/api/Dashboard/status-distribution/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Dashboard\/status-distribution\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "401",
-							"otherinfo": ""
-						},
-						{
-							"id": "228",
-							"uri": "http://host.docker.internal:5000/api/Services?isActive=http%3A%2F%2Fwww.google.com%2F",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services (isActive)",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "400",
-							"otherinfo": ""
-						},
-						{
-							"id": "67",
-							"uri": "http://host.docker.internal:5000/api/Services/9009625190431229681",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/9009625190431229681",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "404",
-							"otherinfo": ""
-						},
-						{
-							"id": "24",
-							"uri": "http://host.docker.internal:5000/api/Services/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id",
+							"id": "83",
+							"uri": "http://tco-backend:8080/api/Backup",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Backup",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -864,8 +434,8 @@
 						},
 						{
 							"id": "7909",
-							"uri": "http://host.docker.internal:5000/api/Services/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id\/",
+							"uri": "http://tco-backend:8080/api/Backup/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Backup\/",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -873,9 +443,19 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "227",
-							"uri": "http://host.docker.internal:5000/api/Users",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users",
+							"id": "36",
+							"uri": "http://tco-backend:8080/api/Backup/8137376701692189804",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Backup\/8137376701692189804",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "2",
+							"uri": "http://tco-backend:8080/api/Backup/generate",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Backup\/generate",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -883,9 +463,49 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7106",
-							"uri": "http://host.docker.internal:5000/api/Users?page=%23set%28%24engine%3D%22%22%29%0A%23set%28%24proc%3D%24engine.getClass%28%29.forName%28%22java.lang.Runtime%22%29.getRuntime%28%29.exec%28%22sleep+15%22%29%29%0A%23set%28%24null%3D%24proc.waitFor%28%29%29%0A%24%7Bnull%7D&pageSize=10&search=ZAP",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users (page,pageSize,search)",
+							"id": "7906",
+							"uri": "http://tco-backend:8080/api/Backup/generate/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Backup\/generate\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "3",
+							"uri": "http://tco-backend:8080/api/Backup/status",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Backup\/status",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7907",
+							"uri": "http://tco-backend:8080/api/Backup/status/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Backup\/status\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "98",
+							"uri": "http://tco-backend:8080/api/ContactMessages",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7083",
+							"uri": "http://tco-backend:8080/api/ContactMessages?status=%23set%28%24engine%3D%22%22%29%0A%23set%28%24proc%3D%24engine.getClass%28%29.forName%28%22java.lang.Runtime%22%29.getRuntime%28%29.exec%28%22sleep+15%22%29%29%0A%23set%28%24null%3D%24proc.waitFor%28%29%29%0A%24%7Bnull%7D",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages (status)",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -893,9 +513,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "27",
-							"uri": "http://host.docker.internal:5000/api/Users?page=1&pageSize=10&search=ZAP",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users (page,pageSize,search)",
+							"id": "4",
+							"uri": "http://tco-backend:8080/api/ContactMessages?status=10",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages (status)",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -903,9 +523,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7911",
-							"uri": "http://host.docker.internal:5000/api/Users/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/",
+							"id": "7912",
+							"uri": "http://tco-backend:8080/api/ContactMessages/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -913,9 +533,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "68",
-							"uri": "http://host.docker.internal:5000/api/Users/5182984746147422048",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/5182984746147422048",
+							"id": "37",
+							"uri": "http://tco-backend:8080/api/ContactMessages/6424585726089808040",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/6424585726089808040",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -923,9 +543,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "29",
-							"uri": "http://host.docker.internal:5000/api/Users/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id",
+							"id": "5",
+							"uri": "http://tco-backend:8080/api/ContactMessages/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/id",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -934,8 +554,8 @@
 						},
 						{
 							"id": "7910",
-							"uri": "http://host.docker.internal:5000/api/Users/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id\/",
+							"uri": "http://tco-backend:8080/api/ContactMessages/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/id\/",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -943,9 +563,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "70",
-							"uri": "http://host.docker.internal:5000/swagger/3516924292307509156",
-							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/3516924292307509156",
+							"id": "38",
+							"uri": "http://tco-backend:8080/api/ContactMessages/id/4194725595209768190",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/id\/4194725595209768190",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -953,9 +573,99 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "276",
-							"uri": "http://host.docker.internal:5000/swagger/v1",
-							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/v1",
+							"id": "7",
+							"uri": "http://tco-backend:8080/api/ContactMessages/pending",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/pending",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7913",
+							"uri": "http://tco-backend:8080/api/ContactMessages/pending/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/pending\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "8",
+							"uri": "http://tco-backend:8080/api/ContactMessages/stats",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/stats",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7911",
+							"uri": "http://tco-backend:8080/api/ContactMessages/stats/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/stats\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "10",
+							"uri": "http://tco-backend:8080/api/CreditRequests",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7915",
+							"uri": "http://tco-backend:8080/api/CreditRequests/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "39",
+							"uri": "http://tco-backend:8080/api/CreditRequests/2709970534244552137",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/2709970534244552137",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "12",
+							"uri": "http://tco-backend:8080/api/CreditRequests/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7916",
+							"uri": "http://tco-backend:8080/api/CreditRequests/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/id\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "40",
+							"uri": "http://tco-backend:8080/api/CreditRequests/id/8986486644784238592",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/id\/8986486644784238592",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -963,9 +673,69 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7914",
-							"uri": "http://host.docker.internal:5000/swagger/v1/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/v1\/",
+							"id": "117",
+							"uri": "http://tco-backend:8080/api/CreditRequests/status",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/status",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7918",
+							"uri": "http://tco-backend:8080/api/CreditRequests/status/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/status\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "41",
+							"uri": "http://tco-backend:8080/api/CreditRequests/status/8371023943152908756",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/status\/8371023943152908756",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "13",
+							"uri": "http://tco-backend:8080/api/CreditRequests/status/status",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/status\/status",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7919",
+							"uri": "http://tco-backend:8080/api/CreditRequests/status/status/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/status\/status\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "155",
+							"uri": "http://tco-backend:8080/api/CreditTypes?isActive=http%3A%2F%2Fwww.google.com%2F",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes (isActive)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "42",
+							"uri": "http://tco-backend:8080/api/CreditTypes/5478770201619904314",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes\/5478770201619904314",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -973,9 +743,239 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "71",
-							"uri": "http://host.docker.internal:5000/swagger/v1/42188669104685380",
-							"nodeName": "http:\/\/host.docker.internal:5000\/swagger\/v1\/42188669104685380",
+							"id": "18",
+							"uri": "http://tco-backend:8080/api/CreditTypes/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7921",
+							"uri": "http://tco-backend:8080/api/CreditTypes/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes\/id\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "158",
+							"uri": "http://tco-backend:8080/api/Dashboard",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Dashboard",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7922",
+							"uri": "http://tco-backend:8080/api/Dashboard/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Dashboard\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "43",
+							"uri": "http://tco-backend:8080/api/Dashboard/5200337674174828921",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Dashboard\/5200337674174828921",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "21",
+							"uri": "http://tco-backend:8080/api/Dashboard/stats",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Dashboard\/stats",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7923",
+							"uri": "http://tco-backend:8080/api/Dashboard/stats/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Dashboard\/stats\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "22",
+							"uri": "http://tco-backend:8080/api/Dashboard/status-distribution",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Dashboard\/status-distribution",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7924",
+							"uri": "http://tco-backend:8080/api/Dashboard/status-distribution/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Dashboard\/status-distribution\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "197",
+							"uri": "http://tco-backend:8080/api/Services?isActive=http%3A%2F%2Fwww.google.com%2F",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services (isActive)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "44",
+							"uri": "http://tco-backend:8080/api/Services/5269606097333388403",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services\/5269606097333388403",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "24",
+							"uri": "http://tco-backend:8080/api/Services/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7926",
+							"uri": "http://tco-backend:8080/api/Services/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services\/id\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "185",
+							"uri": "http://tco-backend:8080/api/Users",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7178",
+							"uri": "http://tco-backend:8080/api/Users?page=%23set%28%24engine%3D%22%22%29%0A%23set%28%24proc%3D%24engine.getClass%28%29.forName%28%22java.lang.Runtime%22%29.getRuntime%28%29.exec%28%22sleep+15%22%29%29%0A%23set%28%24null%3D%24proc.waitFor%28%29%29%0A%24%7Bnull%7D&pageSize=10&search=ZAP",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users (page,pageSize,search)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "400",
+							"otherinfo": ""
+						},
+						{
+							"id": "27",
+							"uri": "http://tco-backend:8080/api/Users?page=1&pageSize=10&search=ZAP",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users (page,pageSize,search)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7927",
+							"uri": "http://tco-backend:8080/api/Users/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "45",
+							"uri": "http://tco-backend:8080/api/Users/6926437094370953129",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/6926437094370953129",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "29",
+							"uri": "http://tco-backend:8080/api/Users/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "7930",
+							"uri": "http://tco-backend:8080/api/Users/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/id\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "46",
+							"uri": "http://tco-backend:8080/swagger/1706131796435177846",
+							"nodeName": "http:\/\/tco-backend:8080\/swagger\/1706131796435177846",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "216",
+							"uri": "http://tco-backend:8080/swagger/v1",
+							"nodeName": "http:\/\/tco-backend:8080\/swagger\/v1",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "7931",
+							"uri": "http://tco-backend:8080/swagger/v1/",
+							"nodeName": "http:\/\/tco-backend:8080\/swagger\/v1\/",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "404",
+							"otherinfo": ""
+						},
+						{
+							"id": "47",
+							"uri": "http://tco-backend:8080/swagger/v1/6656667933515499779",
+							"nodeName": "http:\/\/tco-backend:8080\/swagger\/v1\/6656667933515499779",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -984,8 +984,8 @@
 						},
 						{
 							"id": "9",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/id/status",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id\/status ()({status,adminNotes})",
+							"uri": "http://tco-backend:8080/api/ContactMessages/id/status",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/id\/status ()({status,adminNotes})",
 							"method": "PATCH",
 							"param": "",
 							"attack": "",
@@ -993,9 +993,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7869",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/id/status/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id\/status\/ ()({status,adminNotes})",
+							"id": "7884",
+							"uri": "http://tco-backend:8080/api/ContactMessages/id/status/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/id\/status\/ ()({status,adminNotes})",
 							"method": "PATCH",
 							"param": "",
 							"attack": "",
@@ -1004,8 +1004,8 @@
 						},
 						{
 							"id": "14",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/status",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/status ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"uri": "http://tco-backend:8080/api/CreditRequests/id/status",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/id\/status ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
 							"method": "PATCH",
 							"param": "",
 							"attack": "",
@@ -1013,9 +1013,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7878",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/status/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/status\/ ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"id": "7888",
+							"uri": "http://tco-backend:8080/api/CreditRequests/id/status/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/id\/status\/ ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
 							"method": "PATCH",
 							"param": "",
 							"attack": "",
@@ -1024,8 +1024,8 @@
 						},
 						{
 							"id": "0",
-							"uri": "http://host.docker.internal:5000/api/Auth/login",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/login ()({email,password})",
+							"uri": "http://tco-backend:8080/api/Auth/login",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Auth\/login ()({email,password})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1033,9 +1033,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7864",
-							"uri": "http://host.docker.internal:5000/api/Auth/login/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/login\/ ()({email,password})",
+							"id": "7882",
+							"uri": "http://tco-backend:8080/api/Auth/login/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Auth\/login\/ ()({email,password})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1044,8 +1044,8 @@
 						},
 						{
 							"id": "1",
-							"uri": "http://host.docker.internal:5000/api/Auth/register",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/register ()({email,password,fullName,role})",
+							"uri": "http://tco-backend:8080/api/Auth/register",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Auth\/register ()({email,password,fullName,role})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1053,9 +1053,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7865",
-							"uri": "http://host.docker.internal:5000/api/Auth/register/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/register\/ ()({email,password,fullName,role})",
+							"id": "7883",
+							"uri": "http://tco-backend:8080/api/Auth/register/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Auth\/register\/ ()({email,password,fullName,role})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1063,9 +1063,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "244",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages ()({name,email,subject,message})",
+							"id": "282",
+							"uri": "http://tco-backend:8080/api/ContactMessages",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages ()({name,email,subject,message})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1074,8 +1074,8 @@
 						},
 						{
 							"id": "11",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests ()({fullName,identificationNumber,email,phone,address,employmentStatus,monthlySalary,yearsOfEmployment,creditType,useOfMoney,requestedAmount,termYears,interestRate,monthlyPayment,totalPayment,totalInterest})",
+							"uri": "http://tco-backend:8080/api/CreditRequests",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests ()({fullName,identificationNumber,email,phone,address,employmentStatus,monthlySalary,yearsOfEmployment,creditType,useOfMoney,requestedAmount,termYears,interestRate,monthlyPayment,totalPayment,totalInterest})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1083,9 +1083,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7877",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/ ()({fullName,identificationNumber,email,phone,address,employmentStatus,monthlySalary,yearsOfEmployment,creditType,useOfMoney,requestedAmount,termYears,interestRate,monthlyPayment,totalPayment,totalInterest})",
+							"id": "7886",
+							"uri": "http://tco-backend:8080/api/CreditRequests/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/ ()({fullName,identificationNumber,email,phone,address,employmentStatus,monthlySalary,yearsOfEmployment,creditType,useOfMoney,requestedAmount,termYears,interestRate,monthlyPayment,totalPayment,totalInterest})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1094,8 +1094,8 @@
 						},
 						{
 							"id": "15",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/approve",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/approve ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"uri": "http://tco-backend:8080/api/CreditRequests/id/approve",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/id\/approve ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1103,9 +1103,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7868",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/approve/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/approve\/ ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"id": "7895",
+							"uri": "http://tco-backend:8080/api/CreditRequests/id/approve/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/id\/approve\/ ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1114,8 +1114,8 @@
 						},
 						{
 							"id": "16",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/reject",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/reject ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"uri": "http://tco-backend:8080/api/CreditRequests/id/reject",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/id\/reject ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1123,9 +1123,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7867",
-							"uri": "http://host.docker.internal:5000/api/CreditRequests/id/reject/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditRequests\/id\/reject\/ ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
+							"id": "7887",
+							"uri": "http://tco-backend:8080/api/CreditRequests/id/reject/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests\/id\/reject\/ ()({status,remarks,approvedAmount,approvedTermMonths,newStatus})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1134,8 +1134,8 @@
 						},
 						{
 							"id": "17",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
+							"uri": "http://tco-backend:8080/api/CreditTypes",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1143,9 +1143,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7874",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/ ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
+							"id": "7901",
+							"uri": "http://tco-backend:8080/api/CreditTypes/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes\/ ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1154,8 +1154,8 @@
 						},
 						{
 							"id": "23",
-							"uri": "http://host.docker.internal:5000/api/Services",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services ()({title,description,icon,displayOrder,isActive})",
+							"uri": "http://tco-backend:8080/api/Services",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services ()({title,description,icon,displayOrder,isActive})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1163,9 +1163,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7871",
-							"uri": "http://host.docker.internal:5000/api/Services/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/ ()({title,description,icon,displayOrder,isActive})",
+							"id": "7896",
+							"uri": "http://tco-backend:8080/api/Services/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services\/ ()({title,description,icon,displayOrder,isActive})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1174,8 +1174,8 @@
 						},
 						{
 							"id": "28",
-							"uri": "http://host.docker.internal:5000/api/Users",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users ()({email,password,fullName,role,isActive})",
+							"uri": "http://tco-backend:8080/api/Users",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users ()({email,password,fullName,role,isActive})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1183,9 +1183,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7880",
-							"uri": "http://host.docker.internal:5000/api/Users/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/ ()({email,password,fullName,role,isActive})",
+							"id": "7897",
+							"uri": "http://tco-backend:8080/api/Users/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/ ()({email,password,fullName,role,isActive})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1194,8 +1194,8 @@
 						},
 						{
 							"id": "32",
-							"uri": "http://host.docker.internal:5000/api/Users/change-password",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/change-password ()({userId,newPassword})",
+							"uri": "http://tco-backend:8080/api/Users/change-password",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/change-password ()({userId,newPassword})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1203,9 +1203,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7870",
-							"uri": "http://host.docker.internal:5000/api/Users/change-password/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/change-password\/ ()({userId,newPassword})",
+							"id": "7891",
+							"uri": "http://tco-backend:8080/api/Users/change-password/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/change-password\/ ()({userId,newPassword})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1213,9 +1213,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "5884",
-							"uri": "http://host.docker.internal:5000/computeMetadata/v1/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/computeMetadata\/v1\/ ()({email,password})",
+							"id": "5903",
+							"uri": "http://tco-backend:8080/computeMetadata/v1/",
+							"nodeName": "http:\/\/tco-backend:8080\/computeMetadata\/v1\/ ()({email,password})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1223,9 +1223,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "5856",
-							"uri": "http://host.docker.internal:5000/latest/meta-data/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/latest\/meta-data\/ ()({email,password})",
+							"id": "5873",
+							"uri": "http://tco-backend:8080/latest/meta-data/",
+							"nodeName": "http:\/\/tco-backend:8080\/latest\/meta-data\/ ()({email,password})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1233,9 +1233,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "5996",
-							"uri": "http://host.docker.internal:5000/metadata/instance",
-							"nodeName": "http:\/\/host.docker.internal:5000\/metadata\/instance ()({email,password})",
+							"id": "6066",
+							"uri": "http://tco-backend:8080/metadata/instance",
+							"nodeName": "http:\/\/tco-backend:8080\/metadata\/instance ()({email,password})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1243,9 +1243,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "6014",
-							"uri": "http://host.docker.internal:5000/metadata/v1",
-							"nodeName": "http:\/\/host.docker.internal:5000\/metadata\/v1 ()({email,password})",
+							"id": "6085",
+							"uri": "http://tco-backend:8080/metadata/v1",
+							"nodeName": "http:\/\/tco-backend:8080\/metadata\/v1 ()({email,password})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1253,9 +1253,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "5891",
-							"uri": "http://host.docker.internal:5000/opc/v1/instance/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/opc\/v1\/instance\/ ()({email,password})",
+							"id": "5936",
+							"uri": "http://tco-backend:8080/opc/v1/instance/",
+							"nodeName": "http:\/\/tco-backend:8080\/opc\/v1\/instance\/ ()({email,password})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1263,9 +1263,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "5926",
-							"uri": "http://host.docker.internal:5000/opc/v2/instance/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/opc\/v2\/instance\/ ()({email,password})",
+							"id": "5968",
+							"uri": "http://tco-backend:8080/opc/v2/instance/",
+							"nodeName": "http:\/\/tco-backend:8080\/opc\/v2\/instance\/ ()({email,password})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1273,9 +1273,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "6032",
-							"uri": "http://host.docker.internal:5000/openstack/latest/meta_data.json",
-							"nodeName": "http:\/\/host.docker.internal:5000\/openstack\/latest\/meta_data.json ()({email,password})",
+							"id": "6107",
+							"uri": "http://tco-backend:8080/openstack/latest/meta_data.json",
+							"nodeName": "http:\/\/tco-backend:8080\/openstack\/latest\/meta_data.json ()({email,password})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1284,8 +1284,8 @@
 						},
 						{
 							"id": "19",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
+							"uri": "http://tco-backend:8080/api/CreditTypes/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes\/id ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
 							"method": "PUT",
 							"param": "",
 							"attack": "",
@@ -1293,9 +1293,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7873",
-							"uri": "http://host.docker.internal:5000/api/CreditTypes/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/CreditTypes\/id\/ ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
+							"id": "7900",
+							"uri": "http://tco-backend:8080/api/CreditTypes/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes\/id\/ ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
 							"method": "PUT",
 							"param": "",
 							"attack": "",
@@ -1304,8 +1304,8 @@
 						},
 						{
 							"id": "25",
-							"uri": "http://host.docker.internal:5000/api/Services/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id ()({title,description,icon,displayOrder,isActive})",
+							"uri": "http://tco-backend:8080/api/Services/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services\/id ()({title,description,icon,displayOrder,isActive})",
 							"method": "PUT",
 							"param": "",
 							"attack": "",
@@ -1313,9 +1313,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7881",
-							"uri": "http://host.docker.internal:5000/api/Services/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Services\/id\/ ()({title,description,icon,displayOrder,isActive})",
+							"id": "7893",
+							"uri": "http://tco-backend:8080/api/Services/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services\/id\/ ()({title,description,icon,displayOrder,isActive})",
 							"method": "PUT",
 							"param": "",
 							"attack": "",
@@ -1324,8 +1324,8 @@
 						},
 						{
 							"id": "30",
-							"uri": "http://host.docker.internal:5000/api/Users/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id ()({fullName,role,isActive})",
+							"uri": "http://tco-backend:8080/api/Users/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/id ()({fullName,role,isActive})",
 							"method": "PUT",
 							"param": "",
 							"attack": "",
@@ -1333,9 +1333,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "7882",
-							"uri": "http://host.docker.internal:5000/api/Users/id/",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/id\/ ()({fullName,role,isActive})",
+							"id": "7894",
+							"uri": "http://tco-backend:8080/api/Users/id/",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/id\/ ()({fullName,role,isActive})",
 							"method": "PUT",
 							"param": "",
 							"attack": "",
@@ -1363,9 +1363,9 @@
 					"desc": "<p>The given request has been identified as an authentication request. The 'Other Info' field contains a set of key=value lines which identify any relevant fields. If the request is in a context which has an Authentication Method set to \"Auto-Detect\" then this rule will change the authentication to match the request identified.</p>",
 					"instances":[ 
 						{
-							"id": "65",
-							"uri": "http://host.docker.internal:5000/api/Users",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users ()({email,password,fullName,role,isActive})",
+							"id": "846",
+							"uri": "http://tco-backend:8080/api/Users",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users ()({email,password,fullName,role,isActive})",
 							"method": "POST",
 							"param": "email",
 							"attack": "",
@@ -1373,9 +1373,9 @@
 							"otherinfo": "userParam=email\nuserValue=zaproxy@example.com\npasswordParam=password"
 						},
 						{
-							"id": "66",
-							"uri": "http://host.docker.internal:5000/api/Users/change-password",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Users\/change-password ()({userId,newPassword})",
+							"id": "849",
+							"uri": "http://tco-backend:8080/api/Users/change-password",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Users\/change-password ()({userId,newPassword})",
 							"method": "POST",
 							"param": "userId",
 							"attack": "",
@@ -1383,9 +1383,9 @@
 							"otherinfo": "userParam=userId\nuserValue=John Doe\npasswordParam=newPassword"
 						},
 						{
-							"id": "50",
-							"uri": "http://host.docker.internal:5000/api/Auth/login",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/login ()({email,password})",
+							"id": "833",
+							"uri": "http://tco-backend:8080/api/Auth/login",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Auth\/login ()({email,password})",
 							"method": "POST",
 							"param": "email",
 							"attack": "",
@@ -1413,19 +1413,9 @@
 					"desc": "<p>The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.</p>",
 					"instances":[ 
 						{
-							"id": "43",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id",
-							"method": "DELETE",
-							"param": "",
-							"attack": "",
-							"evidence": "DELETE ",
-							"otherinfo": ""
-						},
-						{
-							"id": "47",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/id",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/id",
+							"id": "826",
+							"uri": "http://tco-backend:8080/api/Backup/generate",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Backup\/generate",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -1433,9 +1423,9 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "44",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages/stats",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages\/stats",
+							"id": "823",
+							"uri": "http://tco-backend:8080/api/ContactMessages/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/id",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -1443,19 +1433,29 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "53",
-							"uri": "http://host.docker.internal:5000/api/Auth/login",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/login ()({email,password})",
+							"id": "825",
+							"uri": "http://tco-backend:8080/api/ContactMessages/stats",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/ContactMessages\/stats",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "401",
+							"otherinfo": ""
+						},
+						{
+							"id": "829",
+							"uri": "http://tco-backend:8080/api/CreditRequests",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditRequests ()({fullName,identificationNumber,email,phone,address,employmentStatus,monthlySalary,yearsOfEmployment,creditType,useOfMoney,requestedAmount,termYears,interestRate,monthlyPayment,totalPayment,totalInterest})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
-							"evidence": "401",
+							"evidence": "400",
 							"otherinfo": ""
 						},
 						{
-							"id": "51",
-							"uri": "http://host.docker.internal:5000/api/Auth/register",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/Auth\/register ()({email,password,fullName,role})",
+							"id": "824",
+							"uri": "http://tco-backend:8080/api/CreditTypes",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes ()({name,description,baseInterestRate,minAmount,maxAmount,maxTermMonths,minTermMonths,isActive})",
 							"method": "POST",
 							"param": "",
 							"attack": "",
@@ -1470,7 +1470,7 @@
 					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
 					"cweid": "524",
 					"wascid": "13",
-					"sourceid": "16"
+					"sourceid": "9"
 				},
 				{
 					"pluginid": "10049",
@@ -1483,24 +1483,64 @@
 					"desc": "<p>The response contents are storable by caching components such as proxy servers, and may be retrieved directly from the cache, rather than from the origin server by the caching servers, in response to similar requests from other users. If the response data is sensitive, personal or user-specific, this may result in sensitive information being leaked. In some cases, this may even result in a user gaining complete control of the session of another user, depending on the configuration of the caching components in use in their environment. This is primarily an issue where \"shared\" caching servers such as \"proxy\" caches are configured on the local network. This configuration is typically found in corporate or educational environments, for instance.</p>",
 					"instances":[ 
 						{
-							"id": "52",
-							"uri": "http://host.docker.internal:5000/api/ContactMessages",
-							"nodeName": "http:\/\/host.docker.internal:5000\/api\/ContactMessages ()({name,email,subject,message})",
-							"method": "POST",
+							"id": "828",
+							"uri": "http://tco-backend:8080/api/CreditTypes?isActive=true",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes (isActive)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
+						},
+						{
+							"id": "832",
+							"uri": "http://tco-backend:8080/api/CreditTypes/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/CreditTypes\/id",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
+						},
+						{
+							"id": "843",
+							"uri": "http://tco-backend:8080/api/Health",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Health",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
+						},
+						{
+							"id": "845",
+							"uri": "http://tco-backend:8080/api/Services?isActive=true",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services (isActive)",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
+						},
+						{
+							"id": "844",
+							"uri": "http://tco-backend:8080/api/Services/id",
+							"nodeName": "http:\/\/tco-backend:8080\/api\/Services\/id",
+							"method": "GET",
 							"param": "",
 							"attack": "",
 							"evidence": "",
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						}
 					],
-					"count": "1",
+					"count": "5",
 					"systemic": true,
 					"solution": "<p>Validate that the response does not contain sensitive, personal or user-specific information. If it does, consider the use of the following HTTP response headers, to limit, or prevent the content being stored and retrieved from the cache by another user:</p><p>Cache-Control: no-cache, no-store, must-revalidate, private</p><p>Pragma: no-cache</p><p>Expires: 0</p><p>This configuration directs both HTTP 1.0 and HTTP 1.1 compliant caching servers to not store the response, and to not retrieve the response (without validation) from the cache, in response to a similar request.</p>",
 					"otherinfo": "<p>In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234.</p>",
 					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
 					"cweid": "524",
 					"wascid": "13",
-					"sourceid": "13"
+					"sourceid": "31"
 				}
 			]
 		}

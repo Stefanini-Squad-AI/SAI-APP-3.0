@@ -2,9 +2,9 @@
  * AURA — Runner unificado: una sola invocación a Cucumber → un único cucumber-report.json
  * → un solo informe bajo reports/<fecha>/<suite>/vN/automation-functional-report.html
  */
-import { copyFileSync, existsSync } from 'fs';
-import * as path from 'path';
-import { spawnSync } from 'child_process';
+import { copyFileSync, existsSync } from 'node:fs';
+import * as path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { TailwindReportEngine } from '../core/reporting/TailwindReportEngine';
 import { ConfluenceExporter } from '../core/changelog/ConfluenceExporter';
 import { allocateVersionedRunDirectory } from '../core/reporting/reportRunDirectory';
@@ -45,15 +45,15 @@ export function deriveSuiteFolderFromFeaturePaths(featurePaths: string[]): strin
 export function normalizeFeaturePaths(paths: string[]): string[] {
   return paths.map((p) => {
     if (path.isAbsolute(p)) {
-      return path.relative(process.cwd(), p).replace(/\\/g, '/');
+      return path.relative(process.cwd(), p).replaceAll('\\', '/');
     }
-    const clean = p.replace(/\\/g, '/');
+    const clean = p.replaceAll('\\', '/');
     if (clean.includes('/')) {
-      return path.relative(process.cwd(), path.resolve(process.cwd(), p)).replace(/\\/g, '/');
+      return path.relative(process.cwd(), path.resolve(process.cwd(), p)).replaceAll('\\', '/');
     }
     return path
       .relative(process.cwd(), path.resolve(process.cwd(), 'src/features', p))
-      .replace(/\\/g, '/');
+      .replaceAll('\\', '/');
   });
 }
 

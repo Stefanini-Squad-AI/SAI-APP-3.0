@@ -1,11 +1,10 @@
 @preview
-Feature: Validate PR preview deployment
+Feature: Validate deployment health
   As a QA team
-  I want to validate that the PR preview is available
-  So that we can confirm the deployed version responds correctly
+  I want to validate that the deployed application is available
+  So that we can confirm the version responds correctly
 
-  Scenario: Basic PR preview availability
-    Given I navigate to the deployed pull request preview
-    Then "body" should be visible
-    And the URL should contain "surge.sh"
+  Scenario: Application is reachable and renders
+    Given the browser is on the TuCreditoOnline home page
+    Then I should see the heading "Online Credits"
     And I take a screenshot

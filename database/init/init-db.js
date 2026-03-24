@@ -33,7 +33,7 @@ try {
     }
   });
   print('  ✓ users');
-} catch (e) { print('  ⚠ users already exists — skipping'); }
+} catch (e) { print('  ⚠ users already exists — skipping: ' + e.codeName); }
 
 try {
   db.createCollection('credittypes', {
@@ -58,7 +58,7 @@ try {
     }
   });
   print('  ✓ credittypes');
-} catch (e) { print('  ⚠ credittypes already exists — skipping'); }
+} catch (e) { print('  ⚠ credittypes already exists — skipping: ' + e.codeName); }
 
 try {
   db.createCollection('creditrequests', {
@@ -102,7 +102,7 @@ try {
     }
   });
   print('  ✓ creditrequests');
-} catch (e) { print('  ⚠ creditrequests already exists — skipping'); }
+} catch (e) { print('  ⚠ creditrequests already exists — skipping: ' + e.codeName); }
 
 try {
   db.createCollection('services', {
@@ -123,7 +123,7 @@ try {
     }
   });
   print('  ✓ services');
-} catch (e) { print('  ⚠ services already exists — skipping'); }
+} catch (e) { print('  ⚠ services already exists — skipping: ' + e.codeName); }
 
 try {
   db.createCollection('contactmessages', {
@@ -149,42 +149,42 @@ try {
     }
   });
   print('  ✓ contactmessages');
-} catch (e) { print('  ⚠ contactmessages already exists — skipping'); }
+} catch (e) { print('  ⚠ contactmessages already exists — skipping: ' + e.codeName); }
 
 // ── Indexes ───────────────────────────────────────────────────────────────────
 
 print('Creating indexes...');
 
 // users
-try { db.users.createIndex({ email: 1 }, { unique: true }); } catch (e) { print('  ⚠ users.email index exists'); }
-try { db.users.createIndex({ email: 1, isActive: 1 }); } catch (e) {}
-try { db.users.createIndex({ role: 1 }); } catch (e) {}
-try { db.users.createIndex({ createdAt: 1 }); } catch (e) {}
-try { db.users.createIndex({ deletedAt: 1 }); } catch (e) {}
+try { db.users.createIndex({ email: 1 }, { unique: true }); } catch (e) { print('  ⚠ users.email index: ' + e.message); }
+try { db.users.createIndex({ email: 1, isActive: 1 }); } catch (e) { print('  ⚠ users.email+isActive: ' + e.message); }
+try { db.users.createIndex({ role: 1 }); } catch (e) { print('  ⚠ users.role: ' + e.message); }
+try { db.users.createIndex({ createdAt: 1 }); } catch (e) { print('  ⚠ users.createdAt: ' + e.message); }
+try { db.users.createIndex({ deletedAt: 1 }); } catch (e) { print('  ⚠ users.deletedAt: ' + e.message); }
 print('  ✓ users indexes');
 
 // credittypes
-try { db.credittypes.createIndex({ isActive: 1 }); } catch (e) {}
-try { db.credittypes.createIndex({ name: 1 }, { unique: true }); } catch (e) { print('  ⚠ credittypes.name index exists'); }
-try { db.credittypes.createIndex({ createdAt: 1 }); } catch (e) {}
+try { db.credittypes.createIndex({ isActive: 1 }); } catch (e) { print('  ⚠ credittypes.isActive: ' + e.message); }
+try { db.credittypes.createIndex({ name: 1 }, { unique: true }); } catch (e) { print('  ⚠ credittypes.name index: ' + e.message); }
+try { db.credittypes.createIndex({ createdAt: 1 }); } catch (e) { print('  ⚠ credittypes.createdAt: ' + e.message); }
 print('  ✓ credittypes indexes');
 
 // creditrequests
-try { db.creditrequests.createIndex({ status: 1 }); } catch (e) {}
-try { db.creditrequests.createIndex({ email: 1 }); } catch (e) {}
-try { db.creditrequests.createIndex({ status: 1, createdAt: -1 }); } catch (e) {}
-try { db.creditrequests.createIndex({ createdAt: -1 }); } catch (e) {}
+try { db.creditrequests.createIndex({ status: 1 }); } catch (e) { print('  ⚠ creditrequests.status: ' + e.message); }
+try { db.creditrequests.createIndex({ email: 1 }); } catch (e) { print('  ⚠ creditrequests.email: ' + e.message); }
+try { db.creditrequests.createIndex({ status: 1, createdAt: -1 }); } catch (e) { print('  ⚠ creditrequests.status+createdAt: ' + e.message); }
+try { db.creditrequests.createIndex({ createdAt: -1 }); } catch (e) { print('  ⚠ creditrequests.createdAt: ' + e.message); }
 print('  ✓ creditrequests indexes');
 
 // services
-try { db.services.createIndex({ isActive: 1, displayOrder: 1 }); } catch (e) {}
-try { db.services.createIndex({ displayOrder: 1 }); } catch (e) {}
+try { db.services.createIndex({ isActive: 1, displayOrder: 1 }); } catch (e) { print('  ⚠ services.isActive+displayOrder: ' + e.message); }
+try { db.services.createIndex({ displayOrder: 1 }); } catch (e) { print('  ⚠ services.displayOrder: ' + e.message); }
 print('  ✓ services indexes');
 
 // contactmessages
-try { db.contactmessages.createIndex({ status: 1 }); } catch (e) {}
-try { db.contactmessages.createIndex({ email: 1 }); } catch (e) {}
-try { db.contactmessages.createIndex({ createdAt: -1 }); } catch (e) {}
+try { db.contactmessages.createIndex({ status: 1 }); } catch (e) { print('  ⚠ contactmessages.status: ' + e.message); }
+try { db.contactmessages.createIndex({ email: 1 }); } catch (e) { print('  ⚠ contactmessages.email: ' + e.message); }
+try { db.contactmessages.createIndex({ createdAt: -1 }); } catch (e) { print('  ⚠ contactmessages.createdAt: ' + e.message); }
 print('  ✓ contactmessages indexes');
 
 // ── Seed Data ─────────────────────────────────────────────────────────────────
@@ -198,9 +198,9 @@ try {
     {
       name: 'Personal Credit',
       description: 'For personal expenses: travel, home improvements, emergencies and more.',
-      baseInterestRate: 18.0,
-      minAmount: 5000.0,
-      maxAmount: 200000.0,
+      baseInterestRate: 18,
+      minAmount: 5000,
+      maxAmount: 200000,
       minTermMonths: 12,
       maxTermMonths: 60,
       isActive: true,
@@ -211,9 +211,9 @@ try {
     {
       name: 'Express Credit',
       description: 'Same-day approval for small amounts. No collateral required.',
-      baseInterestRate: 24.0,
-      minAmount: 1000.0,
-      maxAmount: 50000.0,
+      baseInterestRate: 24,
+      minAmount: 1000,
+      maxAmount: 50000,
       minTermMonths: 6,
       maxTermMonths: 24,
       isActive: true,
@@ -224,9 +224,9 @@ try {
     {
       name: 'Consolidation Credit',
       description: 'Combine all your existing debts into one manageable monthly payment.',
-      baseInterestRate: 15.0,
-      minAmount: 10000.0,
-      maxAmount: 300000.0,
+      baseInterestRate: 15,
+      minAmount: 10000,
+      maxAmount: 300000,
       minTermMonths: 24,
       maxTermMonths: 120,
       isActive: true,
@@ -237,9 +237,9 @@ try {
     {
       name: 'Business Credit',
       description: 'Flexible financing to grow your business or cover operating costs.',
-      baseInterestRate: 16.0,
-      minAmount: 20000.0,
-      maxAmount: 500000.0,
+      baseInterestRate: 16,
+      minAmount: 20000,
+      maxAmount: 500000,
       minTermMonths: 12,
       maxTermMonths: 84,
       isActive: true,

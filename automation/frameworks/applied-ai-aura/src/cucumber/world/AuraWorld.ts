@@ -9,7 +9,7 @@
  *   this.factory     — BrowserFactory (browser lifecycle)
  */
 import { config as dotenvConfig } from 'dotenv';
-import { resolve } from 'path';
+import { resolve } from 'node:path';
 import { setWorldConstructor, World, IWorldOptions } from '@cucumber/cucumber';
 import type { Page } from 'playwright';
 import { IntentBuilder } from '../../core/intent/IntentBuilder';

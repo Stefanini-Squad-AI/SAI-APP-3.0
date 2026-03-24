@@ -136,10 +136,10 @@ function extractCoverageInfo(coberturaData) {
 
 function sanitizeExecutiveMarkdown(md) {
   if (!md || typeof md !== 'string') return '';
-  let s = md.replace(/\[\d+\]/g, '');
-  s = s.replace(/```[\s\S]*?```/g, '');
-  s = s.replace(/\p{Extended_Pictographic}/gu, '');
-  s = s.replace(/\n{3,}/g, '\n\n').trim();
+  let s = md.replaceAll(/\[\d+\]/g, '');
+  s = s.replaceAll(/```[\s\S]*?```/g, '');
+  s = s.replaceAll(/\p{Extended_Pictographic}/gu, '');
+  s = s.replaceAll(/\n{3,}/g, '\n\n').trim();
   return s;
 }
 
@@ -302,6 +302,8 @@ ${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`
 }
 
 function parseSummaryJson(raw) {
+  if (raw == null || typeof raw !== 'string') return null;
+
   const tryParse = (str) => {
     try {
       const p = JSON.parse(str.trim());
@@ -310,12 +312,42 @@ function parseSummaryJson(raw) {
       const pt = typeof p.pt === 'string' ? p.pt.trim() : '';
       if (!en && !es && !pt) return null;
       return { en: en || es || pt, es: es || en || pt, pt: pt || en || es };
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   };
-  const direct = tryParse(raw);
-  if (direct) return direct;
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  return fenced?.[1] ? tryParse(fenced[1]) : null;
+
+  const s = raw.trim();
+  const candidates = [];
+  const push = (x) => {
+    const t = typeof x === 'string' ? x.trim() : '';
+    if (t && !candidates.includes(t)) candidates.push(t);
+  };
+
+  push(s);
+
+  if (s.startsWith('"""')) {
+    let inner = s.replace(/^"""\s*(?:json\s*)?/i, '').trim();
+    if (inner.endsWith('"""')) inner = inner.slice(0, -3).trim();
+    push(inner);
+  }
+
+  const fenceOpen = /```(?:json)?\s*/i.exec(s);
+  if (fenceOpen) {
+    const start = fenceOpen.index + fenceOpen[0].length;
+    const close = s.lastIndexOf('```');
+    if (close > start) push(s.slice(start, close).trim());
+  }
+
+  const b0 = s.indexOf('{');
+  const b1 = s.lastIndexOf('}');
+  if (b0 !== -1 && b1 > b0) push(s.slice(b0, b1 + 1));
+
+  for (const c of candidates) {
+    const parsed = tryParse(c);
+    if (parsed) return parsed;
+  }
+  return null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -327,14 +359,14 @@ function esc(s) {
 
 function mdInline(raw) {
   let h = esc(raw);
-  h = h.replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 dark:text-white font-semibold">$1</strong>');
-  h = h.replace(/\*(.+?)\*/g, '<em class="text-slate-600 dark:text-gray-400">$1</em>');
+  h = h.replaceAll(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 dark:text-white font-semibold">$1</strong>');
+  h = h.replaceAll(/\*(.+?)\*/g, '<em class="text-slate-600 dark:text-gray-400">$1</em>');
   return h;
 }
 
 function mdToHtml(md) {
   if (!md) return '';
-  const lines = md.replace(/\r\n/g, '\n').split('\n');
+  const lines = md.replaceAll('\r\n', '\n').split('\n');
   const out = [];
   let para = [];
   let list = [];

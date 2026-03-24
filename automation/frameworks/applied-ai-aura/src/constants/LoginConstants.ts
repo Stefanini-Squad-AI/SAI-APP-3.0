@@ -1,15 +1,21 @@
 /**
  * AURA — Login Constants
  *
- * RULE: Each constants file defines its own URLs.
- *       AURA_BASE_URL from .env is not used for app under test routes.
- *       Test credentials and data should live in .feature Examples tables.
+ * URL base: uses `AURA_TARGET_URL` from .env or defaults to localhost:3000.
  */
-export const LoginConstants = {
-  BASE_URL:      'https://the-internet.herokuapp.com',
-  LOGIN_PATH:    '/login',
-  SECURE_PATH:   '/secure',
+const DEFAULT_LOCAL = 'http://localhost:3000';
 
-  get LOGIN_URL()  { return `${LoginConstants.BASE_URL}${LoginConstants.LOGIN_PATH}`; },
-  get SECURE_URL() { return `${LoginConstants.BASE_URL}${LoginConstants.SECURE_PATH}`; },
+function resolveBaseUrl(): string {
+  const target = process.env['AURA_TARGET_URL']?.trim();
+  if (target) return target.replace(/\/$/, '');
+  return DEFAULT_LOCAL;
+}
+
+export const LoginConstants = {
+  BASE_URL: resolveBaseUrl(),
+  LOGIN_PATH: '/admin/login',
+  DASHBOARD_PATH: '/admin/dashboard',
+
+  get LOGIN_URL() { return `${LoginConstants.BASE_URL}${LoginConstants.LOGIN_PATH}`; },
+  get DASHBOARD_URL() { return `${LoginConstants.BASE_URL}${LoginConstants.DASHBOARD_PATH}`; },
 } as const;

@@ -3,8 +3,8 @@
  * Singleton store for all @AuraChange decorated entries.
  * Exposes query, export, and Confluence-style markdown generation.
  */
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import type { ChangeEntry, ChangeKind } from '../../types/index';
 
 // ─── Query Filter ─────────────────────────────────────────────────────────────
@@ -26,9 +26,7 @@ export class ChangelogRegistry {
   private constructor() {}
 
   static getInstance(): ChangelogRegistry {
-    if (!ChangelogRegistry.instance) {
-      ChangelogRegistry.instance = new ChangelogRegistry();
-    }
+    ChangelogRegistry.instance ??= new ChangelogRegistry();
     return ChangelogRegistry.instance;
   }
 
@@ -68,15 +66,17 @@ export class ChangelogRegistry {
       for (const entry of entries) {
         const badge = this.kindBadge(entry.kind);
         const date = entry.date.slice(0, 10);
-        lines.push(`### ${badge} ${entry.title}`);
-        lines.push(`> **${date}** · *${entry.author}* · \`${entry.target}\``);
-        lines.push('');
-        lines.push(entry.description);
-        if (entry.tags.length > 0) {
-          lines.push('');
-          lines.push(`**Tags:** ${entry.tags.map((t) => `\`${t}\``).join(', ')}`);
-        }
-        lines.push('\n---\n');
+        const tagLine = entry.tags.length > 0
+          ? `\n\n**Tags:** ${entry.tags.map((t) => '`' + t + '`').join(', ')}`
+          : '';
+        lines.push(
+          `### ${badge} ${entry.title}`,
+          `> **${date}** · *${entry.author}* · \`${entry.target}\``,
+          '',
+          entry.description,
+          ...( tagLine ? ['', tagLine] : []),
+          '\n---\n',
+        );
       }
     }
 
@@ -172,10 +172,10 @@ export class ChangelogRegistry {
 
   private escapeHTML(str: string): string {
     return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
   }
 }
 

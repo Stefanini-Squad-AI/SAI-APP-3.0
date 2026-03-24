@@ -8,6 +8,10 @@ import type { AuraWorld } from '../cucumber/world/AuraWorld';
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 
+Given('I use a mobile viewport', async function (this: AuraWorld) {
+  await this.page.setViewportSize({ width: 390, height: 844 });
+});
+
 Given('I navigate to {string}', async function (this: AuraWorld, url: string) {
   let target = url.trim();
   if (target.startsWith('/') && !target.startsWith('//')) {

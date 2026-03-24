@@ -17,6 +17,8 @@ public static class ServiceExtensions
 
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton<IConfiguration>(configuration);
+
         // Configure MongoDB settings
         services.Configure<MongoDbSettings>(configuration.GetSection("MongoDbSettings"));
         

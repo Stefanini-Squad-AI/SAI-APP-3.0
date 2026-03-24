@@ -140,9 +140,9 @@ jobs:
               '',
               '---',
               '',
-              '### \u{1F4E6} Artefactos Descargables',
+              '### \u{1F4E6} Downloadable Artifacts',
               '',
-              '| | Nombre | Descripci\u00F3n |',
+              '| | Name | Description |',
               '|:---:|--------|-------------|',
               '| \u{1F4E6} | `backend-unit-test-report` | Backend unit test results |',
               '| \u{1F4E6} | `frontend-unit-test-report` | Frontend unit test results |',
@@ -406,7 +406,7 @@ jobs:
             echo "detail=Quality Gate status: $QG_STATUS." >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Actualizar panel de resultados
+      - name: Update dashboard — SonarQube Backend
         if: always()
         uses: actions/github-script@v8
         env:
@@ -415,45 +415,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
         with:
           script: |
-            async function updateDashboard(github, context, sections) {
-              const maxAttempts = 5;
-              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-                if (!c) return;
-                let body = c.body;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = body.indexOf(s), ei = body.indexOf(e);
-                  if (si !== -1 && ei !== -1)
-                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
-                }
-                try {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner, repo: context.repo.repo,
-                    comment_id: c.id, body,
-                  });
-                } catch { continue; }
-                await new Promise(r => setTimeout(r, 800));
-                const { data: verify } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
-                let ok = true;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
-                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
-                }
-                if (ok) return;
-              }
-            }
-
+            const updateDashboard = require('./.github/scripts/update-dashboard');
             const qg = process.env.QG_STATUS;
             const url = process.env.SONAR_HOST_URL
               ? `${process.env.SONAR_HOST_URL}/dashboard?id=applied-ai-team-sai3-backend`
@@ -473,7 +435,7 @@ jobs:
                 : `> \u26A0\uFE0F **Backend** - Quality Gate: ${qg || 'Unavailable'}`;
             }
 
-            await updateDashboard(github, context, { 'sonar-backend': content });
+            await updateDashboard({ github, context, sections: { 'sonar-backend': content } });
 
   sonarqube-frontend:
     name: "SonarQube \u2014 Frontend"
@@ -528,6 +490,55 @@ jobs:
           else
             echo "can_scan=false" >> "$GITHUB_OUTPUT"
             echo "reason=Validation failed (auth_http=$AUTH_HTTP, auth_valid=$AUTH_VALID)." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure permissive quality gate (demo)
+        if: steps.sonar-frontend-access.outputs.can_scan == 'true'
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_APPLIED_AI_TEAM_SAI3_FRONTEND }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
+        run: |
+          GATE_NAME="Demo Gate"
+          LIST_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" \
+            -o /tmp/sonar-gates.json \
+            -w "%{http_code}" \
+            "${SONAR_HOST_URL}/api/qualitygates/list" || echo "000")
+
+          if [ "$LIST_HTTP" != "200" ]; then
+            echo "::warning::Cannot list quality gates (HTTP $LIST_HTTP). Demo gate setup skipped."
+            exit 0
+          fi
+
+          GATE_ID=$(python3 -c "import json; gates=json.load(open('/tmp/sonar-gates.json')).get('qualitygates',[]); matches=[str(g.get('id','')) for g in gates if g.get('name')=='Demo Gate']; print(matches[0] if matches else '')" 2>/dev/null || echo "")
+
+          if [ -z "$GATE_ID" ]; then
+            CREATE_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" -X POST \
+              -o /tmp/sonar-create-gate.json \
+              -w "%{http_code}" \
+              "${SONAR_HOST_URL}/api/qualitygates/create?name=Demo+Gate" || echo "000")
+
+            if [ "$CREATE_HTTP" = "200" ] || [ "$CREATE_HTTP" = "201" ]; then
+              GATE_ID=$(python3 -c "import json; print(str(json.load(open('/tmp/sonar-create-gate.json')).get('id','')))" 2>/dev/null || echo "")
+            elif [ "$CREATE_HTTP" = "400" ]; then
+              SHOW_HTTP=$(curl -sS -u "${SONAR_TOKEN}:" \
+                -o /tmp/sonar-show-gate.json \
+                -w "%{http_code}" \
+                "${SONAR_HOST_URL}/api/qualitygates/show?name=Demo+Gate" || echo "000")
+              if [ "$SHOW_HTTP" = "200" ]; then
+                GATE_ID=$(python3 -c "import json; print(str(json.load(open('/tmp/sonar-show-gate.json')).get('id','')))" 2>/dev/null || echo "")
+              else
+                exit 0
+              fi
+            else
+              exit 0
+            fi
+          fi
+
+          if [ -n "$GATE_ID" ]; then
+            curl -sS -u "${SONAR_TOKEN}:" -X POST \
+              -o /dev/null -w "%{http_code}" \
+              "${SONAR_HOST_URL}/api/qualitygates/select?projectKey=applied-ai-team-sai3-frontend&gateId=${GATE_ID}" || true
           fi
 
       - name: Run SonarQube scan
@@ -606,7 +617,7 @@ jobs:
             echo "detail=Quality Gate status: $QG_STATUS." >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Actualizar panel de resultados
+      - name: Update dashboard — SonarQube Frontend
         if: always()
         uses: actions/github-script@v8
         env:
@@ -615,45 +626,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL_APPLIED_AI_TEAM }}
         with:
           script: |
-            async function updateDashboard(github, context, sections) {
-              const maxAttempts = 5;
-              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-                if (!c) return;
-                let body = c.body;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = body.indexOf(s), ei = body.indexOf(e);
-                  if (si !== -1 && ei !== -1)
-                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
-                }
-                try {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner, repo: context.repo.repo,
-                    comment_id: c.id, body,
-                  });
-                } catch { continue; }
-                await new Promise(r => setTimeout(r, 800));
-                const { data: verify } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
-                let ok = true;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
-                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
-                }
-                if (ok) return;
-              }
-            }
-
+            const updateDashboard = require('./.github/scripts/update-dashboard');
             const qg = process.env.QG_STATUS;
             const url = process.env.SONAR_HOST_URL
               ? `${process.env.SONAR_HOST_URL}/dashboard?id=applied-ai-team-sai3-frontend`
@@ -673,7 +646,7 @@ jobs:
                 : `> \u26A0\uFE0F **Frontend** - Quality Gate: ${qg || 'Unavailable'}`;
             }
 
-            await updateDashboard(github, context, { 'sonar-frontend': content });
+            await updateDashboard({ github, context, sections: { 'sonar-frontend': content } });
 
   backend-unit-tests:
     name: "Unit Tests - Backend"
@@ -783,58 +756,20 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Actualizar panel de resultados
+      - name: Update dashboard — Backend unit tests
         if: always()
         uses: actions/github-script@v8
         env:
           REPORT_URL: ${{ steps.backend-report-url.outputs.backend_report_url }}
         with:
           script: |
-            async function updateDashboard(github, context, sections) {
-              const maxAttempts = 5;
-              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-                if (!c) return;
-                let body = c.body;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = body.indexOf(s), ei = body.indexOf(e);
-                  if (si !== -1 && ei !== -1)
-                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
-                }
-                try {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner, repo: context.repo.repo,
-                    comment_id: c.id, body,
-                  });
-                } catch { continue; }
-                await new Promise(r => setTimeout(r, 800));
-                const { data: verify } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
-                let ok = true;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
-                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
-                }
-                if (ok) return;
-              }
-            }
-
+            const updateDashboard = require('./.github/scripts/update-dashboard');
             const url = process.env.REPORT_URL;
             const content = url
               ? `> \u2705 **Backend** - Tests completed - \u{1F4C4} [View detailed report](${url})`
               : '> \u2705 **Backend** - Tests completed - \u{1F4E6} _Report available in artifacts_';
 
-            await updateDashboard(github, context, { 'unit-backend': content });
+            await updateDashboard({ github, context, sections: { 'unit-backend': content } });
 
   frontend-unit-tests:
     name: "Unit Tests - Frontend"
@@ -906,58 +841,20 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Actualizar panel de resultados
+      - name: Update dashboard — Frontend unit tests
         if: always()
         uses: actions/github-script@v8
         env:
           REPORT_URL: ${{ steps.frontend-report-url.outputs.frontend_report_url }}
         with:
           script: |
-            async function updateDashboard(github, context, sections) {
-              const maxAttempts = 5;
-              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-                if (!c) return;
-                let body = c.body;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = body.indexOf(s), ei = body.indexOf(e);
-                  if (si !== -1 && ei !== -1)
-                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
-                }
-                try {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner, repo: context.repo.repo,
-                    comment_id: c.id, body,
-                  });
-                } catch { continue; }
-                await new Promise(r => setTimeout(r, 800));
-                const { data: verify } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
-                let ok = true;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
-                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
-                }
-                if (ok) return;
-              }
-            }
-
+            const updateDashboard = require('./.github/scripts/update-dashboard');
             const url = process.env.REPORT_URL;
             const content = url
               ? `> \u2705 **Frontend** - Tests completed - \u{1F4C4} [View detailed report](${url})`
               : '> \u2705 **Frontend** - Tests completed - \u{1F4E6} _Report available in artifacts_';
 
-            await updateDashboard(github, context, { 'unit-frontend': content });
+            await updateDashboard({ github, context, sections: { 'unit-frontend': content } });
 
   build-and-quality-tests:
     name: "Integration and Security Tests"
@@ -1212,7 +1109,7 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Actualizar panel de resultados
+      - name: Update dashboard — Integration & Security
         if: always()
         uses: actions/github-script@v8
         env:
@@ -1221,45 +1118,7 @@ jobs:
           SEC_API_URL: ${{ steps.security-report-urls.outputs.security_api_report_url }}
         with:
           script: |
-            async function updateDashboard(github, context, sections) {
-              const maxAttempts = 5;
-              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-                if (!c) return;
-                let body = c.body;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = body.indexOf(s), ei = body.indexOf(e);
-                  if (si !== -1 && ei !== -1)
-                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
-                }
-                try {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner, repo: context.repo.repo,
-                    comment_id: c.id, body,
-                  });
-                } catch { continue; }
-                await new Promise(r => setTimeout(r, 800));
-                const { data: verify } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
-                let ok = true;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
-                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
-                }
-                if (ok) return;
-              }
-            }
-
+            const updateDashboard = require('./.github/scripts/update-dashboard');
             const integrationOk = process.env.INTEGRATION_OK === 'true';
             const secFrontendUrl = process.env.SEC_FRONTEND_URL;
             const secApiUrl = process.env.SEC_API_URL;
@@ -1279,10 +1138,10 @@ jobs:
             }
             const securityContent = securityLines.join('\n');
 
-            await updateDashboard(github, context, {
+            await updateDashboard({ github, context, sections: {
               'integration': integrationContent,
               'security': securityContent,
-            });
+            } });
 
       - name: Stop local services
         if: always()
@@ -1363,7 +1222,7 @@ jobs:
           done
           echo "Preview did not respond within ${MAX_WAIT}s — link will be posted anyway"
 
-      - name: Actualizar panel de resultados
+      - name: Update dashboard — Preview
         if: always()
         uses: actions/github-script@v8
         env:
@@ -1372,45 +1231,7 @@ jobs:
           MAIN_APP_URL: ${{ env.MAIN_APP_URL }}
         with:
           script: |
-            async function updateDashboard(github, context, sections) {
-              const maxAttempts = 5;
-              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-                if (!c) return;
-                let body = c.body;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = body.indexOf(s), ei = body.indexOf(e);
-                  if (si !== -1 && ei !== -1)
-                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
-                }
-                try {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner, repo: context.repo.repo,
-                    comment_id: c.id, body,
-                  });
-                } catch { continue; }
-                await new Promise(r => setTimeout(r, 800));
-                const { data: verify } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
-                let ok = true;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
-                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
-                }
-                if (ok) return;
-              }
-            }
-
+            const updateDashboard = require('./.github/scripts/update-dashboard');
             const url = process.env.PREVIEW_URL?.trim() || process.env.EXPECTED_URL?.trim();
             const mainAppUrl = process.env.MAIN_APP_URL;
             let content;
@@ -1425,7 +1246,7 @@ jobs:
               content = '> \u274C _Failed to deploy preview site_';
             }
 
-            await updateDashboard(github, context, { 'preview': content });
+            await updateDashboard({ github, context, sections: { 'preview': content } });
 
       - name: Comment preview URL on PR
         uses: actions/github-script@v8
@@ -1483,7 +1304,7 @@ jobs:
             echo "has_docs=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Update docs section in dashboard
+      - name: Update dashboard — Docs preview
         if: always()
         uses: actions/github-script@v8
         env:
@@ -1492,49 +1313,10 @@ jobs:
           MAIN_DOCS_URL: ${{ env.MAIN_DOCS_URL }}
         with:
           script: |
-            async function updateDashboard(github, context, sections) {
-              const maxAttempts = 5;
-              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-                if (!c) return;
-                let body = c.body;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = body.indexOf(s), ei = body.indexOf(e);
-                  if (si !== -1 && ei !== -1)
-                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
-                }
-                try {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner, repo: context.repo.repo,
-                    comment_id: c.id, body,
-                  });
-                } catch { continue; }
-                await new Promise(r => setTimeout(r, 800));
-                const { data: verify } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
-                let ok = true;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
-                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
-                }
-                if (ok) return;
-              }
-            }
-
+            const updateDashboard = require('./.github/scripts/update-dashboard');
             const hasDocs = process.env.HAS_DOCS === 'true';
             const prPreviewUrl = process.env.PR_PREVIEW_URL;
             const mainDocsUrl = process.env.MAIN_DOCS_URL;
-            // Docs are embedded inside the main Surge preview build at /docs/
             const prDocsUrl = prPreviewUrl ? `${prPreviewUrl.replace(/\/$/, '')}/docs/` : null;
             let content;
             if (hasDocs) {
@@ -1550,7 +1332,7 @@ jobs:
             } else {
               content = '> \u26AA _No documentation directory found to publish_';
             }
-            await updateDashboard(github, context, { 'docs-preview': content });
+            await updateDashboard({ github, context, sections: { 'docs-preview': content } });
 
   functional-tests-web:
     name: "Functional Tests"
@@ -1622,7 +1404,7 @@ jobs:
 
       - name: Run functional tests
         working-directory: automation/frameworks/applied-ai-aura
-        run: npx cucumber-js --tags "@preview"
+        run: npx cucumber-js --tags "@preview or @smoke"
         continue-on-error: true
 
       - name: Locate latest report and video
@@ -1665,52 +1447,14 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
-      - name: Actualizar panel de resultados
+      - name: Update dashboard — Functional tests
         if: always()
         uses: actions/github-script@v8
         env:
           REPORT_URL: ${{ steps.functional-report-url.outputs.functional_report_url }}
         with:
           script: |
-            async function updateDashboard(github, context, sections) {
-              const maxAttempts = 5;
-              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                if (attempt > 1) await new Promise(r => setTimeout(r, attempt * 1000 + Math.random() * 2000));
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const c = comments.find(c => c.body?.includes('<!-- ci-dashboard -->'));
-                if (!c) return;
-                let body = c.body;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = body.indexOf(s), ei = body.indexOf(e);
-                  if (si !== -1 && ei !== -1)
-                    body = body.substring(0, si + s.length) + '\n' + content + '\n' + body.substring(ei);
-                }
-                try {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner, repo: context.repo.repo,
-                    comment_id: c.id, body,
-                  });
-                } catch { continue; }
-                await new Promise(r => setTimeout(r, 800));
-                const { data: verify } = await github.rest.issues.listComments({
-                  owner: context.repo.owner, repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-                const vc = verify.find(v => v.body?.includes('<!-- ci-dashboard -->'));
-                let ok = true;
-                for (const [name, content] of Object.entries(sections)) {
-                  const s = `<!-- section:${name} -->`, e = `<!-- /section:${name} -->`;
-                  const si = vc?.body?.indexOf(s) ?? -1, ei = vc?.body?.indexOf(e) ?? -1;
-                  if (si !== -1 && ei !== -1 && vc.body.substring(si + s.length, ei).trim() !== content.trim()) { ok = false; break; }
-                }
-                if (ok) return;
-              }
-            }
-
+            const updateDashboard = require('./.github/scripts/update-dashboard');
             const url = process.env.REPORT_URL;
             let content;
             if (url) {
@@ -1723,7 +1467,7 @@ jobs:
               content = '> \u2705 Functional tests completed - \u{1F4E6} _Report available in artifacts_';
             }
 
-            await updateDashboard(github, context, { 'functional': content });
+            await updateDashboard({ github, context, sections: { 'functional': content } });
 
   teardown-preview:
     if: github.event.action == 'closed'
@@ -1810,7 +1554,7 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
-      - name: Actualizar panel de resultados
+      - name: Update dashboard — PR closed
         uses: actions/github-script@v8
         with:
           script: |

@@ -57,12 +57,14 @@ const LanguageSelector = () => {
           {LANGUAGES.map((lang) => (
             <li key={lang.code}>
               <button
+                type="button"
                 onClick={() => handleLanguageChange(lang.code)}
                 className={`w-full px-4 py-2 text-left hover:bg-primary-50 transition ${
                   i18n.language === lang.code
                     ? 'bg-primary-50 text-primary-700 font-semibold'
                     : 'text-gray-700'
                 }`}
+                aria-label={t(lang.labelKey)}
               >
                 {t(lang.labelKey)}
               </button>

@@ -3,7 +3,7 @@
  * Lifecycle hooks that manage browser setup/teardown, step-level data
  * collection, screenshot capture, and AURA report generation.
  */
-import * as path from 'path';
+import * as path from 'node:path';
 import { Before, After, BeforeStep, AfterStep, Status, setDefaultTimeout } from '@cucumber/cucumber';
 import type { GherkinDocument, PickleStep } from '@cucumber/messages';
 import type { AuraWorld } from '../world/AuraWorld';
@@ -72,7 +72,7 @@ After(async function (this: AuraWorld, { result }) {
   if (result?.status === Status.FAILED) {
     try {
       const buf = await this.page.screenshot({ fullPage: true });
-      await this.attach(buf, 'image/png');
+      this.attach(buf, 'image/png');
     } catch { /* non-critical */ }
   }
 
@@ -106,7 +106,7 @@ AfterStep(async function (this: AuraWorld, { pickleStep, result, gherkinDocument
     this.report.addIntentResults(intentResults);
 
     if (result.status === Status.FAILED) {
-      await this.attach(JSON.stringify(intentResults, null, 2), 'application/json');
+      this.attach(JSON.stringify(intentResults, null, 2), 'application/json');
     }
   }
 

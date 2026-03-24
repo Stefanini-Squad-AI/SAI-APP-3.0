@@ -19,10 +19,10 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 | Level | Reason | Site | Description | Statistic |
 | --- | --- | --- | --- | --- |
-| Info | Informational | http://host.docker.internal:3000 | Percentage of responses with status code 4xx | 100 % |
-| Info | Informational | http://host.docker.internal:3000 | Percentage of endpoints with content type text/plain | 100 % |
-| Info | Informational | http://host.docker.internal:3000 | Percentage of endpoints with method GET | 100 % |
-| Info | Informational | http://host.docker.internal:3000 | Count of total endpoints | 2    |
+| Info | Informational | http://tco-frontend:3000 | Percentage of responses with status code 4xx | 100 % |
+| Info | Informational | http://tco-frontend:3000 | Percentage of endpoints with content type text/plain | 100 % |
+| Info | Informational | http://tco-frontend:3000 | Percentage of endpoints with method GET | 100 % |
+| Info | Informational | http://tco-frontend:3000 | Count of total endpoints | 2    |
 
 
 
@@ -50,15 +50,15 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.
 
-* URL: http://host.docker.internal:3000
-  * Node Name: `http://host.docker.internal:3000`
+* URL: http://tco-frontend:3000
+  * Node Name: `http://tco-frontend:3000`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
   * Evidence: `403`
   * Other Info: ``
-* URL: http://host.docker.internal:3000/robots.txt
-  * Node Name: `http://host.docker.internal:3000/robots.txt`
+* URL: http://tco-frontend:3000/robots.txt
+  * Node Name: `http://tco-frontend:3000/robots.txt`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``

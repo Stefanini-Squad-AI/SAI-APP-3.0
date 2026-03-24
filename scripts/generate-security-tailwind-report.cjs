@@ -14,8 +14,8 @@
  *   node scripts/generate-security-tailwind-report.cjs
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
 const ENV_PATH = path.join(ROOT, '.env');
@@ -24,41 +24,42 @@ const OUT_DIR = path.join(SECURITY_DIR, 'tailwind-dashboard');
 const FRONTEND_JSON = path.join(SECURITY_DIR, 'zap-frontend-report.json');
 const API_JSON = path.join(SECURITY_DIR, 'zap-api-report.json');
 
+function parseDotenvManual() {
+  if (!fs.existsSync(ENV_PATH)) return;
+  const raw = fs.readFileSync(ENV_PATH, 'utf8');
+  for (const line of raw.split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Za-z_]\w*)\s*=\s*(.*)$/);
+    if (m && !process.env[m[1]]) {
+      let v = m[2].trim();
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))
+        v = v.slice(1, -1);
+      process.env[m[1]] = v;
+    }
+  }
+}
+
 function loadDotenv() {
   try {
     require(path.join(ROOT, 'frontend', 'node_modules', 'dotenv')).config({ path: ENV_PATH });
   } catch {
-    try {
-      if (fs.existsSync(ENV_PATH)) {
-        const raw = fs.readFileSync(ENV_PATH, 'utf8');
-        for (const line of raw.split(/\r?\n/)) {
-          const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
-          if (m && !process.env[m[1]]) {
-            let v = m[2].trim();
-            if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))
-              v = v.slice(1, -1);
-            process.env[m[1]] = v;
-          }
-        }
-      }
-    } catch { /* ignore */ }
+    try { parseDotenvManual(); } catch { /* ignore */ }
   }
 }
 loadDotenv();
 
 function stripHtml(html) {
   if (!html) return '';
-  return String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return String(html).replaceAll(/<[^>]+>/g, ' ').replaceAll(/\s+/g, ' ').trim();
 }
 
 function esc(s) {
   if (!s) return '';
   return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
 function parseZapFile(filePath, scanKey) {
@@ -68,7 +69,10 @@ function parseZapFile(filePath, scanKey) {
   }
   const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   const insights = Array.isArray(data.insights) ? data.insights : [];
-  const sites = Array.isArray(data.site) ? data.site : data.site ? [data.site] : [];
+  let sites;
+  if (Array.isArray(data.site)) sites = data.site;
+  else if (data.site) sites = [data.site];
+  else sites = [];
   const alerts = [];
   for (const site of sites) {
     const metaName = site['@name'] || site.name || '';
@@ -278,7 +282,7 @@ Use markdown (**bold**, bullets) inside each string. No code fences.`;
     console.log(`  AI response (${data.usage?.total_tokens ?? '?'} tokens).`);
     return parseSummaryJson(content) || { en: content.trim(), es: content.trim(), pt: content.trim() };
   } catch (err) {
-    console.warn(`  LLM failed: ${err && err.message ? err.message : String(err)}`);
+    console.warn(`  LLM failed: ${err?.message ?? String(err)}`);
     return { en: '', es: '', pt: '' };
   }
 }
@@ -292,9 +296,9 @@ function mdToHtml(md) {
     if (block.startsWith('## ')) return `<h3 class="text-lg font-semibold text-slate-800 dark:text-white mt-3 mb-2">${esc(block.slice(3))}</h3>`;
     if (block.startsWith('# ')) return `<h2 class="text-xl font-bold text-slate-800 dark:text-white mt-4 mb-2">${esc(block.slice(2))}</h2>`;
     let h = esc(block);
-    h = h.replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 dark:text-white">$1</strong>');
-    h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    h = h.replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
+    h = h.replaceAll(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 dark:text-white">$1</strong>');
+    h = h.replaceAll(/\*(.+?)\*/g, '<em>$1</em>');
+    h = h.replaceAll(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
     if (h.includes('<li')) h = `<ul class="space-y-1 mb-3">${h}</ul>`;
     else h = `<p class="mb-3">${h}</p>`;
     return h;
@@ -314,7 +318,8 @@ function generateHtml(agg, summaryByLang, model) {
     es: mdToHtml(summaryByLang.es),
     pt: mdToHtml(summaryByLang.pt),
   };
-  const summaryJson = JSON.stringify(summaryHtml).replace(/<\/script/g, '<\\/script');
+  const closeScriptSafe = String.fromCodePoint(60) + '/script';
+  const summaryJson = JSON.stringify(summaryHtml).replaceAll('</script', closeScriptSafe);
 
   const feIns = model.frontend.alerts.reduce((s, a) => s + a.instanceCount, 0);
   const apiIns = model.api.alerts.reduce((s, a) => s + a.instanceCount, 0);
@@ -387,23 +392,24 @@ function generateHtml(agg, summaryByLang, model) {
     apiAlerts: model.api.alerts.length,
     feInstances: feIns,
     apiInstances: apiIns,
-  }).replace(/</g, '\\u003c');
+  }).replaceAll('<', '\u003c');
 
-  const statusBadge = agg.highCount > 0
-    ? 'bg-red-500/20 text-red-100 border-red-400/50'
-    : agg.medCount > 0
-      ? 'bg-amber-500/20 text-amber-100 border-amber-400/50'
-      : 'bg-emerald-500/20 text-emerald-100 border-emerald-400/50';
-  const statusText =
-    agg.highCount > 0 ? 'REVIEW HIGH' : agg.medCount > 0 ? 'REVIEW MEDIUM' : 'LOW RISK PROFILE';
+  let statusBadge;
+  if (agg.highCount > 0) statusBadge = 'bg-red-500/20 text-red-100 border-red-400/50';
+  else if (agg.medCount > 0) statusBadge = 'bg-amber-500/20 text-amber-100 border-amber-400/50';
+  else statusBadge = 'bg-emerald-500/20 text-emerald-100 border-emerald-400/50';
+  let statusText;
+  if (agg.highCount > 0) statusText = 'REVIEW HIGH';
+  else if (agg.medCount > 0) statusText = 'REVIEW MEDIUM';
+  else statusText = 'LOW RISK PROFILE';
 
   return `<!DOCTYPE html>
 <html lang="es" class="">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>OWASP ZAP — Security Dashboard v2 · TuCreditoOnline</title>
-<script src="https://cdn.tailwindcss.com"><\/script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"><\/script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script>
 tailwind.config = {
@@ -417,7 +423,7 @@ tailwind.config = {
     }
   }
 };
-<\/script>
+${'<'}/script>
 <style>
 .tab-btn.active{border-color:#6366f1;color:#6366f1;background:rgba(99,102,241,.08)}
 .dark .tab-btn.active{color:#a5b4fc;background:rgba(99,102,241,.15)}
@@ -533,7 +539,8 @@ html.dark #lang-select option{color:#fafafa;background-color:#3f3f46}
       ${[3, 2, 1, 0].map((c) => {
         const n = agg.byRiskFindings[c];
         const pct = agg.totalFindings ? (n / agg.totalFindings) * 100 : 0;
-        const col = c === 3 ? 'bg-red-500' : c === 2 ? 'bg-amber-500' : c === 1 ? 'bg-blue-500' : 'bg-slate-400';
+        const riskColors = { 3: 'bg-red-500', 2: 'bg-amber-500', 1: 'bg-blue-500', 0: 'bg-slate-400' };
+        const col = riskColors[c] || 'bg-slate-400';
         return pct > 0 ? `<div class="${col} h-full transition-all" style="width:${pct.toFixed(2)}%" title="${riskLabel(c)}: ${n}"></div>` : '';
       }).join('')}
     </div>
@@ -837,7 +844,7 @@ function updateAllCharts(lang) {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
   else run();
 })();
-<\/script>
+${'<'}/script>
 </body>
 </html>`;
 }

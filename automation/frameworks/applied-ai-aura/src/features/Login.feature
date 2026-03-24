@@ -1,21 +1,26 @@
-# Login feature
-# Test data should live in Examples.
-# URL constants should live in LoginConstants.ts.
+# Admin Login feature — TuCreditoOnline SPA (SAI-APP-3.0 frontend)
+# URL constants: LoginConstants.ts
 
 @login
-Feature: User Authentication
-  As an application user
+Feature: TuCreditoOnline Admin Login
+  As an administrator
   I want to sign in with valid credentials
-  So that I can access protected areas
+  So that I can access the administration panel
 
   Background:
-    Given the browser is open on the login page
+    Given the browser is on the admin login page
 
-  @smoke @happy-path
+  @smoke @login-page-display
+  Scenario: Login page displays correctly
+    Then I should see the heading "Administration Panel"
+    And the email field should be visible
+    And the password field should be visible
+    And the login button should be visible
+
+  @smoke @login-valid-credentials
   Scenario: Successful login with valid credentials
-    When I enter username "tomsmith"
-    And I enter password "SuperSecretPassword!"
-    And I click the login button
-    Then I should be redirected to "/secure"
-    And I should see the welcome message
+    When I enter email "admin@tucreditoonline.local"
+    And I enter login password "Admin123!"
+    And I click the admin login button
+    Then the URL should contain "admin/dashboard"
 

@@ -1,53 +1,537 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="23" failures="0" errors="0" time="22.032">
-  <testsuite name="useCreditCalculator" errors="0" failures="0" skipped="0" timestamp="2026-03-19T18:24:08" time="5.14" tests="11">
-    <testcase classname="useCreditCalculator should initialize with default values" name="useCreditCalculator should initialize with default values" time="0.098">
+<testsuites name="jest tests" tests="250" failures="0" errors="0" time="11.05">
+  <testsuite name="checkHealth" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.702" tests="2">
+    <testcase classname="checkHealth returns health data on success" name="checkHealth returns health data on success" time="0.01">
     </testcase>
-    <testcase classname="useCreditCalculator should calculate monthly payment correctly using French amortization formula" name="useCreditCalculator should calculate monthly payment correctly using French amortization formula" time="0.077">
+    <testcase classname="checkHealth logs and re-throws error on failure" name="checkHealth logs and re-throws error on failure" time="0.008">
     </testcase>
-    <testcase classname="useCreditCalculator should calculate correct monthly payment for 100,000 at 18% for 3 years" name="useCreditCalculator should calculate correct monthly payment for 100,000 at 18% for 3 years" time="0.078">
+  </testsuite>
+  <testsuite name="decodeJWT" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.717" tests="15">
+    <testcase classname="decodeJWT returns null for falsy input" name="decodeJWT returns null for falsy input" time="0.009">
     </testcase>
-    <testcase classname="useCreditCalculator should calculate correct total payment and interest" name="useCreditCalculator should calculate correct total payment and interest" time="0.077">
+    <testcase classname="decodeJWT returns null for a token with wrong number of parts" name="decodeJWT returns null for a token with wrong number of parts" time="0.006">
     </testcase>
-    <testcase classname="useCreditCalculator should calculate max financing based on 35% of monthly income" name="useCreditCalculator should calculate max financing based on 35% of monthly income" time="0.078">
+    <testcase classname="decodeJWT decodes a valid JWT and returns its payload" name="decodeJWT decodes a valid JWT and returns its payload" time="0.001">
     </testcase>
-    <testcase classname="useCreditCalculator should respect credit type max amount limit" name="useCreditCalculator should respect credit type max amount limit" time="0.077">
+    <testcase classname="decodeJWT returns null for a token with malformed base64 payload" name="decodeJWT returns null for a token with malformed base64 payload" time="0.001">
+    </testcase>
+    <testcase classname="decodeJWT handles tokens with URL-safe base64 encoding (- and _ characters)" name="decodeJWT handles tokens with URL-safe base64 encoding (- and _ characters)" time="0.001">
+    </testcase>
+    <testcase classname="extractUserFromToken returns null for a falsy token" name="extractUserFromToken returns null for a falsy token" time="0">
+    </testcase>
+    <testcase classname="extractUserFromToken returns null for an invalid token" name="extractUserFromToken returns null for an invalid token" time="0.001">
+    </testcase>
+    <testcase classname="extractUserFromToken extracts user data from standard JWT claims" name="extractUserFromToken extracts user data from standard JWT claims" time="0.001">
+    </testcase>
+    <testcase classname="extractUserFromToken falls back to .NET-style claim names when standard claims are missing" name="extractUserFromToken falls back to .NET-style claim names when standard claims are missing" time="0.001">
+    </testcase>
+    <testcase classname="extractUserFromToken returns null values for missing claims" name="extractUserFromToken returns null values for missing claims" time="0.001">
+    </testcase>
+    <testcase classname="isJWTExpired returns true for a falsy token" name="isJWTExpired returns true for a falsy token" time="0">
+    </testcase>
+    <testcase classname="isJWTExpired returns true for a token without exp claim" name="isJWTExpired returns true for a token without exp claim" time="0.001">
+    </testcase>
+    <testcase classname="isJWTExpired returns true for an expired token" name="isJWTExpired returns true for an expired token" time="0">
+    </testcase>
+    <testcase classname="isJWTExpired returns false for a token that has not yet expired" name="isJWTExpired returns false for a token that has not yet expired" time="0.001">
+    </testcase>
+    <testcase classname="isJWTExpired returns true for an invalid token" name="isJWTExpired returns true for an invalid token" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="generateBackup" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.715" tests="9">
+    <testcase classname="generateBackup downloads the backup file and returns success" name="generateBackup downloads the backup file and returns success" time="0.016">
+    </testcase>
+    <testcase classname="generateBackup uses the filename from content-disposition header" name="generateBackup uses the filename from content-disposition header" time="0.002">
+    </testcase>
+    <testcase classname="generateBackup falls back to default filename when content-disposition is missing" name="generateBackup falls back to default filename when content-disposition is missing" time="0.001">
+    </testcase>
+    <testcase classname="generateBackup falls back to default filename when content-disposition has no filename match" name="generateBackup falls back to default filename when content-disposition has no filename match" time="0.001">
+    </testcase>
+    <testcase classname="generateBackup returns error on API failure" name="generateBackup returns error on API failure" time="0.001">
+    </testcase>
+    <testcase classname="generateBackup falls back to error.message when response has no error field" name="generateBackup falls back to error.message when response has no error field" time="0.001">
+    </testcase>
+    <testcase classname="getBackupStatus returns success with status data" name="getBackupStatus returns success with status data" time="0.001">
+    </testcase>
+    <testcase classname="getBackupStatus returns error on failure" name="getBackupStatus returns error on failure" time="0.001">
+    </testcase>
+    <testcase classname="getBackupStatus falls back to default message when error is empty" name="getBackupStatus falls back to default message when error is empty" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="getStats" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.729" tests="7">
+    <testcase classname="getStats returns success with dashboard stats" name="getStats returns success with dashboard stats" time="0.01">
+    </testcase>
+    <testcase classname="getStats returns error on failure" name="getStats returns error on failure" time="0">
+    </testcase>
+    <testcase classname="getStats falls back to error.message when response has no error field" name="getStats falls back to error.message when response has no error field" time="0">
+    </testcase>
+    <testcase classname="getStats falls back to default message when error has no message" name="getStats falls back to default message when error has no message" time="0.001">
+    </testcase>
+    <testcase classname="getStatusDistribution returns success with distribution data" name="getStatusDistribution returns success with distribution data" time="0.001">
+    </testcase>
+    <testcase classname="getStatusDistribution returns error on failure" name="getStatusDistribution returns error on failure" time="0.002">
+    </testcase>
+    <testcase classname="getStatusDistribution falls back to default message when error has no message" name="getStatusDistribution falls back to default message when error has no message" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="getAll" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.735" tests="13">
+    <testcase classname="getAll returns all credit types when no isActive filter is given" name="getAll returns all credit types when no isActive filter is given" time="0.015">
+    </testcase>
+    <testcase classname="getAll passes isActive filter to the API when provided" name="getAll passes isActive filter to the API when provided" time="0.001">
+    </testcase>
+    <testcase classname="getAll returns all mock data when the backend is unreachable and no filter" name="getAll returns all mock data when the backend is unreachable and no filter" time="0.001">
+    </testcase>
+    <testcase classname="getAll filters mock data when isActive=true and backend is unreachable" name="getAll filters mock data when isActive=true and backend is unreachable" time="0.001">
+    </testcase>
+    <testcase classname="getAll filters mock data when isActive=false and backend is unreachable" name="getAll filters mock data when isActive=false and backend is unreachable" time="0.001">
+    </testcase>
+    <testcase classname="getById returns credit type data on success" name="getById returns credit type data on success" time="0.001">
+    </testcase>
+    <testcase classname="getById throws and logs on failure" name="getById throws and logs on failure" time="0.01">
+    </testcase>
+    <testcase classname="create creates a credit type and returns the response data" name="create creates a credit type and returns the response data" time="0.001">
+    </testcase>
+    <testcase classname="create throws and logs on failure" name="create throws and logs on failure" time="0.002">
+    </testcase>
+    <testcase classname="update updates a credit type and returns the response data" name="update updates a credit type and returns the response data" time="0">
+    </testcase>
+    <testcase classname="update throws and logs on failure" name="update throws and logs on failure" time="0">
+    </testcase>
+    <testcase classname="delete deletes a credit type and returns the response data" name="delete deletes a credit type and returns the response data" time="0">
+    </testcase>
+    <testcase classname="delete throws and logs on failure" name="delete throws and logs on failure" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="login – real API mode (default env)" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.763" tests="10">
+    <testcase classname="login – real API mode (default env) returns success on a successful API response" name="login – real API mode (default env) returns success on a successful API response" time="0.013">
+    </testcase>
+    <testcase classname="login – real API mode (default env) returns error with message from response data on API failure" name="login – real API mode (default env) returns error with message from response data on API failure" time="0.001">
+    </testcase>
+    <testcase classname="login – real API mode (default env) returns error with generic message when response has no error field" name="login – real API mode (default env) returns error with generic message when response has no error field" time="0">
+    </testcase>
+    <testcase classname="login – real API mode (default env) returns a specific message for HTTP 404 endpoint-not-found errors" name="login – real API mode (default env) returns a specific message for HTTP 404 endpoint-not-found errors" time="0">
+    </testcase>
+    <testcase classname="login – real API mode (default env) returns a specific message for HTTP 405 errors" name="login – real API mode (default env) returns a specific message for HTTP 405 errors" time="0">
+    </testcase>
+    <testcase classname="login – real API mode (default env) trims and lower-cases the email before sending" name="login – real API mode (default env) trims and lower-cases the email before sending" time="0">
+    </testcase>
+    <testcase classname="register returns success on successful registration" name="register returns success on successful registration" time="0.001">
+    </testcase>
+    <testcase classname="register uses the provided role" name="register uses the provided role" time="0.001">
+    </testcase>
+    <testcase classname="register returns error on registration failure" name="register returns error on registration failure" time="0.001">
+    </testcase>
+    <testcase classname="register falls back to error.message when response data has no error field" name="register falls back to error.message when response data has no error field" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="getAll" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.748" tests="11">
+    <testcase classname="getAll returns all services with no filter" name="getAll returns all services with no filter" time="0.011">
+    </testcase>
+    <testcase classname="getAll passes isActive filter when provided" name="getAll passes isActive filter when provided" time="0.001">
+    </testcase>
+    <testcase classname="getAll throws and logs on failure" name="getAll throws and logs on failure" time="0.015">
+    </testcase>
+    <testcase classname="getById returns service data on success" name="getById returns service data on success" time="0.002">
+    </testcase>
+    <testcase classname="getById throws and logs on failure" name="getById throws and logs on failure" time="0.001">
+    </testcase>
+    <testcase classname="create creates a service and returns response data" name="create creates a service and returns response data" time="0">
+    </testcase>
+    <testcase classname="create throws and logs on failure" name="create throws and logs on failure" time="0.001">
+    </testcase>
+    <testcase classname="update updates a service and returns response data" name="update updates a service and returns response data" time="0">
+    </testcase>
+    <testcase classname="update throws and logs on failure" name="update throws and logs on failure" time="0.002">
+    </testcase>
+    <testcase classname="delete deletes a service and returns response data" name="delete deletes a service and returns response data" time="0.001">
+    </testcase>
+    <testcase classname="delete throws and logs on failure" name="delete throws and logs on failure" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="getAllUsers" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.76" tests="15">
+    <testcase classname="getAllUsers returns success with user list and default pagination" name="getAllUsers returns success with user list and default pagination" time="0.01">
+    </testcase>
+    <testcase classname="getAllUsers includes search param when provided" name="getAllUsers includes search param when provided" time="0.001">
+    </testcase>
+    <testcase classname="getAllUsers does not include search param when search is empty" name="getAllUsers does not include search param when search is empty" time="0.001">
+    </testcase>
+    <testcase classname="getAllUsers returns error on failure" name="getAllUsers returns error on failure" time="0.001">
+    </testcase>
+    <testcase classname="getAllUsers uses response.data.error when available" name="getAllUsers uses response.data.error when available" time="0.001">
+    </testcase>
+    <testcase classname="getUserById returns success with user data" name="getUserById returns success with user data" time="0">
+    </testcase>
+    <testcase classname="getUserById returns error on failure" name="getUserById returns error on failure" time="0">
+    </testcase>
+    <testcase classname="createUser creates a user and returns success" name="createUser creates a user and returns success" time="0.001">
+    </testcase>
+    <testcase classname="createUser returns error on failure" name="createUser returns error on failure" time="0">
+    </testcase>
+    <testcase classname="updateUser updates a user and returns success" name="updateUser updates a user and returns success" time="0.001">
+    </testcase>
+    <testcase classname="updateUser returns error on failure" name="updateUser returns error on failure" time="0.001">
+    </testcase>
+    <testcase classname="deleteUser deletes a user and returns success" name="deleteUser deletes a user and returns success" time="0">
+    </testcase>
+    <testcase classname="deleteUser returns error on failure" name="deleteUser returns error on failure" time="0.001">
+    </testcase>
+    <testcase classname="changePassword changes password and returns success" name="changePassword changes password and returns success" time="0.001">
+    </testcase>
+    <testcase classname="changePassword returns error on failure" name="changePassword returns error on failure" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="create" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.783" tests="28">
+    <testcase classname="create creates a message and returns the response data" name="create creates a message and returns the response data" time="0.015">
+    </testcase>
+    <testcase classname="create returns a demo object when the backend is unreachable" name="create returns a demo object when the backend is unreachable" time="0.003">
+    </testcase>
+    <testcase classname="getAll fetches all messages without status filter" name="getAll fetches all messages without status filter" time="0.001">
+    </testcase>
+    <testcase classname="getAll fetches messages filtered by status" name="getAll fetches messages filtered by status" time="0.001">
+    </testcase>
+    <testcase classname="getAll throws on failure" name="getAll throws on failure" time="0.016">
+    </testcase>
+    <testcase classname="getById returns the message data" name="getById returns the message data" time="0.001">
+    </testcase>
+    <testcase classname="getById throws on failure" name="getById throws on failure" time="0.001">
+    </testcase>
+    <testcase classname="updateStatus updates status without adminNotes" name="updateStatus updates status without adminNotes" time="0">
+    </testcase>
+    <testcase classname="updateStatus includes adminNotes in the payload when provided" name="updateStatus includes adminNotes in the payload when provided" time="0.001">
+    </testcase>
+    <testcase classname="updateStatus throws on failure" name="updateStatus throws on failure" time="0.001">
+    </testcase>
+    <testcase classname="delete deletes the message" name="delete deletes the message" time="0.003">
+    </testcase>
+    <testcase classname="delete throws on failure" name="delete throws on failure" time="0.001">
+    </testcase>
+    <testcase classname="getStatusText returns correct text for each status" name="getStatusText returns correct text for each status" time="0">
+    </testcase>
+    <testcase classname="getStatusText returns Unknown for an unrecognised status" name="getStatusText returns Unknown for an unrecognised status" time="0.001">
+    </testcase>
+    <testcase classname="getStatusColor returns the correct Tailwind classes for known statuses" name="getStatusColor returns the correct Tailwind classes for known statuses" time="0.002">
+    </testcase>
+    <testcase classname="getStatusColor returns default class for unknown status" name="getStatusColor returns default class for unknown status" time="0">
+    </testcase>
+    <testcase classname="isValidTransition allows New → InProgress" name="isValidTransition allows New → InProgress" time="0">
+    </testcase>
+    <testcase classname="isValidTransition allows New → Replied" name="isValidTransition allows New → Replied" time="0.001">
+    </testcase>
+    <testcase classname="isValidTransition disallows New → Closed directly" name="isValidTransition disallows New → Closed directly" time="0.001">
+    </testcase>
+    <testcase classname="isValidTransition allows InProgress → Replied" name="isValidTransition allows InProgress → Replied" time="0.001">
+    </testcase>
+    <testcase classname="isValidTransition allows InProgress → Closed" name="isValidTransition allows InProgress → Closed" time="0.001">
+    </testcase>
+    <testcase classname="isValidTransition disallows any transition from Closed" name="isValidTransition disallows any transition from Closed" time="0.001">
+    </testcase>
+    <testcase classname="isValidTransition returns false for unknown current status" name="isValidTransition returns false for unknown current status" time="0.001">
+    </testcase>
+    <testcase classname="getNextStatusOptions returns two options for New (0)" name="getNextStatusOptions returns two options for New (0)" time="0.001">
+    </testcase>
+    <testcase classname="getNextStatusOptions returns two options for InProgress (1)" name="getNextStatusOptions returns two options for InProgress (1)" time="0">
+    </testcase>
+    <testcase classname="getNextStatusOptions returns one option for Replied (2)" name="getNextStatusOptions returns one option for Replied (2)" time="0.001">
+    </testcase>
+    <testcase classname="getNextStatusOptions returns no options for Closed (3)" name="getNextStatusOptions returns no options for Closed (3)" time="0">
+    </testcase>
+    <testcase classname="getNextStatusOptions returns empty array for unknown status" name="getNextStatusOptions returns empty array for unknown status" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="createCreditRequest" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.783" tests="13">
+    <testcase classname="createCreditRequest returns success with backend response data on success" name="createCreditRequest returns success with backend response data on success" time="0.016">
+    </testcase>
+    <testcase classname="createCreditRequest returns a demo success object when the backend call fails" name="createCreditRequest returns a demo success object when the backend call fails" time="0.001">
+    </testcase>
+    <testcase classname="getAllCreditRequests returns success with list on success" name="getAllCreditRequests returns success with list on success" time="0.001">
+    </testcase>
+    <testcase classname="getAllCreditRequests returns error on failure" name="getAllCreditRequests returns error on failure" time="0.001">
+    </testcase>
+    <testcase classname="getCreditRequestById returns success with request data on success" name="getCreditRequestById returns success with request data on success" time="0">
+    </testcase>
+    <testcase classname="getCreditRequestById returns error on failure" name="getCreditRequestById returns error on failure" time="0">
+    </testcase>
+    <testcase classname="getCreditRequestsByStatus returns success with filtered list" name="getCreditRequestsByStatus returns success with filtered list" time="0.001">
+    </testcase>
+    <testcase classname="getCreditRequestsByStatus returns error on failure" name="getCreditRequestsByStatus returns error on failure" time="0.001">
+    </testcase>
+    <testcase classname="approveCreditRequest calls approve endpoint and returns success" name="approveCreditRequest calls approve endpoint and returns success" time="0.001">
+    </testcase>
+    <testcase classname="approveCreditRequest returns error on failure" name="approveCreditRequest returns error on failure" time="0">
+    </testcase>
+    <testcase classname="approveCreditRequest uses empty object as default for data parameter" name="approveCreditRequest uses empty object as default for data parameter" time="0.001">
+    </testcase>
+    <testcase classname="rejectCreditRequest calls reject endpoint and returns success" name="rejectCreditRequest calls reject endpoint and returns success" time="0.001">
+    </testcase>
+    <testcase classname="rejectCreditRequest returns error on failure" name="rejectCreditRequest returns error on failure" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="sanitizeHtml" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.802" tests="65">
+    <testcase classname="sanitizeHtml returns empty string for null input" name="sanitizeHtml returns empty string for null input" time="0.032">
+    </testcase>
+    <testcase classname="sanitizeHtml returns empty string for undefined input" name="sanitizeHtml returns empty string for undefined input" time="0">
+    </testcase>
+    <testcase classname="sanitizeHtml returns empty string for non-string input" name="sanitizeHtml returns empty string for non-string input" time="0">
+    </testcase>
+    <testcase classname="sanitizeHtml passes through plain text unchanged" name="sanitizeHtml passes through plain text unchanged" time="0.002">
+    </testcase>
+    <testcase classname="sanitizeHtml encodes HTML angle brackets" name="sanitizeHtml encodes HTML angle brackets" time="0.002">
+    </testcase>
+    <testcase classname="sanitizeHtml handles ampersands" name="sanitizeHtml handles ampersands" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeString returns empty string for null" name="sanitizeString returns empty string for null" time="0">
+    </testcase>
+    <testcase classname="sanitizeString returns empty string for non-string" name="sanitizeString returns empty string for non-string" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeString trims leading/trailing whitespace" name="sanitizeString trims leading/trailing whitespace" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeString strips HTML tags" name="sanitizeString strips HTML tags" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeString removes control characters (except tab/newline)" name="sanitizeString removes control characters (except tab/newline)" time="0">
+    </testcase>
+    <testcase classname="sanitizeString keeps tab characters" name="sanitizeString keeps tab characters" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeString keeps newline characters" name="sanitizeString keeps newline characters" time="0">
+    </testcase>
+    <testcase classname="sanitizeString returns clean plain text unchanged" name="sanitizeString returns clean plain text unchanged" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeEmail returns empty string for null" name="sanitizeEmail returns empty string for null" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeEmail returns empty string for non-string" name="sanitizeEmail returns empty string for non-string" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeEmail returns empty string for invalid email" name="sanitizeEmail returns empty string for invalid email" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeEmail returns empty string for email missing domain" name="sanitizeEmail returns empty string for email missing domain" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeEmail returns normalised lowercase for valid email" name="sanitizeEmail returns normalised lowercase for valid email" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeEmail accepts standard email format" name="sanitizeEmail accepts standard email format" time="0">
+    </testcase>
+    <testcase classname="sanitizePhoneNumber returns empty string for null" name="sanitizePhoneNumber returns empty string for null" time="0.001">
+    </testcase>
+    <testcase classname="sanitizePhoneNumber removes non-digit characters" name="sanitizePhoneNumber removes non-digit characters" time="0.001">
+    </testcase>
+    <testcase classname="sanitizePhoneNumber leaves digits untouched" name="sanitizePhoneNumber leaves digits untouched" time="0">
+    </testcase>
+    <testcase classname="sanitizePhoneNumber handles empty string" name="sanitizePhoneNumber handles empty string" time="0">
+    </testcase>
+    <testcase classname="sanitizeNumber parses a valid number string" name="sanitizeNumber parses a valid number string" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeNumber returns min for NaN input" name="sanitizeNumber returns min for NaN input" time="0">
+    </testcase>
+    <testcase classname="sanitizeNumber clamps to min when value is below range" name="sanitizeNumber clamps to min when value is below range" time="0">
+    </testcase>
+    <testcase classname="sanitizeNumber clamps to max when value exceeds range" name="sanitizeNumber clamps to max when value exceeds range" time="0">
+    </testcase>
+    <testcase classname="sanitizeNumber returns value when within range" name="sanitizeNumber returns value when within range" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeNumber handles numeric input directly" name="sanitizeNumber handles numeric input directly" time="0">
+    </testcase>
+    <testcase classname="sanitizeNumber uses 0 as default min" name="sanitizeNumber uses 0 as default min" time="0">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns returns false for null" name="containsSuspiciousPatterns returns false for null" time="0.001">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns returns false for non-string" name="containsSuspiciousPatterns returns false for non-string" time="0">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns returns false for clean text" name="containsSuspiciousPatterns returns false for clean text" time="0.001">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns detects &lt;script tags" name="containsSuspiciousPatterns detects &lt;script tags" time="0">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns detects javascript: protocol" name="containsSuspiciousPatterns detects javascript: protocol" time="0.001">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns detects onerror= handlers" name="containsSuspiciousPatterns detects onerror= handlers" time="0">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns detects onclick= handlers" name="containsSuspiciousPatterns detects onclick= handlers" time="0.002">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns detects onload= handlers" name="containsSuspiciousPatterns detects onload= handlers" time="0.001">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns detects eval(" name="containsSuspiciousPatterns detects eval(" time="0.001">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns detects expression(" name="containsSuspiciousPatterns detects expression(" time="0.001">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns detects vbscript:" name="containsSuspiciousPatterns detects vbscript:" time="0.001">
+    </testcase>
+    <testcase classname="containsSuspiciousPatterns detects data:text/html" name="containsSuspiciousPatterns detects data:text/html" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeObject returns non-object input unchanged" name="sanitizeObject returns non-object input unchanged" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeObject sanitizes string properties" name="sanitizeObject sanitizes string properties" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeObject preserves number properties" name="sanitizeObject preserves number properties" time="0">
+    </testcase>
+    <testcase classname="sanitizeObject recursively sanitizes nested objects" name="sanitizeObject recursively sanitizes nested objects" time="0">
+    </testcase>
+    <testcase classname="sanitizeObject preserves boolean/undefined/null values" name="sanitizeObject preserves boolean/undefined/null values" time="0.001">
+    </testcase>
+    <testcase classname="escapeHtml returns empty string for null" name="escapeHtml returns empty string for null" time="0">
+    </testcase>
+    <testcase classname="escapeHtml escapes &amp;" name="escapeHtml escapes &amp;" time="0.001">
+    </testcase>
+    <testcase classname="escapeHtml escapes &lt;" name="escapeHtml escapes &lt;" time="0">
+    </testcase>
+    <testcase classname="escapeHtml escapes &gt;" name="escapeHtml escapes &gt;" time="0.001">
+    </testcase>
+    <testcase classname="escapeHtml escapes &quot;" name="escapeHtml escapes &quot;" time="0">
+    </testcase>
+    <testcase classname="escapeHtml escapes &apos;" name="escapeHtml escapes &apos;" time="0">
+    </testcase>
+    <testcase classname="escapeHtml escapes /" name="escapeHtml escapes /" time="0">
+    </testcase>
+    <testcase classname="escapeHtml leaves plain text unchanged" name="escapeHtml leaves plain text unchanged" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeUrl returns empty string for null" name="sanitizeUrl returns empty string for null" time="0">
+    </testcase>
+    <testcase classname="sanitizeUrl returns empty string for empty string" name="sanitizeUrl returns empty string for empty string" time="0">
+    </testcase>
+    <testcase classname="sanitizeUrl blocks javascript: protocol" name="sanitizeUrl blocks javascript: protocol" time="0">
+    </testcase>
+    <testcase classname="sanitizeUrl blocks data: protocol" name="sanitizeUrl blocks data: protocol" time="0">
+    </testcase>
+    <testcase classname="sanitizeUrl blocks vbscript: protocol" name="sanitizeUrl blocks vbscript: protocol" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeUrl blocks file: protocol" name="sanitizeUrl blocks file: protocol" time="0">
+    </testcase>
+    <testcase classname="sanitizeUrl allows http URLs" name="sanitizeUrl allows http URLs" time="0.001">
+    </testcase>
+    <testcase classname="sanitizeUrl allows https URLs" name="sanitizeUrl allows https URLs" time="0">
+    </testcase>
+    <testcase classname="sanitizeUrl trims surrounding whitespace" name="sanitizeUrl trims surrounding whitespace" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="useApi" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.886" tests="7">
+    <testcase classname="useApi initialises with default state" name="useApi initialises with default state" time="0.015">
+    </testcase>
+    <testcase classname="useApi sets loading to true while executing, then false on success" name="useApi sets loading to true while executing, then false on success" time="0.005">
+    </testcase>
+    <testcase classname="useApi returns the resolved value from execute()" name="useApi returns the resolved value from execute()" time="0.004">
+    </testcase>
+    <testcase classname="useApi passes arguments through to the wrapped function" name="useApi passes arguments through to the wrapped function" time="0.004">
+    </testcase>
+    <testcase classname="useApi sets error state and re-throws on failure" name="useApi sets error state and re-throws on failure" time="0.005">
+    </testcase>
+    <testcase classname="useApi clears error state on a subsequent successful call" name="useApi clears error state on a subsequent successful call" time="0.004">
+    </testcase>
+    <testcase classname="useApi execute is stable (same reference) across re-renders when apiFunction does not change" name="useApi execute is stable (same reference) across re-renders when apiFunction does not change" time="0.009">
+    </testcase>
+  </testsuite>
+  <testsuite name="ProtectedRoute" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.949" tests="3">
+    <testcase classname="ProtectedRoute shows a loading spinner while auth state is being resolved" name="ProtectedRoute shows a loading spinner while auth state is being resolved" time="0.059">
+    </testcase>
+    <testcase classname="ProtectedRoute redirects to /admin/login when the user is not authenticated" name="ProtectedRoute redirects to /admin/login when the user is not authenticated" time="0.006">
+    </testcase>
+    <testcase classname="ProtectedRoute renders the child route when the user is authenticated" name="ProtectedRoute renders the child route when the user is authenticated" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="ALLOWED_KEYS" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.966" tests="19">
+    <testcase classname="ALLOWED_KEYS exports the expected key constants" name="ALLOWED_KEYS exports the expected key constants" time="0.006">
+    </testcase>
+    <testcase classname="isAllowedKey returns true for allowed keys" name="isAllowedKey returns true for allowed keys" time="0">
+    </testcase>
+    <testcase classname="isAllowedKey returns false for unknown keys" name="isAllowedKey returns false for unknown keys" time="0.001">
+    </testcase>
+    <testcase classname="setItem / getItem stores and retrieves a value for an allowed key" name="setItem / getItem stores and retrieves a value for an allowed key" time="0.001">
+    </testcase>
+    <testcase classname="setItem / getItem returns false and logs error when key is not allowed" name="setItem / getItem returns false and logs error when key is not allowed" time="0.001">
+    </testcase>
+    <testcase classname="setItem / getItem returns null and logs error when getting a disallowed key" name="setItem / getItem returns null and logs error when getting a disallowed key" time="0">
+    </testcase>
+    <testcase classname="setItem / getItem returns null when key is allowed but not yet set" name="setItem / getItem returns null when key is allowed but not yet set" time="0.001">
+    </testcase>
+    <testcase classname="setItem / getItem strips HTML tags from stored values (XSS prevention)" name="setItem / getItem strips HTML tags from stored values (XSS prevention)" time="0">
+    </testcase>
+    <testcase classname="removeItem removes an existing allowed key and returns true" name="removeItem removes an existing allowed key and returns true" time="0.001">
+    </testcase>
+    <testcase classname="removeItem returns false and logs error for a disallowed key" name="removeItem returns false and logs error for a disallowed key" time="0.001">
+    </testcase>
+    <testcase classname="clear removes all allowed keys from storage" name="clear removes all allowed keys from storage" time="0.001">
+    </testcase>
+    <testcase classname="auth token helpers setAuthToken stores and getAuthToken retrieves the token" name="auth token helpers setAuthToken stores and getAuthToken retrieves the token" time="0.001">
+    </testcase>
+    <testcase classname="auth token helpers setRefreshToken stores and getRefreshToken retrieves the token" name="auth token helpers setRefreshToken stores and getRefreshToken retrieves the token" time="0">
+    </testcase>
+    <testcase classname="auth token helpers setTokenExpiry stores and getTokenExpiry retrieves the expiry" name="auth token helpers setTokenExpiry stores and getTokenExpiry retrieves the expiry" time="0.001">
+    </testcase>
+    <testcase classname="isTokenExpired returns false when no expiry is stored" name="isTokenExpired returns false when no expiry is stored" time="0">
+    </testcase>
+    <testcase classname="isTokenExpired returns true when the expiry date is in the past" name="isTokenExpired returns true when the expiry date is in the past" time="0.001">
+    </testcase>
+    <testcase classname="isTokenExpired returns false when the expiry date is in the future" name="isTokenExpired returns false when the expiry date is in the future" time="0.001">
+    </testcase>
+    <testcase classname="clearAuth removes auth_token, refresh_token, and token_expiry" name="clearAuth removes auth_token, refresh_token, and token_expiry" time="0">
+    </testcase>
+    <testcase classname="cleanupOldData removes unauthorized keys that were placed in localStorage externally" name="cleanupOldData removes unauthorized keys that were placed in localStorage externally" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="AuthProvider – initial state with no stored token" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="1.969" tests="10">
+    <testcase classname="AuthProvider – initial state with no stored token starts with user=null, token=null, loading=false after mount" name="AuthProvider – initial state with no stored token starts with user=null, token=null, loading=false after mount" time="0.021">
+    </testcase>
+    <testcase classname="AuthProvider – initial state with valid stored token restores user from a valid, non-expired stored token" name="AuthProvider – initial state with valid stored token restores user from a valid, non-expired stored token" time="0.004">
+    </testcase>
+    <testcase classname="AuthProvider – initial state with expired token clears auth and sets user=null when stored token is expired" name="AuthProvider – initial state with expired token clears auth and sets user=null when stored token is expired" time="0.004">
+    </testcase>
+    <testcase classname="AuthProvider – initial state when extractUserFromToken returns null clears auth when token is valid but user extraction fails" name="AuthProvider – initial state when extractUserFromToken returns null clears auth when token is valid but user extraction fails" time="0.005">
+    </testcase>
+    <testcase classname="login() sets user and token, persists auth token to storage" name="login() sets user and token, persists auth token to storage" time="0.014">
+    </testcase>
+    <testcase classname="login() does not call setTokenExpiry when expiresAt is omitted" name="login() does not call setTokenExpiry when expiresAt is omitted" time="0.002">
+    </testcase>
+    <testcase classname="logout() clears user, token, and calls clearAuth" name="logout() clears user, token, and calls clearAuth" time="0.002">
+    </testcase>
+    <testcase classname="isAuthenticated() returns false when not logged in" name="isAuthenticated() returns false when not logged in" time="0.001">
+    </testcase>
+    <testcase classname="isAuthenticated() returns true after a successful login" name="isAuthenticated() returns true after a successful login" time="0.002">
+    </testcase>
+    <testcase classname="useAuth – error outside provider throws when used outside of AuthProvider" name="useAuth – error outside provider throws when used outside of AuthProvider" time="0.03">
+    </testcase>
+  </testsuite>
+  <testsuite name="useCreditCalculator" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="2.759" tests="11">
+    <testcase classname="useCreditCalculator should initialize with default values" name="useCreditCalculator should initialize with default values" time="0.097">
+    </testcase>
+    <testcase classname="useCreditCalculator should calculate monthly payment correctly using French amortization formula" name="useCreditCalculator should calculate monthly payment correctly using French amortization formula" time="0.074">
+    </testcase>
+    <testcase classname="useCreditCalculator should calculate correct monthly payment for 100,000 at 18% for 3 years" name="useCreditCalculator should calculate correct monthly payment for 100,000 at 18% for 3 years" time="0.077">
+    </testcase>
+    <testcase classname="useCreditCalculator should calculate correct total payment and interest" name="useCreditCalculator should calculate correct total payment and interest" time="0.078">
+    </testcase>
+    <testcase classname="useCreditCalculator should calculate max financing based on 35% of monthly income" name="useCreditCalculator should calculate max financing based on 35% of monthly income" time="0.077">
+    </testcase>
+    <testcase classname="useCreditCalculator should respect credit type max amount limit" name="useCreditCalculator should respect credit type max amount limit" time="0.079">
     </testcase>
     <testcase classname="useCreditCalculator should use correct interest rate from credit type" name="useCreditCalculator should use correct interest rate from credit type" time="0.077">
     </testcase>
     <testcase classname="useCreditCalculator should handle zero interest rate edge case" name="useCreditCalculator should handle zero interest rate edge case" time="0.078">
     </testcase>
-    <testcase classname="useCreditCalculator should recalculate when term changes" name="useCreditCalculator should recalculate when term changes" time="0.079">
+    <testcase classname="useCreditCalculator should recalculate when term changes" name="useCreditCalculator should recalculate when term changes" time="0.078">
     </testcase>
-    <testcase classname="useCreditCalculator should ensure monthly payment is a positive number" name="useCreditCalculator should ensure monthly payment is a positive number" time="0.078">
+    <testcase classname="useCreditCalculator should ensure monthly payment is a positive number" name="useCreditCalculator should ensure monthly payment is a positive number" time="0.08">
     </testcase>
-    <testcase classname="useCreditCalculator should handle loading state correctly" name="useCreditCalculator should handle loading state correctly" time="0.076">
+    <testcase classname="useCreditCalculator should handle loading state correctly" name="useCreditCalculator should handle loading state correctly" time="0.079">
     </testcase>
   </testsuite>
-  <testsuite name="CreditRequestWizard - Form Validations" errors="0" failures="0" skipped="0" timestamp="2026-03-19T18:24:08" time="11.814" tests="12">
-    <testcase classname="CreditRequestWizard - Form Validations should render the wizard with initial step (personal data)" name="CreditRequestWizard - Form Validations should render the wizard with initial step (personal data)" time="0.047">
+  <testsuite name="CreditRequestWizard - Form Validations" errors="0" failures="0" skipped="0" timestamp="2026-03-24T20:14:31" time="9.955" tests="12">
+    <testcase classname="CreditRequestWizard - Form Validations should render the wizard with initial step (personal data)" name="CreditRequestWizard - Form Validations should render the wizard with initial step (personal data)" time="0.042">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should show error when fullName is empty" name="CreditRequestWizard - Form Validations should show error when fullName is empty" time="0.068">
+    <testcase classname="CreditRequestWizard - Form Validations should show error when fullName is empty" name="CreditRequestWizard - Form Validations should show error when fullName is empty" time="0.113">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should show error when email is empty" name="CreditRequestWizard - Form Validations should show error when email is empty" time="0.194">
+    <testcase classname="CreditRequestWizard - Form Validations should show error when email is empty" name="CreditRequestWizard - Form Validations should show error when email is empty" time="0.177">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should validate email format" name="CreditRequestWizard - Form Validations should validate email format" time="0.426">
+    <testcase classname="CreditRequestWizard - Form Validations should validate email format" name="CreditRequestWizard - Form Validations should validate email format" time="0.455">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should show error when phone is empty" name="CreditRequestWizard - Form Validations should show error when phone is empty" time="0.654">
+    <testcase classname="CreditRequestWizard - Form Validations should show error when phone is empty" name="CreditRequestWizard - Form Validations should show error when phone is empty" time="0.72">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should advance to step 2 when personal data is valid" name="CreditRequestWizard - Form Validations should advance to step 2 when personal data is valid" time="1.135">
+    <testcase classname="CreditRequestWizard - Form Validations should advance to step 2 when personal data is valid" name="CreditRequestWizard - Form Validations should advance to step 2 when personal data is valid" time="1.232">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should validate positive monthly salary" name="CreditRequestWizard - Form Validations should validate positive monthly salary" time="1.207">
+    <testcase classname="CreditRequestWizard - Form Validations should validate positive monthly salary" name="CreditRequestWizard - Form Validations should validate positive monthly salary" time="1.32">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should call onClose when clicking cancel and user confirms" name="CreditRequestWizard - Form Validations should call onClose when clicking cancel and user confirms" time="0.077">
+    <testcase classname="CreditRequestWizard - Form Validations should call onClose when clicking cancel and user confirms" name="CreditRequestWizard - Form Validations should call onClose when clicking cancel and user confirms" time="0.079">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should not call onClose when clicking cancel if user cancels confirmation" name="CreditRequestWizard - Form Validations should not call onClose when clicking cancel if user cancels confirmation" time="0.015">
+    <testcase classname="CreditRequestWizard - Form Validations should not call onClose when clicking cancel if user cancels confirmation" name="CreditRequestWizard - Form Validations should not call onClose when clicking cancel if user cancels confirmation" time="0.017">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should allow navigation back to previous step" name="CreditRequestWizard - Form Validations should allow navigation back to previous step" time="1.151">
+    <testcase classname="CreditRequestWizard - Form Validations should allow navigation back to previous step" name="CreditRequestWizard - Form Validations should allow navigation back to previous step" time="1.25">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should submit form successfully when all data is valid" name="CreditRequestWizard - Form Validations should submit form successfully when all data is valid" time="1.194">
+    <testcase classname="CreditRequestWizard - Form Validations should submit form successfully when all data is valid" name="CreditRequestWizard - Form Validations should submit form successfully when all data is valid" time="1.266">
     </testcase>
-    <testcase classname="CreditRequestWizard - Form Validations should handle submission error" name="CreditRequestWizard - Form Validations should handle submission error" time="1.148">
+    <testcase classname="CreditRequestWizard - Form Validations should handle submission error" name="CreditRequestWizard - Form Validations should handle submission error" time="1.32">
     </testcase>
   </testsuite>
 </testsuites>

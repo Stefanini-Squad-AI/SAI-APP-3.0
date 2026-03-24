@@ -1,0 +1,24 @@
+{
+  "dd10900140f515db": {
+    "key": "dd10900140f515db",
+    "resolution": {
+      "selector": "[aria-label=\"Language\"]",
+      "confidence": 1,
+      "strategy": "ai",
+      "explanation": "[perplexity] The intent 'language:Español' targets the language switcher element, which has aria-label='Language' and current text='English', making it the exact match for changing to Español."
+    },
+    "createdAt": "2026-03-24T20:35:39.543Z",
+    "ttl": 3600
+  },
+  "2b227190f3925017": {
+    "key": "2b227190f3925017",
+    "resolution": {
+      "selector": "[aria-label=\"Language\"]",
+      "confidence": 1,
+      "strategy": "ai",
+      "explanation": "[perplexity] The intent 'language:Português' targets the language selector element, which has aria-label='Language' and is a button with role='button'. This is the only matching element in the DOM."
+    },
+    "createdAt": "2026-03-24T20:43:44.149Z",
+    "ttl": 3600
+  }
+}

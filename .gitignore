@@ -51,3 +51,15 @@ docker-logs/
 *.log
 *.tmp
 *.temp
+
+# Security test results (generated)
+test-results/security/security-dashboard.html
+test-results/security/security-dashboard.md
+test-results/security/tailwind-dashboard/
+
+# CI scripts (generated output)
+.github/actions/update-dashboard/__pycache__/
+
+# Node
+node_modules/
+package-lock.json.bak
