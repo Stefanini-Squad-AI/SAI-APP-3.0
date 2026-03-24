@@ -6,10 +6,10 @@
  *   ts-node src/tests/AuraSuiteTest.ts
  *   ts-node src/tests/AuraSuiteTest.ts --tags @smoke
  *   ts-node src/tests/AuraSuiteTest.ts --tags @home
- *   ts-node src/tests/AuraSuiteTest.ts --tags @home-hero-calculator
+ *   ts-node src/tests/AuraSuiteTest.ts --tags @home-hero
  *   ts-node src/tests/AuraSuiteTest.ts src/features/Home.feature src/features/Login.feature --tags @smoke
  */
-import * as path from 'path';
+import * as path from 'node:path';
 import { config as dotenvConfig } from 'dotenv';
 import { runAuraCucumberAndReport, normalizeFeaturePaths } from './auraRunner';
 
@@ -74,7 +74,4 @@ async function main(): Promise<void> {
   console.log('\n✅ AuraSuiteTest PASSED');
 }
 
-main().catch((err: unknown) => {
-  console.error(err);
-  process.exit(1);
-});
+await main();
