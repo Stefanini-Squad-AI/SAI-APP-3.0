@@ -317,6 +317,28 @@ function parseSummaryJson(raw) {
     }
   };
 
+  // Fix literal newlines/tabs inside JSON string values so JSON.parse succeeds
+  const fixNewlines = (str) => {
+    let out = '';
+    let inStr = false;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i];
+      if (ch === '"' && (i === 0 || str[i - 1] !== '\\')) {
+        inStr = !inStr;
+        out += ch;
+      } else if (inStr && ch === '\n') {
+        out += '\\n';
+      } else if (inStr && ch === '\r') {
+        out += '\\r';
+      } else if (inStr && ch === '\t') {
+        out += '\\t';
+      } else {
+        out += ch;
+      }
+    }
+    return out;
+  };
+
   const s = raw.trim();
   const candidates = [];
   const push = (x) => {
@@ -332,19 +354,33 @@ function parseSummaryJson(raw) {
     push(inner);
   }
 
-  const fenceOpen = /```(?:json)?\s*/i.exec(s);
-  if (fenceOpen) {
-    const start = fenceOpen.index + fenceOpen[0].length;
-    const close = s.lastIndexOf('```');
-    if (close > start) push(s.slice(start, close).trim());
+  // Handle 1-4 backtick fences (LLMs sometimes use 2 or 4 instead of 3)
+  const fenceMatch = /^(`{1,4})(?:json)?\s*/im.exec(s);
+  if (fenceMatch) {
+    const start = fenceMatch.index + fenceMatch[0].length;
+    const closePattern = fenceMatch[1]; // same number of backticks
+    const closeIdx = s.indexOf(closePattern, start);
+    if (closeIdx > start) push(s.slice(start, closeIdx).trim());
+    const lastClose = s.lastIndexOf(closePattern);
+    if (lastClose > start && lastClose !== closeIdx) push(s.slice(start, lastClose).trim());
+  }
+
+  // Handle bare "json" prefix without backticks (e.g. "json\n{...}")
+  if (/^json\s/i.test(s)) {
+    push(s.replace(/^json\s*/i, '').trim());
   }
 
   const b0 = s.indexOf('{');
   const b1 = s.lastIndexOf('}');
   if (b0 !== -1 && b1 > b0) push(s.slice(b0, b1 + 1));
 
+  // Try each candidate as-is, then with literal-newline fixing
   for (const c of candidates) {
     const parsed = tryParse(c);
+    if (parsed) return parsed;
+  }
+  for (const c of candidates) {
+    const parsed = tryParse(fixNewlines(c));
     if (parsed) return parsed;
   }
   return null;

@@ -74,4 +74,7 @@ async function main(): Promise<void> {
   console.log('\n✅ AuraSuiteTest PASSED');
 }
 
-await main();
+main().catch((err) => {
+  console.error('\n AuraSuiteTest ERROR:', err);
+  process.exit(1);
+});

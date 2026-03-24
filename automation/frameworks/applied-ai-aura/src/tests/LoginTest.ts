@@ -35,4 +35,7 @@ async function runLoginTest(): Promise<void> {
   }
 }
 
-await runLoginTest();
+runLoginTest().catch((err) => {
+  console.error('\n LoginTest ERROR:', err);
+  process.exit(1);
+});
