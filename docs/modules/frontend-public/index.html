@@ -75,6 +75,7 @@
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="vLegal">Legal Information</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
         </tbody>
       </table>
@@ -150,6 +151,13 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/legal</code></td>
+            <td data-i18n="rLegalPurpose">Present the platform legal notice to public users.</td>
+            <td data-i18n="rLegalContains">Five legal sections with update date, plus contact and back-home links.</td>
+            <td data-i18n="rLegalActions">Read legal clauses and navigate to contact/home pages.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
@@ -215,6 +223,9 @@
         rTermsPurpose: "Describe contract and usage conditions for platform services.",
         rTermsContains: "Five terms sections with update date, plus contact and back-home links.",
         rTermsActions: "Review legal obligations, then navigate to contact/home pages.",
+        rLegalPurpose: "Present the platform legal notice to public users.",
+        rLegalContains: "Five legal sections with update date, plus contact and back-home links.",
+        rLegalActions: "Read legal clauses and navigate to contact/home pages.",
         r404Purpose: "Handle unknown URLs and recover navigation.",
         r404Contains: "404 code, explanatory text, and CTA back to home.",
         r404Actions: "Return safely to root route.",
@@ -250,10 +261,14 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
+        vLegal: "Información Legal",
         vNotFound: "No encontrado",
         noApi: "Sin llamadas al backend.",
         authYes: "Sí",
-        authNo: "No"
+        authNo: "No",
+        rLegalPurpose: "Presentar el aviso legal de la plataforma a usuarios públicos.",
+        rLegalContains: "Cinco secciones legales con fecha de actualización, más enlaces a contacto e inicio.",
+        rLegalActions: "Leer las cláusulas legales y navegar a contacto o inicio."
       },
       pt: {
         back: "<- Voltar para o hub de documentação",
@@ -283,10 +298,14 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
+        vLegal: "Informações Legais",
         vNotFound: "Não encontrado",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
-        authNo: "Não"
+        authNo: "Não",
+        rLegalPurpose: "Apresentar o aviso legal da plataforma aos usuários públicos.",
+        rLegalContains: "Cinco seções legais com data de atualização, mais links para contato e página inicial.",
+        rLegalActions: "Ler as cláusulas legais e navegar para contato ou página inicial."
       }
     };
 
