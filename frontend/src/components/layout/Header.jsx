@@ -36,7 +36,18 @@ const Header = () => {
             <Link to="/faq" className="text-gray-700 hover:text-primary-600 transition font-medium">
               {t('header.faq')}
             </Link>
-            <Link to="/contact" className="text-gray-700 hover:text-primary-600 transition font-medium">
+            <Link
+              to="/legal"
+              data-testid="header-nav-legal"
+              className="text-gray-700 hover:text-primary-600 transition font-medium"
+            >
+              {t('header.legalInfo')}
+            </Link>
+            <Link
+              to="/contact"
+              data-testid="header-nav-contact"
+              className="text-gray-700 hover:text-primary-600 transition font-medium"
+            >
               {t('header.contact')}
             </Link>
           </div>
@@ -57,6 +68,9 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <button
+            type="button"
+            data-testid="header-mobile-menu-toggle"
+            aria-label={t('header.menuToggle')}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 rounded-lg hover:bg-gray-100"
           >
@@ -92,7 +106,20 @@ const Header = () => {
               <Link to="/faq" className="text-gray-700 hover:text-primary-600 transition font-medium" onClick={() => setMobileMenuOpen(false)}>
                 {t('header.faq')}
               </Link>
-              <Link to="/contact" className="text-gray-700 hover:text-primary-600 transition font-medium" onClick={() => setMobileMenuOpen(false)}>
+              <Link
+                to="/legal"
+                data-testid="header-nav-legal-mobile"
+                className="text-gray-700 hover:text-primary-600 transition font-medium"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('header.legalInfo')}
+              </Link>
+              <Link
+                to="/contact"
+                data-testid="header-nav-contact-mobile"
+                className="text-gray-700 hover:text-primary-600 transition font-medium"
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 {t('header.contact')}
               </Link>
               <Link

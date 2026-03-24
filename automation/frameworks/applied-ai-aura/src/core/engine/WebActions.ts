@@ -553,6 +553,11 @@ export class WebActions {
     return this.page.title();
   }
 
+  /** Sets viewport size (e.g. mobile scenarios). */
+  async setViewport(width: number, height: number): Promise<void> {
+    await this.page.setViewportSize({ width, height });
+  }
+
   /** Accepts a dialog (alert/confirm/prompt). */
   async acceptDialog(promptText?: string): Promise<void> {
     this.page.once('dialog', async (dialog) => {

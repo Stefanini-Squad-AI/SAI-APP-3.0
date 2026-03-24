@@ -71,6 +71,7 @@
       <ul>
         <li>Supported runtime locales are strictly: <code>en</code>, <code>es</code>, and <code>pt</code>.</li>
         <li>Language switch is provided in the header selector and persisted with <code>tco-user-language</code>.</li>
+        <li data-i18n="publicLegalRoute">Public SPA route <code>/legal</code> (<code>LegalInfoPage.jsx</code>) exposes consolidated legal information beside the Contact entry in the header; strings live in the same i18n bundles as other public pages.</li>
       </ul>
     </section>
 
@@ -88,9 +89,9 @@
   </div>
   <script>
     const i18n = {
-      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
-      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
-      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
+      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map", publicLegalRoute: "Public SPA route <code>/legal</code> (<code>LegalInfoPage.jsx</code>) exposes consolidated legal information beside the Contact entry in the header; strings live in the same i18n bundles as other public pages." },
+      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación", publicLegalRoute: "La ruta pública <code>/legal</code> (<code>LegalInfoPage.jsx</code>) expone información legal consolidada junto a Contacto en el encabezado; los textos están en los mismos bundles i18n que el resto del sitio público." },
+      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação", publicLegalRoute: "A rota pública <code>/legal</code> (<code>LegalInfoPage.jsx</code>) expõe informações legais consolidadas ao lado de Contato no cabeçalho; as strings ficam nos mesmos bundles i18n das demais páginas públicas." }
     };
     const select = document.getElementById("lang-select");
     const key = "docs-hub-lang";

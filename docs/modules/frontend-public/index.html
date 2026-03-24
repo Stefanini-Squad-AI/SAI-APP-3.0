@@ -72,6 +72,7 @@
           <tr><td><code>/about</code></td><td data-i18n="vAbout">About</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/AboutPage.jsx</code></td></tr>
           <tr><td><code>/faq</code></td><td data-i18n="vFaq">FAQ</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/FAQPage.jsx</code></td></tr>
           <tr><td><code>/contact</code></td><td data-i18n="vContact">Contact</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/ContactPage.jsx</code></td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="vLegal">Legal information</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalInfoPage.jsx</code></td></tr>
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
@@ -136,6 +137,13 @@
             <td><code>POST /api/contactmessages</code></td>
           </tr>
           <tr>
+            <td><code>/legal</code></td>
+            <td data-i18n="rLegalPurpose">Summarize legal notices and point visitors to privacy, terms, and contact channels.</td>
+            <td data-i18n="rLegalContains">Hero with title, three informational sections, links to privacy and terms, and contact CTA.</td>
+            <td data-i18n="rLegalActions">Read summaries, open related policies, continue to contact or home.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>/privacy</code></td>
             <td data-i18n="rPrivacyPurpose">Disclose data handling and user privacy rights.</td>
             <td data-i18n="rPrivacyContains">Five policy sections with update date, plus contact and back-home links.</td>
@@ -187,6 +195,7 @@
         vAbout: "About",
         vFaq: "FAQ",
         vContact: "Contact",
+        vLegal: "Legal information",
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
@@ -209,6 +218,9 @@
         rContactPurpose: "Capture customer inquiries and open support channel.",
         rContactContains: "Validated contact form, contact information cards, support links, embedded map, and office details.",
         rContactActions: "Submit inquiry, trigger success/error feedback, call or WhatsApp support options.",
+        rLegalPurpose: "Summarize legal notices and point visitors to privacy, terms, and contact channels.",
+        rLegalContains: "Hero with title, three informational sections, links to privacy and terms, and contact CTA.",
+        rLegalActions: "Read summaries, open related policies, continue to contact or home.",
         rPrivacyPurpose: "Disclose data handling and user privacy rights.",
         rPrivacyContains: "Five policy sections with update date, plus contact and back-home links.",
         rPrivacyActions: "Read legal clauses and navigate to contact/home pages.",
@@ -247,6 +259,7 @@
         vAbout: "Nosotros",
         vFaq: "FAQ",
         vContact: "Contacto",
+        vLegal: "Información legal",
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
@@ -280,6 +293,7 @@
         vAbout: "Sobre",
         vFaq: "FAQ",
         vContact: "Contato",
+        vLegal: "Informações legais",
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
