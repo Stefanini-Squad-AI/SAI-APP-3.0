@@ -1042,6 +1042,10 @@ jobs:
 
       - name: Generate Tailwind security dashboard v2 (ZAP JSON → AURA-style HTML)
         if: always()
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.CI_PERPLEXITY_API_KEY }}
+          PERPLEXITY_MODEL: sonar
+          MODEL_PROVIDER: perplexity
         run: |
           node scripts/generate-security-tailwind-report.cjs || echo "Security dashboard v2: skipped or failed (non-blocking)"
 
