@@ -37,7 +37,7 @@ env:
 jobs:
   init-dashboard:
     name: "\U0001F680 Initialize Results Dashboard"
-    if: github.event.action != 'closed'
+    if: github.event.action != 'closed' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -184,7 +184,7 @@ jobs:
 
   sonarqube-backend:
     name: "SonarQube \u2014 Backend"
-    if: github.event.action != 'closed'
+    if: github.event.action != 'closed' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     needs: [init-dashboard]
     continue-on-error: true
@@ -477,7 +477,7 @@ jobs:
 
   sonarqube-frontend:
     name: "SonarQube \u2014 Frontend"
-    if: github.event.action != 'closed'
+    if: github.event.action != 'closed' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     needs: [init-dashboard]
     continue-on-error: true
@@ -677,7 +677,7 @@ jobs:
 
   backend-unit-tests:
     name: "Unit Tests - Backend"
-    if: github.event.action != 'closed'
+    if: github.event.action != 'closed' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     needs: [init-dashboard]
     continue-on-error: true
@@ -829,7 +829,7 @@ jobs:
 
   frontend-unit-tests:
     name: "Unit Tests - Frontend"
-    if: github.event.action != 'closed'
+    if: github.event.action != 'closed' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     needs: [init-dashboard]
     continue-on-error: true
@@ -943,7 +943,7 @@ jobs:
 
   build-and-quality-tests:
     name: "Integration and Security Tests"
-    if: github.event.action != 'closed'
+    if: github.event.action != 'closed' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     needs: [init-dashboard]
     continue-on-error: true
@@ -1273,7 +1273,7 @@ jobs:
 
   deploy-preview:
     name: "Deploy Preview"
-    if: github.event.action != 'closed'
+    if: github.event.action != 'closed' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     needs: [init-dashboard]
     continue-on-error: true
@@ -1434,7 +1434,7 @@ jobs:
 
   docs-preview:
     name: "Docs Preview"
-    if: github.event.action != 'closed'
+    if: github.event.action != 'closed' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     needs: [deploy-preview]
     continue-on-error: true
@@ -1526,7 +1526,7 @@ jobs:
 
   functional-tests-web:
     name: "Functional Tests"
-    if: github.event.action != 'closed'
+    if: github.event.action != 'closed' && github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     needs: [deploy-preview]
     continue-on-error: true
