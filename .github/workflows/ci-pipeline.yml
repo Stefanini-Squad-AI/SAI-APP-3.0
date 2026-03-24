@@ -685,7 +685,7 @@ jobs:
       contents: read
       pull-requests: write
     outputs:
-      backend_report_url: ${{ steps.publish-backend-report.outputs.backend_report_url }}
+      backend_report_url: ${{ steps.backend-report-url.outputs.backend_report_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -761,14 +761,23 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
+      - name: Record backend unit report Surge URL
+        if: always()
+        id: backend-report-url
+        working-directory: ./backend
+        run: |
+          if [ -f "TestResults/test-report.html" ]; then
+            echo "backend_report_url=${{ env.BACKEND_REPORT_URL }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish backend unit report to Surge
         if: always()
         id: publish-backend-report
+        continue-on-error: true
         working-directory: ./backend
         run: |
           if [ -f "TestResults/test-report.html" ]; then
             npx surge --project TestResults --domain ${{ env.BACKEND_REPORT_DOMAIN }}
-            echo "backend_report_url=${{ env.BACKEND_REPORT_URL }}" >> $GITHUB_OUTPUT
           fi
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
@@ -778,7 +787,7 @@ jobs:
         if: always()
         uses: actions/github-script@v8
         env:
-          REPORT_URL: ${{ steps.publish-backend-report.outputs.backend_report_url }}
+          REPORT_URL: ${{ steps.backend-report-url.outputs.backend_report_url }}
         with:
           script: |
             async function updateDashboard(github, context, sections) {
@@ -837,7 +846,7 @@ jobs:
       contents: read
       pull-requests: write
     outputs:
-      frontend_report_url: ${{ steps.publish-frontend-report.outputs.frontend_report_url }}
+      frontend_report_url: ${{ steps.frontend-report-url.outputs.frontend_report_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -875,14 +884,23 @@ jobs:
             frontend/test-results/jest/test-report.md
           retention-days: 90
 
+      - name: Record frontend unit report Surge URL
+        if: always()
+        id: frontend-report-url
+        working-directory: ./frontend
+        run: |
+          if [ -f "test-results/jest/test-report.html" ]; then
+            echo "frontend_report_url=${{ env.FRONTEND_REPORT_URL }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish frontend unit report to Surge
         if: always()
         id: publish-frontend-report
+        continue-on-error: true
         working-directory: ./frontend
         run: |
           if [ -f "test-results/jest/test-report.html" ]; then
             npx surge --project test-results/jest --domain ${{ env.FRONTEND_REPORT_DOMAIN }}
-            echo "frontend_report_url=${{ env.FRONTEND_REPORT_URL }}" >> $GITHUB_OUTPUT
           fi
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
@@ -892,7 +910,7 @@ jobs:
         if: always()
         uses: actions/github-script@v8
         env:
-          REPORT_URL: ${{ steps.publish-frontend-report.outputs.frontend_report_url }}
+          REPORT_URL: ${{ steps.frontend-report-url.outputs.frontend_report_url }}
         with:
           script: |
             async function updateDashboard(github, context, sections) {
@@ -951,8 +969,8 @@ jobs:
       contents: read
       pull-requests: write
     outputs:
-      security_frontend_report_url: ${{ steps.publish-security-report.outputs.security_frontend_report_url }}
-      security_api_report_url: ${{ steps.publish-security-report.outputs.security_api_report_url }}
+      security_frontend_report_url: ${{ steps.security-report-urls.outputs.security_frontend_report_url }}
+      security_api_report_url: ${{ steps.security-report-urls.outputs.security_api_report_url }}
     timeout-minutes: 35
     steps:
       - name: Checkout code
@@ -1049,6 +1067,7 @@ jobs:
           echo "Starting integration and security tests in parallel..."
 
           (
+            set -o pipefail
             cd backend
             dotnet test TuCreditoOnline.sln \
               --no-build \
@@ -1170,18 +1189,24 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
+      - name: Record security report Surge URLs
+        if: always()
+        id: security-report-urls
+        run: |
+          if [ -f "test-results/security/zap-frontend-report.html" ]; then
+            echo "security_frontend_report_url=${{ env.SECURITY_FRONTEND_REPORT_URL }}" >> $GITHUB_OUTPUT
+          fi
+          if [ -f "test-results/security/zap-api-report.html" ]; then
+            echo "security_api_report_url=${{ env.SECURITY_API_REPORT_URL }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish security reports to Surge
         if: always()
         id: publish-security-report
+        continue-on-error: true
         run: |
           if [ -f "test-results/security/zap-frontend-report.html" ] || [ -f "test-results/security/zap-api-report.html" ]; then
             npx surge --project test-results/security --domain ${{ env.SECURITY_REPORT_DOMAIN }}
-            if [ -f "test-results/security/zap-frontend-report.html" ]; then
-              echo "security_frontend_report_url=${{ env.SECURITY_FRONTEND_REPORT_URL }}" >> $GITHUB_OUTPUT
-            fi
-            if [ -f "test-results/security/zap-api-report.html" ]; then
-              echo "security_api_report_url=${{ env.SECURITY_API_REPORT_URL }}" >> $GITHUB_OUTPUT
-            fi
           fi
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
@@ -1192,8 +1217,8 @@ jobs:
         uses: actions/github-script@v8
         env:
           INTEGRATION_OK: ${{ env.INTEGRATION_OK }}
-          SEC_FRONTEND_URL: ${{ steps.publish-security-report.outputs.security_frontend_report_url }}
-          SEC_API_URL: ${{ steps.publish-security-report.outputs.security_api_report_url }}
+          SEC_FRONTEND_URL: ${{ steps.security-report-urls.outputs.security_frontend_report_url }}
+          SEC_API_URL: ${{ steps.security-report-urls.outputs.security_api_report_url }}
         with:
           script: |
             async function updateDashboard(github, context, sections) {
@@ -1281,10 +1306,14 @@ jobs:
       contents: read
       pull-requests: write
     outputs:
-      preview_url: ${{ steps.preview.outputs.preview_url }}
+      preview_url: ${{ steps.preview-url.outputs.preview_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Record PR preview URL for downstream jobs
+        id: preview-url
+        run: echo "preview_url=${{ env.PREVIEW_URL }}" >> $GITHUB_OUTPUT
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -1311,9 +1340,8 @@ jobs:
 
       - name: Deploy preview to Surge
         id: preview
-        run: |
-          npx surge --project frontend/dist --domain ${{ env.PREVIEW_DOMAIN }}
-          echo "preview_url=${{ env.PREVIEW_URL }}" >> $GITHUB_OUTPUT
+        continue-on-error: true
+        run: npx surge --project frontend/dist --domain ${{ env.PREVIEW_DOMAIN }}
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
@@ -1339,7 +1367,7 @@ jobs:
         if: always()
         uses: actions/github-script@v8
         env:
-          PREVIEW_URL: ${{ steps.preview.outputs.preview_url }}
+          PREVIEW_URL: ${{ steps.preview-url.outputs.preview_url }}
           EXPECTED_URL: ${{ env.PREVIEW_URL }}
           MAIN_APP_URL: ${{ env.MAIN_APP_URL }}
         with:
@@ -1383,7 +1411,7 @@ jobs:
               }
             }
 
-            const url = process.env.PREVIEW_URL || process.env.EXPECTED_URL;
+            const url = process.env.PREVIEW_URL?.trim() || process.env.EXPECTED_URL?.trim();
             const mainAppUrl = process.env.MAIN_APP_URL;
             let content;
             if (url) {
@@ -1588,7 +1616,9 @@ jobs:
           printf "AURA_REPORT_THEME=dark\n" >> .env
           printf "AURA_RECORD_VIDEO=true\n" >> .env
           printf "AURA_DOCS_DIR=docs\n" >> .env
-          printf "AURA_TARGET_URL=%s\n" "${{ needs.deploy-preview.outputs.preview_url }}" >> .env
+          TARGET="${{ needs.deploy-preview.outputs.preview_url }}"
+          if [ -z "$TARGET" ]; then TARGET="${{ env.PREVIEW_URL }}"; fi
+          printf "AURA_TARGET_URL=%s\n" "$TARGET" >> .env
 
       - name: Run functional tests
         working-directory: automation/frameworks/applied-ai-aura
@@ -1605,14 +1635,21 @@ jobs:
           echo "latest_report=${LATEST_REPORT}" >> $GITHUB_OUTPUT
           echo "latest_video=${LATEST_VIDEO}" >> $GITHUB_OUTPUT
 
+      # Record the Surge URL before publishing so the PR dashboard still gets a link if `surge` fails
+      # (failed steps do not expose outputs written only after the failing command).
+      - name: Record functional report Surge URL
+        if: always() && steps.locate-report.outputs.latest_report != ''
+        id: functional-report-url
+        run: echo "functional_report_url=${{ env.FUNCTIONAL_REPORT_URL }}" >> $GITHUB_OUTPUT
+
       - name: Publish test report to Surge
         if: always() && steps.locate-report.outputs.latest_report != ''
         id: publish-report
+        continue-on-error: true
         working-directory: automation/frameworks/applied-ai-aura
         run: |
           REPORT_DIR=$(dirname "${{ steps.locate-report.outputs.latest_report }}")
           npx surge --project "$REPORT_DIR" --domain ${{ env.FUNCTIONAL_REPORT_DOMAIN }}
-          echo "functional_report_url=${{ env.FUNCTIONAL_REPORT_URL }}" >> $GITHUB_OUTPUT
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
@@ -1632,7 +1669,7 @@ jobs:
         if: always()
         uses: actions/github-script@v8
         env:
-          REPORT_URL: ${{ steps.publish-report.outputs.functional_report_url }}
+          REPORT_URL: ${{ steps.functional-report-url.outputs.functional_report_url }}
         with:
           script: |
             async function updateDashboard(github, context, sections) {

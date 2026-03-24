@@ -499,6 +499,9 @@ tailwind.config = {
 .acc-chevron{transition:transform .2s}.acc-chevron.open{transform:rotate(90deg)}
 .search-input{transition:border-color .2s}
 .search-input:focus{outline:none;border-color:#6366f1}
+/* OS dropdown uses a light surface; inherited text-white on <select> made options invisible */
+#lang-select option{color:#0f172a;background-color:#f8fafc}
+html.dark #lang-select option{color:#fafafa;background-color:#3f3f46}
 </style>
 </head>
 <body class="bg-slate-100 text-slate-800 dark:bg-zinc-950 dark:text-zinc-100 min-h-screen font-sans transition-colors duration-300">

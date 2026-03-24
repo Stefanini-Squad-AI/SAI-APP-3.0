@@ -424,6 +424,8 @@ tailwind.config = {
 .tab-panel{display:none}.tab-panel.active{display:block}
 .search-input:focus{outline:none;border-color:#6366f1}
 .acc-i.open{transform:rotate(180deg)}
+#lang-select option{color:#0f172a;background-color:#f8fafc}
+html.dark #lang-select option{color:#fafafa;background-color:#3f3f46}
 </style>
 </head>
 <body class="bg-slate-100 text-slate-800 dark:bg-zinc-950 dark:text-zinc-100 min-h-screen font-sans transition-colors duration-300">

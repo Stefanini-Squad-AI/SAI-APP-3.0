@@ -9,12 +9,21 @@ import type { AuraWorld } from '../cucumber/world/AuraWorld';
 // ─── Navigation ───────────────────────────────────────────────────────────────
 
 Given('I navigate to {string}', async function (this: AuraWorld, url: string) {
-  await this.webActions.navigateTo(url);
+  let target = url.trim();
+  if (target.startsWith('/') && !target.startsWith('//')) {
+    const base = process.env['AURA_TARGET_URL']?.trim().replace(/\/$/, '');
+    if (base) target = `${base}${target}`;
+  }
+  await this.webActions.navigateTo(target);
 });
 
 // ─── Generic Actions ──────────────────────────────────────────────────────────
 
 When('I click on {string}', async function (this: AuraWorld, target: string) {
+  await this.webActions.click(target);
+});
+
+When('I click on {string} in the page', async function (this: AuraWorld, target: string) {
   await this.webActions.click(target);
 });
 
