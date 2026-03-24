@@ -31,8 +31,7 @@ env:
   FRONTEND_REPORT_DOMAIN: frontend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   FRONTEND_REPORT_URL: https://frontend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/test-report.html
   SECURITY_REPORT_DOMAIN: security-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
-  SECURITY_FRONTEND_REPORT_URL: https://security-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/zap-frontend-report.html
-  SECURITY_API_REPORT_URL: https://security-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/zap-api-report.html
+  SECURITY_REPORT_URL: https://security-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/security-dashboard.html
 
 jobs:
   init-dashboard:
@@ -866,8 +865,7 @@ jobs:
       contents: read
       pull-requests: write
     outputs:
-      security_frontend_report_url: ${{ steps.security-report-urls.outputs.security_frontend_report_url }}
-      security_api_report_url: ${{ steps.security-report-urls.outputs.security_api_report_url }}
+      security_report_url: ${{ steps.security-report-urls.outputs.security_report_url }}
     timeout-minutes: 35
     steps:
       - name: Checkout code
@@ -1086,24 +1084,21 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
-      - name: Record security report Surge URLs
+      - name: Record security report Surge URL
         if: always()
         id: security-report-urls
         run: |
-          if [ -f "test-results/security/zap-frontend-report.html" ]; then
-            echo "security_frontend_report_url=${{ env.SECURITY_FRONTEND_REPORT_URL }}" >> $GITHUB_OUTPUT
-          fi
-          if [ -f "test-results/security/zap-api-report.html" ]; then
-            echo "security_api_report_url=${{ env.SECURITY_API_REPORT_URL }}" >> $GITHUB_OUTPUT
+          if [ -f "test-results/security/tailwind-dashboard/security-dashboard.html" ]; then
+            echo "security_report_url=${{ env.SECURITY_REPORT_URL }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish security reports to Surge
+      - name: Publish security dashboard to Surge
         if: always()
         id: publish-security-report
         continue-on-error: true
         run: |
-          if [ -f "test-results/security/zap-frontend-report.html" ] || [ -f "test-results/security/zap-api-report.html" ]; then
-            npx surge --project test-results/security --domain ${{ env.SECURITY_REPORT_DOMAIN }}
+          if [ -f "test-results/security/tailwind-dashboard/security-dashboard.html" ]; then
+            npx surge --project test-results/security/tailwind-dashboard --domain ${{ env.SECURITY_REPORT_DOMAIN }}
           fi
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
@@ -1114,29 +1109,27 @@ jobs:
         uses: actions/github-script@v8
         env:
           INTEGRATION_OK: ${{ env.INTEGRATION_OK }}
-          SEC_FRONTEND_URL: ${{ steps.security-report-urls.outputs.security_frontend_report_url }}
-          SEC_API_URL: ${{ steps.security-report-urls.outputs.security_api_report_url }}
+          SEC_REPORT_URL: ${{ steps.security-report-urls.outputs.security_report_url }}
         with:
           script: |
             const updateDashboard = require('./.github/scripts/update-dashboard');
             const integrationOk = process.env.INTEGRATION_OK === 'true';
-            const secFrontendUrl = process.env.SEC_FRONTEND_URL;
-            const secApiUrl = process.env.SEC_API_URL;
+            const secReportUrl = process.env.SEC_REPORT_URL;
 
             const integrationIcon = integrationOk ? '\u2705' : '\u274C';
             const integrationStatus = integrationOk ? 'Tests completed successfully' : 'Tests completed with errors';
             const integrationContent = `> ${integrationIcon} ${integrationStatus} - \u{1F4E6} _Results in artifact \`integration-test-report\`_`;
 
-            let securityLines = [];
-            if (secFrontendUrl || secApiUrl) {
-              securityLines.push('> \u2705 Security tests completed');
-              securityLines.push('>');
-              if (secFrontendUrl) securityLines.push(`> \u{1F4C4} [Security report - Frontend](${secFrontendUrl})`);
-              if (secApiUrl) securityLines.push(`> \u{1F4C4} [Security report - API](${secApiUrl})`);
+            let securityContent;
+            if (secReportUrl) {
+              securityContent = [
+                '> \u2705 Security tests completed',
+                '>',
+                `> \u{1F6E1}\uFE0F [View Security Dashboard](${secReportUrl})`,
+              ].join('\n');
             } else {
-              securityLines.push('> \u2705 Security tests completed - \u{1F4E6} _Results in artifact \`security-test-report\`_');
+              securityContent = '> \u2705 Security tests completed - \u{1F4E6} _Results in artifact \`security-test-report\`_';
             }
-            const securityContent = securityLines.join('\n');
 
             await updateDashboard({ github, context, sections: {
               'integration': integrationContent,
@@ -1191,6 +1184,9 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_ENABLE_MOCK_BACKEND: "true"
         run: npm run build
+
+      - name: Enable Surge SPA fallback
+        run: cp frontend/dist/index.html frontend/dist/200.html
 
       - name: Include documentation in preview build
         run: |

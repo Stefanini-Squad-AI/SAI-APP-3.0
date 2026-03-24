@@ -381,9 +381,12 @@ Mention explicitly the gap between "tests ejecutados" and "código fuente sin cu
 
   const content = await callExecutiveLLM(systemPrompt, userPrompt);
   if (!content) return { en: '', es: '', pt: '' };
+  console.log(`  AI response first 200 chars: ${content.slice(0, 200).replace(/\n/g, '\\n')}`);
   const parsed = parseSummaryJson(content);
   if (parsed) return sanitizeExecutiveSummaryByLang(parsed);
-  return sanitizeExecutiveSummaryByLang({ en: content.trim(), es: content.trim(), pt: content.trim() });
+  console.warn('  parseSummaryJson returned null — falling back to raw content.');
+  const unescaped = content.trim().replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+  return sanitizeExecutiveSummaryByLang({ en: unescaped, es: unescaped, pt: unescaped });
 }
 
 function parseSummaryJson(raw) {
@@ -469,6 +472,28 @@ function parseSummaryJson(raw) {
     const parsed = tryParse(fixNewlines(c));
     if (parsed) return parsed;
   }
+
+  // Last resort: regex-extract each language key individually
+  // This handles cases where the JSON is technically malformed but the
+  // individual string values are intact (common with LLM outputs)
+  const extractKey = (text, key) => {
+    const pattern = new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"`);
+    const m = pattern.exec(text);
+    if (m) {
+      try { return JSON.parse(`"${m[1]}"`); } catch { return m[1]; }
+    }
+    return '';
+  };
+
+  for (const c of candidates) {
+    const en = extractKey(c, 'en');
+    const es = extractKey(c, 'es');
+    const pt = extractKey(c, 'pt');
+    if (en || es || pt) {
+      return { en: en || es || pt, es: es || en || pt, pt: pt || en || es };
+    }
+  }
+
   return null;
 }
 

@@ -13,6 +13,10 @@ Given('the browser is open on the TuCreditoOnline home page', async function (th
   await this.webActions.navigateTo(HomeConstants.HOME_URL);
 });
 
+Given('the browser is on the TuCreditoOnline home page', async function (this: AuraWorld) {
+  await this.webActions.navigateTo(HomeConstants.HOME_URL);
+});
+
 When('I click the link {string}', async function (this: AuraWorld, label: string) {
   const link = this.page.getByRole('link', { name: label }).first();
   await link.waitFor({ state: 'visible', timeout: 15000 });

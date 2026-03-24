@@ -291,10 +291,14 @@ ${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content ?? '';
     console.log(`  AI response received (${data.usage?.total_tokens ?? '?'} tokens).`);
+    console.log(`  AI response first 200 chars: ${content.slice(0, 200).replaceAll('\n', '\\n')}`);
 
     const parsed = parseSummaryJson(content);
     if (parsed) return sanitizeExecutiveSummaryByLang(parsed);
-    return sanitizeExecutiveSummaryByLang({ en: content.trim(), es: content.trim(), pt: content.trim() });
+    console.warn('  parseSummaryJson returned null — falling back to raw content as single-lang summary.');
+    // Fallback: unescape literal \n sequences so mdToHtml can split lines properly
+    const unescaped = content.trim().replaceAll('\\n', '\n').replaceAll('\\t', '\t');
+    return sanitizeExecutiveSummaryByLang({ en: unescaped, es: unescaped, pt: unescaped });
   } catch (err) {
     console.warn(`  Perplexity API call failed: ${err?.message ?? String(err)}`);
     return { en: '', es: '', pt: '' };
@@ -383,6 +387,29 @@ function parseSummaryJson(raw) {
     const parsed = tryParse(fixNewlines(c));
     if (parsed) return parsed;
   }
+
+  // Last resort: regex-extract each language key individually
+  // This handles cases where the JSON is technically malformed but the
+  // individual string values are intact (common with LLM outputs)
+  const extractKey = (text, key) => {
+    // Match "key": "..." where value can contain escaped quotes
+    const pattern = new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"`);
+    const m = pattern.exec(text);
+    if (m) {
+      try { return JSON.parse(`"${m[1]}"`); } catch { return m[1]; }
+    }
+    return '';
+  };
+
+  for (const c of candidates) {
+    const en = extractKey(c, 'en');
+    const es = extractKey(c, 'es');
+    const pt = extractKey(c, 'pt');
+    if (en || es || pt) {
+      return { en: en || es || pt, es: es || en || pt, pt: pt || en || es };
+    }
+  }
+
   return null;
 }
 

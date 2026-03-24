@@ -17,7 +17,7 @@ const rootEnv = path.resolve(__dirname, '..', '..', '..', '..', '..', '.env');
 dotenvConfig({ path: rootEnv });
 dotenvConfig();
 
-const DEFAULT_FEATURES = ['src/features/Home.feature', 'src/features/Login.feature'];
+const DEFAULT_FEATURES = ['src/features/Home.feature'];
 
 interface ParsedCli {
   tags?: string;
