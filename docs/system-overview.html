@@ -50,6 +50,7 @@
         <li><code>backend/</code>: ASP.NET Core Web API (.NET 8) with JWT authentication and MongoDB repositories.</li>
         <li><code>database/</code>: MongoDB initialization and seed support for local dockerized environments.</li>
         <li><code>automation/</code>: quality tooling, including <code>applied-ai-aura</code> functional automation.</li>
+        <li data-i18n="legalRoute"><code>/legal</code>: Public compliance overview with hero, summary cards, and policy links.</li>
       </ul>
     </section>
 
@@ -88,9 +89,9 @@
   </div>
   <script>
     const i18n = {
-      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map" },
-      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación" },
-      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação" }
+      en: { back: "<- Back to docs hub", langLabel: "Language:", title: "System Overview", subtitle: "Architecture map, module catalog, routes, i18n boundaries, and integration surfaces.", archDomain: "Architecture and domain", moduleCatalog: "Module catalog", i18nStrict: "Internationalization (strict)", docMap: "Documentation map", legalRoute: "<code>/legal</code>: Public compliance overview with hero, summary cards, and policy links." },
+      es: { back: "<- Volver al hub de documentación", langLabel: "Idioma:", title: "Vista General del Sistema", subtitle: "Mapa de arquitectura, catálogo de módulos, rutas, límites de i18n y superficies de integración.", archDomain: "Arquitectura y dominio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalización (estricta)", docMap: "Mapa de documentación", legalRoute: "<code>/legal</code>: Vista pública de cumplimiento con hero, tarjetas y enlaces a políticas." },
+      pt: { back: "<- Voltar para o hub de documentação", langLabel: "Idioma:", title: "Visão Geral do Sistema", subtitle: "Mapa de arquitetura, catálogo de módulos, rotas, limites de i18n e superfícies de integração.", archDomain: "Arquitetura e domínio", moduleCatalog: "Catálogo de módulos", i18nStrict: "Internacionalização (estrita)", docMap: "Mapa de documentação", legalRoute: "<code>/legal</code>: Visão pública de conformidade com hero, cartões e links para políticas." }
     };
     const select = document.getElementById("lang-select");
     const key = "docs-hub-lang";

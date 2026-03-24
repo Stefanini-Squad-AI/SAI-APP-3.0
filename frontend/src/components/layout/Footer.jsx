@@ -98,6 +98,11 @@ const Footer = () => {
                   {t('header.contact')}
                 </Link>
               </li>
+              <li>
+                <Link to="/legal" className="text-gray-400 hover:text-white transition">
+                  {t('header.legalInfo')}
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -140,6 +145,11 @@ const Footer = () => {
               <li>
                 <Link to="/terms" className="text-gray-400 hover:text-white transition">
                   {t('footer.termsConditions')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/legal" className="text-gray-400 hover:text-white transition">
+                  {t('header.legalInfo')}
                 </Link>
               </li>
               <li>
