@@ -162,6 +162,25 @@ async function loadCoverageInfo() {
 
 // ─── LLM executive summary (MODEL_PROVIDER: perplexity | openai) ───────────
 
+/** Limpia artefactos del modelo (citas [1], bloques ```, emojis) del Markdown del resumen. */
+function sanitizeExecutiveMarkdown(md) {
+  if (!md || typeof md !== 'string') return '';
+  let s = md.replace(/\[\d+\]/g, '');
+  s = s.replace(/```[\s\S]*?```/g, '');
+  s = s.replace(/\p{Extended_Pictographic}/gu, '');
+  s = s.replace(/\n{3,}/g, '\n\n').trim();
+  return s;
+}
+
+function sanitizeExecutiveSummaryByLang(obj) {
+  if (!obj) return obj;
+  return {
+    en: sanitizeExecutiveMarkdown(obj.en),
+    es: sanitizeExecutiveMarkdown(obj.es),
+    pt: sanitizeExecutiveMarkdown(obj.pt),
+  };
+}
+
 function resolveExecMaxTokens() {
   const n = Number.parseInt(process.env.FRONTEND_EXEC_SUMMARY_MAX_TOKENS || '8192', 10);
   if (Number.isFinite(n) && n >= 1024 && n <= 32000) return n;
@@ -282,33 +301,64 @@ async function generateExecutiveSummary(stats, testSuites, coverageInfo) {
   const systemPrompt = `You are a senior QA / engineering lead writing a structured EXECUTIVE UNIT-TEST REPORT for React/Jest (frontend).
 Output Markdown only inside JSON string values (no HTML). For EACH language use the SAME outline and depth.
 
-Rules:
-- Reference concrete numbers: tests passed/failed, pass rate, duration, and coverage metrics when provided.
-- Use ## for the 10 main sections. Under findings use ### for the three subsections.
+Style and audience:
+- Explain at a high level in clear, professional prose. Readers may not be deeply technical: define acronyms once, avoid jargon dumps, connect numbers to business impact.
+- Be substantive: each section should add real insight from the data (not filler).
+- Do NOT use emojis, symbols as bullets, decorative icons, or numeric reference markers like [1] or [12].
+- Do NOT include fenced code blocks (\`\`\`), inline code snippets of config files, file paths in backticks, or pasted JSON.
+- Use ## for the 10 main sections. Under "Hallazgos" / "Findings" / "Achados" use exactly these three ### subsections.
 - Use bullet lists (- item) where helpful.
 - Avoid raw stack traces; paraphrase failure themes.
-- Historical trend: usually single run — state if no prior data.
-- Glossary: 4–8 terms (unit test, suite, coverage line/branch, collectCoverageFrom, etc.) in target language.
+- Historical trend: usually single run — state explicitly if no prior data.
+- Glossary: 4–8 plain-language terms (unit test, suite, line/branch coverage, etc.) in the target language.
 
 Return ONLY valid JSON (no markdown fences):
 {"en":"<markdown>","es":"<markdown>","pt":"<markdown>"}
 
-**es** — EXACT ## headings:
-## 📌 Encabezado de Contexto
-## 🏆 Resultado General (Semáforo)
-## 🗂️ Alcance — ¿Qué se probó?
-## 🔍 Hallazgos Detallados
-### ✅ Lo que funcionó
-### ❌ Fallos encontrados
-### ⚠️ Advertencias
-## ⏱️ Métricas de Rendimiento
-## 🚨 Evaluación de Riesgos
-## 📊 Cobertura de Pruebas
-## 💡 Recomendaciones Accionables
-## 📈 Tendencia Histórica
-## 📝 Glosario de Términos
+**es** — use EXACTLY these headings (no leading icons or extra characters):
+## Encabezado de Contexto
+## Resultado General (Semáforo)
+## Alcance — ¿Qué se probó?
+## Hallazgos Detallados
+### Lo que funcionó
+### Fallos encontrados
+### Advertencias
+## Métricas de Rendimiento
+## Evaluación de Riesgos
+## Cobertura de Pruebas
+## Recomendaciones Accionables
+## Tendencia Histórica
+## Glosario de Términos
 
-**en** / **pt** — same structure, translated titles, keep emojis.`;
+**en** — same structure with natural English titles:
+## Context Header
+## Overall Result (Traffic Light)
+## Scope — What Was Tested?
+## Detailed Findings
+### What Worked
+### Failures Found
+### Warnings
+## Performance Metrics
+## Risk Assessment
+## Test Coverage
+## Actionable Recommendations
+## Historical Trend
+## Glossary of Terms
+
+**pt** — same structure in Portuguese:
+## Cabeçalho de Contexto
+## Resultado Geral (Semáforo)
+## Escopo — O que foi testado?
+## Achados Detalhados
+### O que funcionou
+### Falhas encontradas
+### Avisos
+## Métricas de Desempenho
+## Avaliação de Riscos
+## Cobertura de Testes
+## Recomendações Acionáveis
+## Tendência Histórica
+## Glossário de Termos`;
 
   const userPrompt = `Frontend unit tests (Jest + React Testing Library):
 
@@ -331,7 +381,9 @@ Mention explicitly the gap between "tests ejecutados" and "código fuente sin cu
 
   const content = await callExecutiveLLM(systemPrompt, userPrompt);
   if (!content) return { en: '', es: '', pt: '' };
-  return parseSummaryJson(content) || { en: content.trim(), es: content.trim(), pt: content.trim() };
+  const parsed = parseSummaryJson(content);
+  if (parsed) return sanitizeExecutiveSummaryByLang(parsed);
+  return sanitizeExecutiveSummaryByLang({ en: content.trim(), es: content.trim(), pt: content.trim() });
 }
 
 function parseSummaryJson(raw) {
@@ -524,12 +576,9 @@ tailwind.config = {
 <!-- ═══ TAB: EXECUTIVE SUMMARY ═══ -->
 <section id="tab-executive" class="tab-panel active">
 <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
-  <div class="flex items-center gap-3 mb-4">
-    <div class="w-10 h-10 rounded-lg bg-aura-100 dark:bg-aura-600/20 flex items-center justify-center"><i class="bi bi-stars text-aura-600 dark:text-aura-400 text-xl"></i></div>
-    <div>
-      <h2 class="text-xl font-bold text-slate-800 dark:text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2>
-      <p class="text-xs text-slate-500 dark:text-gray-400" data-i18n="executiveSubtitle">Generado con Inteligencia Artificial (MODEL_PROVIDER en .env)</p>
-    </div>
+  <div class="mb-4">
+    <h2 class="text-xl font-bold text-slate-800 dark:text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2>
+    <p class="text-xs text-slate-500 dark:text-gray-400 mt-1" data-i18n="executiveSubtitle">Resumen de pruebas unitarias con AI</p>
   </div>
   <div id="executive-summary-content" class="prose max-w-none text-slate-600 dark:text-slate-300 leading-relaxed">
     ${summaryHtmlByLang.es || '<p class="text-slate-400 dark:text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY u OPENAI_API_KEY según MODEL_PROVIDER.</p>'}
@@ -979,9 +1028,9 @@ if (linesCovEl) {
 
 // ── i18n ──
 const i18n = {
-es:{reportTitle:'Reporte de Pruebas Unitarias — Frontend',tabExecutive:'Resumen Ejecutivo',tabOverview:'Resultados Generales',tabDetails:'Detalle de Tests',tabCoverage:'Cobertura',tabErrors:'Logs de Error',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Generado con IA (MODEL_PROVIDER en .env)',noSummary:'Resumen no disponible. Configure PERPLEXITY_API_KEY u OPENAI_API_KEY según MODEL_PROVIDER.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiDuration:'Duración',chartDistribution:'Distribución de Tests',chartSuites:'Resultados por Suite',chartLinesCov:'Líneas cubiertas vs no cubiertas',overallProgress:'Progreso General',lblPassed:'exitosos',lblFailed:'fallidos',testSuites:'Test Suites',searchTests:'Buscar tests...',colTest:'Test',colStatus:'Estado',colDuration:'Duración',noErrors:'No se registraron errores. ¡Excelente!',errorCount:'Tests Fallidos',footerMadeBy:'Hecho por Applied AI Team — Stefanini',generatedAt:'Generado',totalDuration:'Duración total',codeCoverageTitle:'Cobertura de código (Jest)',codeCoverageHint:'Porcentaje sobre líneas/ramas instrumentadas. Ejecute npm run test:coverage antes del informe.',covLinePct:'Cobertura líneas',covBranchPct:'Cobertura ramas',covFilesTracked:'Archivos en alcance',covFilesNoLines:'Sin cubrir líneas (~0%)',covLinesLabel:'líneas',lineCoverage:'Cobertura de líneas',branchCoverage:'Cobertura de ramas',covByPackage:'Cobertura por paquete',colPackage:'Paquete',colFile:'Archivo',colLinesHit:'Líneas cubiertas'},
-en:{reportTitle:'Unit Test Report — Frontend',tabExecutive:'Executive Summary',tabOverview:'Overall Results',tabDetails:'Test Details',tabCoverage:'Coverage',tabErrors:'Error Logs',executiveTitle:'Executive Summary',executiveSubtitle:'AI-generated (MODEL_PROVIDER in .env)',noSummary:'Summary unavailable. Set PERPLEXITY_API_KEY or OPENAI_API_KEY per MODEL_PROVIDER.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Pass Rate',kpiDuration:'Duration',chartDistribution:'Test Distribution',chartSuites:'Results by Suite',chartLinesCov:'Covered vs uncovered lines',overallProgress:'Overall Progress',lblPassed:'passed',lblFailed:'failed',testSuites:'Test Suites',searchTests:'Search tests...',colTest:'Test',colStatus:'Status',colDuration:'Duration',noErrors:'No errors recorded. Excellent!',errorCount:'Failed Tests',footerMadeBy:'Made by Applied AI Team — Stefanini',generatedAt:'Generated',totalDuration:'Total duration',codeCoverageTitle:'Code coverage (Jest)',codeCoverageHint:'Percentage over instrumented lines/branches. Run npm run test:coverage before the report.',covLinePct:'Line coverage',covBranchPct:'Branch coverage',covFilesTracked:'Files in scope',covFilesNoLines:'No line coverage (~0%)',covLinesLabel:'lines',lineCoverage:'Line coverage',branchCoverage:'Branch coverage',covByPackage:'Coverage by package',colPackage:'Package',colFile:'File',colLinesHit:'Lines hit'},
-pt:{reportTitle:'Relatório de Testes Unitários — Frontend',tabExecutive:'Resumo Executivo',tabOverview:'Resultados Gerais',tabDetails:'Detalhes dos Testes',tabCoverage:'Cobertura',tabErrors:'Logs de Erro',executiveTitle:'Resumo Executivo',executiveSubtitle:'Gerado com IA (MODEL_PROVIDER no .env)',noSummary:'Resumo indisponível. Configure PERPLEXITY_API_KEY ou OPENAI_API_KEY conforme MODEL_PROVIDER.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiDuration:'Duração',chartDistribution:'Distribuição de Testes',chartSuites:'Resultados por Suite',chartLinesCov:'Linhas cobertas vs não cobertas',overallProgress:'Progresso Geral',lblPassed:'aprovados',lblFailed:'falhos',testSuites:'Test Suites',searchTests:'Buscar testes...',colTest:'Teste',colStatus:'Status',colDuration:'Duração',noErrors:'Nenhum erro registrado. Excelente!',errorCount:'Testes com Falha',footerMadeBy:'Feito por Applied AI Team — Stefanini',generatedAt:'Gerado',totalDuration:'Duração total',codeCoverageTitle:'Cobertura de código (Jest)',codeCoverageHint:'Percentual sobre linhas/ramos instrumentados. Execute npm run test:coverage antes do relatório.',covLinePct:'Cobertura de linhas',covBranchPct:'Cobertura de ramos',covFilesTracked:'Arquivos no escopo',covFilesNoLines:'Sem cobertura de linha (~0%)',covLinesLabel:'linhas',lineCoverage:'Cobertura de linhas',branchCoverage:'Cobertura de ramos',covByPackage:'Cobertura por pacote',colPackage:'Pacote',colFile:'Arquivo',colLinesHit:'Linhas cobertas'}
+es:{reportTitle:'Reporte de Pruebas Unitarias — Frontend',tabExecutive:'Resumen Ejecutivo',tabOverview:'Resultados Generales',tabDetails:'Detalle de Tests',tabCoverage:'Cobertura',tabErrors:'Logs de Error',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Resumen de pruebas unitarias con AI',noSummary:'Resumen no disponible. Configure PERPLEXITY_API_KEY u OPENAI_API_KEY según MODEL_PROVIDER.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiDuration:'Duración',chartDistribution:'Distribución de Tests',chartSuites:'Resultados por Suite',chartLinesCov:'Líneas cubiertas vs no cubiertas',overallProgress:'Progreso General',lblPassed:'exitosos',lblFailed:'fallidos',testSuites:'Test Suites',searchTests:'Buscar tests...',colTest:'Test',colStatus:'Estado',colDuration:'Duración',noErrors:'No se registraron errores. ¡Excelente!',errorCount:'Tests Fallidos',footerMadeBy:'Hecho por Applied AI Team — Stefanini',generatedAt:'Generado',totalDuration:'Duración total',codeCoverageTitle:'Cobertura de código (Jest)',codeCoverageHint:'Porcentaje sobre líneas/ramas instrumentadas. Ejecute npm run test:coverage antes del informe.',covLinePct:'Cobertura líneas',covBranchPct:'Cobertura ramas',covFilesTracked:'Archivos en alcance',covFilesNoLines:'Sin cubrir líneas (~0%)',covLinesLabel:'líneas',lineCoverage:'Cobertura de líneas',branchCoverage:'Cobertura de ramas',covByPackage:'Cobertura por paquete',colPackage:'Paquete',colFile:'Archivo',colLinesHit:'Líneas cubiertas'},
+en:{reportTitle:'Unit Test Report — Frontend',tabExecutive:'Executive Summary',tabOverview:'Overall Results',tabDetails:'Test Details',tabCoverage:'Coverage',tabErrors:'Error Logs',executiveTitle:'Executive Summary',executiveSubtitle:'Unit test summary with AI',noSummary:'Summary unavailable. Set PERPLEXITY_API_KEY or OPENAI_API_KEY per MODEL_PROVIDER.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Pass Rate',kpiDuration:'Duration',chartDistribution:'Test Distribution',chartSuites:'Results by Suite',chartLinesCov:'Covered vs uncovered lines',overallProgress:'Overall Progress',lblPassed:'passed',lblFailed:'failed',testSuites:'Test Suites',searchTests:'Search tests...',colTest:'Test',colStatus:'Status',colDuration:'Duration',noErrors:'No errors recorded. Excellent!',errorCount:'Failed Tests',footerMadeBy:'Made by Applied AI Team — Stefanini',generatedAt:'Generated',totalDuration:'Total duration',codeCoverageTitle:'Code coverage (Jest)',codeCoverageHint:'Percentage over instrumented lines/branches. Run npm run test:coverage before the report.',covLinePct:'Line coverage',covBranchPct:'Branch coverage',covFilesTracked:'Files in scope',covFilesNoLines:'No line coverage (~0%)',covLinesLabel:'lines',lineCoverage:'Line coverage',branchCoverage:'Branch coverage',covByPackage:'Coverage by package',colPackage:'Package',colFile:'File',colLinesHit:'Lines hit'},
+pt:{reportTitle:'Relatório de Testes Unitários — Frontend',tabExecutive:'Resumo Executivo',tabOverview:'Resultados Gerais',tabDetails:'Detalhes dos Testes',tabCoverage:'Cobertura',tabErrors:'Logs de Erro',executiveTitle:'Resumo Executivo',executiveSubtitle:'Resumo de testes unitários com IA',noSummary:'Resumo indisponível. Configure PERPLEXITY_API_KEY ou OPENAI_API_KEY conforme MODEL_PROVIDER.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiDuration:'Duração',chartDistribution:'Distribuição de Testes',chartSuites:'Resultados por Suite',chartLinesCov:'Linhas cobertas vs não cobertas',overallProgress:'Progresso Geral',lblPassed:'aprovados',lblFailed:'falhos',testSuites:'Test Suites',searchTests:'Buscar testes...',colTest:'Teste',colStatus:'Status',colDuration:'Duração',noErrors:'Nenhum erro registrado. Excelente!',errorCount:'Testes com Falha',footerMadeBy:'Feito por Applied AI Team — Stefanini',generatedAt:'Gerado',totalDuration:'Duração total',codeCoverageTitle:'Cobertura de código (Jest)',codeCoverageHint:'Percentual sobre linhas/ramos instrumentados. Execute npm run test:coverage antes do relatório.',covLinePct:'Cobertura de linhas',covBranchPct:'Cobertura de ramos',covFilesTracked:'Arquivos no escopo',covFilesNoLines:'Sem cobertura de linha (~0%)',covLinesLabel:'linhas',lineCoverage:'Cobertura de linhas',branchCoverage:'Cobertura de ramos',covByPackage:'Cobertura por pacote',colPackage:'Pacote',colFile:'Arquivo',colLinesHit:'Linhas cobertas'}
 };
 
 function renderExecutiveSummary(lang) {

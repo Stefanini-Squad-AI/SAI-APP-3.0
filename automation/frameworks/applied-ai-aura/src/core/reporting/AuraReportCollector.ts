@@ -331,17 +331,65 @@ export class AuraReportCollector {
     try {
       const adapter: AIAdapter = createLLMAdapter();
 
-      const systemPrompt = `You are a senior QA manager writing executive test summaries for stakeholders.
-Write concise executive summaries (3-5 short paragraphs each), non-technical and business-oriented.
-Include: overall result, key findings, risk assessment, and recommendation.
-Do NOT include code, selectors, stack traces, or low-level technical details.
-Return ONLY valid JSON with this exact schema:
-{"en":"...","es":"...","pt":"..."}
-Where:
-- "en" is English
-- "es" is Spanish
-- "pt" is Portuguese
-Do not add markdown code fences or extra keys.`;
+      const systemPrompt = `You are a senior QA / test automation lead writing a structured EXECUTIVE FUNCTIONAL TEST REPORT for business and engineering stakeholders.
+Output Markdown only inside JSON string values (no HTML). For EACH language use the SAME outline and depth.
+
+Style and audience:
+- Explain at a high level in clear, professional prose. Readers may not be deeply technical: define acronyms once, avoid jargon dumps, connect results to user-facing risk and quality.
+- Be substantive: each section should add real insight from the data (not filler).
+- Do NOT use emojis, decorative symbols, or numeric reference markers like [1] or [12].
+- Do NOT include fenced code blocks (\`\`\`), inline code snippets, file paths in backticks, or pasted JSON.
+- Use ## for the 10 main sections. Under "Hallazgos" / "Findings" / "Achados" use exactly these three ### subsections.
+- Use bullet lists (- item) where helpful.
+- Avoid raw stack traces; paraphrase error themes.
+
+Return ONLY valid JSON (no markdown fences):
+{"en":"<markdown>","es":"<markdown>","pt":"<markdown>"}
+
+**es** — use EXACTLY these headings:
+## Encabezado de Contexto
+## Resultado General (Semáforo)
+## Alcance — ¿Qué se probó?
+## Hallazgos Detallados
+### Lo que funcionó
+### Fallos encontrados
+### Advertencias
+## Métricas de Rendimiento
+## Evaluación de Riesgos
+## Cobertura de Pruebas
+## Recomendaciones Accionables
+## Tendencia Histórica
+## Glosario de Términos
+
+**en** — same structure with natural English titles:
+## Context Header
+## Overall Result (Traffic Light)
+## Scope — What Was Tested?
+## Detailed Findings
+### What Worked
+### Failures Found
+### Warnings
+## Performance Metrics
+## Risk Assessment
+## Test Coverage
+## Actionable Recommendations
+## Historical Trend
+## Glossary of Terms
+
+**pt** — same structure in Portuguese:
+## Cabeçalho de Contexto
+## Resultado Geral (Semáforo)
+## Escopo — O que foi testado?
+## Achados Detalhados
+### O que funcionou
+### Falhas encontradas
+### Avisos
+## Métricas de Desempenho
+## Avaliação de Riscos
+## Cobertura de Testes
+## Recomendações Acionáveis
+## Tendência Histórica
+## Glossário de Termos`;
 
       const userPrompt = `Analyze these test results and generate an executive summary:
 
@@ -363,22 +411,22 @@ ${data.errorLogs.length > 0 ? 'Errors found:\n' + data.errorLogs.map(l => `  - $
       const response = await adapter.complete({
         system: systemPrompt,
         user: userPrompt,
-        temperature: 0.4,
-        maxTokens: 1800,
+        temperature: 0.35,
+        maxTokens: 8192,
       });
 
       const parsed = parseSummaryJson(response.content);
       if (parsed) {
         console.info(`[AURA/Report] ✓ Multilingual executive summaries generated (${response.tokensUsed} tokens, ${response.latencyMs}ms)`);
-        return parsed;
+        return sanitizeExecutiveSummaryByLang(parsed);
       }
 
       console.warn('[AURA/Report] ⚠ AI summary JSON was invalid. Falling back to English-only summary.');
-      return {
+      return sanitizeExecutiveSummaryByLang({
         en: response.content.trim(),
         es: response.content.trim(),
         pt: response.content.trim(),
-      };
+      });
     } catch (err) {
       console.warn('[AURA/Report] ⚠ Could not generate AI executive summaries:', err instanceof Error ? err.message : err);
       return { en: '', es: '', pt: '' };
@@ -409,6 +457,27 @@ function sanitize(name: string): string {
     .replace(/[^a-z0-9]+/gi, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
+}
+
+function sanitizeExecutiveMarkdown(md: string): string {
+  if (!md) return '';
+  let s = md.replace(/\[\d+\]/g, '');
+  s = s.replace(/```[\s\S]*?```/g, '');
+  s = s.replace(/\p{Extended_Pictographic}/gu, '');
+  s = s.replace(/\n{3,}/g, '\n\n').trim();
+  return s;
+}
+
+function sanitizeExecutiveSummaryByLang(obj: { en: string; es: string; pt: string }): {
+  en: string;
+  es: string;
+  pt: string;
+} {
+  return {
+    en: sanitizeExecutiveMarkdown(obj.en),
+    es: sanitizeExecutiveMarkdown(obj.es),
+    pt: sanitizeExecutiveMarkdown(obj.pt),
+  };
 }
 
 function parseSummaryJson(raw: string): { en: string; es: string; pt: string } | null {

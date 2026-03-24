@@ -105,9 +105,9 @@ ${grey ? `/* GREY MODE — slate + tarjetas con borde (sin light mode plano) */
 <!-- ═══ TAB: EXECUTIVE SUMMARY ═══ -->
 <section id="tab-executive" class="tab-panel active">
 <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
-  <div class="flex items-center gap-3 mb-4">
-    <div class="w-10 h-10 rounded-lg bg-aura-600/20 flex items-center justify-center"><i class="bi bi-stars text-aura-400 text-xl"></i></div>
-    <div><h2 class="text-xl font-bold text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2><p class="text-xs text-gray-400" data-i18n="executiveSubtitle">Generado con Inteligencia Artificial</p></div>
+  <div class="mb-4">
+    <h2 class="text-xl font-bold text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2>
+    <p class="text-xs text-gray-400 mt-1" data-i18n="executiveSubtitle">Resumen de pruebas funcionales con AI</p>
   </div>
   <div id="executive-summary-content" class="prose max-w-none text-slate-700 leading-relaxed">
     ${summaryHtmlByLang.es || '<p class="text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible.</p>'}
@@ -357,9 +357,9 @@ if(covCtx){new Chart(covCtx,{type:'bar',data:{labels:[R.featureName],datasets:[{
 
 // ── i18n ──
 const i18n={
-es:{reportTitle:'Reporte de Pruebas SAI',footerMadeBy:'Hecho por Applied AI Team',tabExecutive:'Resumen Ejecutivo',tabOverall:'Resultados Generales',tabResults:'Resultados de Pruebas',tabSteps:'Detalle de Pasos',tabSuccess:'Logs de Éxito',tabErrors:'Logs de Error',tabVideo:'Video',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Generado con Inteligencia Artificial',noSummary:'Resumen ejecutivo no disponible.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiDuration:'Duración',chartResults:'Resultados',chartDuration:'Duración por Paso (ms)',lgPassing:'Exitosos',lgFailed:'Fallidos',lgPending:'Pendientes',lgSkipped:'Omitidos',lgIgnored:'Ignorados',lgAborted:'Abortados',lgBroken:'Rotos',lgCompromised:'Comprometidos',keyStats:'Estadísticas Clave',ksScenarios:'Escenarios',ksTestCases:'Casos de Prueba',ksStarted:'Inicio de Pruebas',ksFinished:'Fin de Pruebas',ksTotalDuration:'Duración Total',ksFastest:'Prueba Más Rápida',ksSlowest:'Prueba Más Lenta',ksAverage:'Tiempo Promedio',covOverview:'Cobertura Funcional',covDetails:'Detalle de Cobertura Funcional',covFeature:'Feature',covScenarios:'Escenarios',covTestCases:'Casos',covPassRate:'% Éxito',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Resumen de Fallos',failFrequent:'Fallos Más Frecuentes',failUnstable:'Features Más Inestables',noFailures:'No se registraron fallos.',noUnstable:'No hay features inestables.',infoScenario:'Escenario',infoEnvironment:'Entorno',infoTester:'Ejecutor',envBrowser:'Navegador',colStep:'#',colDescription:'Descripción',colStatus:'Estado',colDuration:'Duración',stepsLabel:'pasos exitosos',screenshot:'Captura de Pantalla',stepLogs:'Logs del Paso',successEmpty:'No se registraron logs de éxito.',errorEmpty:'No se registraron errores. ¡Excelente!',noVideo:'No se grabó video para esta ejecución.',noVideoHint:'Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.',generatedAt:'Generado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Acción',colMessage:'Mensaje',colDetails:'Detalles',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Éxito',errorCount:'Logs de Error'},
-en:{reportTitle:'SAI Test Report',footerMadeBy:'Made by Applied AI Team',tabExecutive:'Executive Summary',tabOverall:'Overall Results',tabResults:'Test Results',tabSteps:'Steps Details',tabSuccess:'Success Logs',tabErrors:'Error Logs',tabVideo:'Video',executiveTitle:'Executive Summary',executiveSubtitle:'AI-Generated Analysis',noSummary:'Executive summary not available.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Success Rate',kpiDuration:'Duration',chartResults:'Results',chartDuration:'Duration per Step (ms)',lgPassing:'Passing',lgFailed:'Failed',lgPending:'Pending',lgSkipped:'Skipped',lgIgnored:'Ignored',lgAborted:'Aborted',lgBroken:'Broken',lgCompromised:'Compromised',keyStats:'Key Statistics',ksScenarios:'Scenarios',ksTestCases:'Test Cases',ksStarted:'Tests Started',ksFinished:'Tests Finished',ksTotalDuration:'Total Duration',ksFastest:'Fastest Test',ksSlowest:'Slowest Test',ksAverage:'Average Execution Time',covOverview:'Functional Coverage Overview',covDetails:'Functional Coverage Details',covFeature:'Feature',covScenarios:'Scenarios',covTestCases:'Test Cases',covPassRate:'% Pass',covResult:'Result',covCoverage:'Coverage',failOverview:'Test Failure Overview',failFrequent:'Most Frequent Failures',failUnstable:'Most Unstable Features',noFailures:'No failures recorded.',noUnstable:'No unstable features.',infoScenario:'Scenario',infoEnvironment:'Environment',infoTester:'Tester',envBrowser:'Browser',colStep:'#',colDescription:'Description',colStatus:'Status',colDuration:'Duration',stepsLabel:'steps passed',screenshot:'Screenshot',stepLogs:'Step Logs',successEmpty:'No success logs recorded.',errorEmpty:'No errors recorded. Excellent!',noVideo:'No video recorded for this execution.',noVideoHint:'Set AURA_RECORD_VIDEO=true in .env to enable recording.',generatedAt:'Generated',colTimestamp:'Time',colElement:'Element',colAction:'Action',colMessage:'Message',colDetails:'Details',logTotal:'Total',logLogs:'logs',searchLogs:'Search logs...',successCount:'Success Logs',errorCount:'Error Logs'},
-pt:{reportTitle:'Relatório de Testes SAI',footerMadeBy:'Feito por Applied AI Team',tabExecutive:'Resumo Executivo',tabOverall:'Resultados Gerais',tabResults:'Resultados dos Testes',tabSteps:'Detalhes dos Passos',tabSuccess:'Logs de Sucesso',tabErrors:'Logs de Erro',tabVideo:'Vídeo',executiveTitle:'Resumo Executivo',executiveSubtitle:'Gerado com Inteligência Artificial',noSummary:'Resumo executivo não disponível.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiDuration:'Duração',chartResults:'Resultados',chartDuration:'Duração por Passo (ms)',lgPassing:'Aprovados',lgFailed:'Falhos',lgPending:'Pendentes',lgSkipped:'Omitidos',lgIgnored:'Ignorados',lgAborted:'Abortados',lgBroken:'Quebrados',lgCompromised:'Comprometidos',keyStats:'Estatísticas Principais',ksScenarios:'Cenários',ksTestCases:'Casos de Teste',ksStarted:'Início dos Testes',ksFinished:'Fim dos Testes',ksTotalDuration:'Duração Total',ksFastest:'Teste Mais Rápido',ksSlowest:'Teste Mais Lento',ksAverage:'Tempo Médio de Execução',covOverview:'Visão Geral de Cobertura Funcional',covDetails:'Detalhes de Cobertura Funcional',covFeature:'Feature',covScenarios:'Cenários',covTestCases:'Casos',covPassRate:'% Sucesso',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Visão Geral de Falhas',failFrequent:'Falhas Mais Frequentes',failUnstable:'Features Mais Instáveis',noFailures:'Nenhuma falha registrada.',noUnstable:'Nenhuma feature instável.',infoScenario:'Cenário',infoEnvironment:'Ambiente',infoTester:'Executor',envBrowser:'Navegador',colStep:'#',colDescription:'Descrição',colStatus:'Status',colDuration:'Duração',stepsLabel:'passos aprovados',screenshot:'Captura de Tela',stepLogs:'Logs do Passo',successEmpty:'Nenhum log de sucesso registrado.',errorEmpty:'Nenhum erro registrado. Excelente!',noVideo:'Nenhum vídeo gravado para esta execução.',noVideoHint:'Configure AURA_RECORD_VIDEO=true em .env para habilitar gravação.',generatedAt:'Gerado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Ação',colMessage:'Mensagem',colDetails:'Detalhes',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Sucesso',errorCount:'Logs de Erro'}
+es:{reportTitle:'Reporte de Pruebas SAI',footerMadeBy:'Hecho por Applied AI Team',tabExecutive:'Resumen Ejecutivo',tabOverall:'Resultados Generales',tabResults:'Resultados de Pruebas',tabSteps:'Detalle de Pasos',tabSuccess:'Logs de Éxito',tabErrors:'Logs de Error',tabVideo:'Video',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Resumen de pruebas funcionales con AI',noSummary:'Resumen ejecutivo no disponible.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiDuration:'Duración',chartResults:'Resultados',chartDuration:'Duración por Paso (ms)',lgPassing:'Exitosos',lgFailed:'Fallidos',lgPending:'Pendientes',lgSkipped:'Omitidos',lgIgnored:'Ignorados',lgAborted:'Abortados',lgBroken:'Rotos',lgCompromised:'Comprometidos',keyStats:'Estadísticas Clave',ksScenarios:'Escenarios',ksTestCases:'Casos de Prueba',ksStarted:'Inicio de Pruebas',ksFinished:'Fin de Pruebas',ksTotalDuration:'Duración Total',ksFastest:'Prueba Más Rápida',ksSlowest:'Prueba Más Lenta',ksAverage:'Tiempo Promedio',covOverview:'Cobertura Funcional',covDetails:'Detalle de Cobertura Funcional',covFeature:'Feature',covScenarios:'Escenarios',covTestCases:'Casos',covPassRate:'% Éxito',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Resumen de Fallos',failFrequent:'Fallos Más Frecuentes',failUnstable:'Features Más Inestables',noFailures:'No se registraron fallos.',noUnstable:'No hay features inestables.',infoScenario:'Escenario',infoEnvironment:'Entorno',infoTester:'Ejecutor',envBrowser:'Navegador',colStep:'#',colDescription:'Descripción',colStatus:'Estado',colDuration:'Duración',stepsLabel:'pasos exitosos',screenshot:'Captura de Pantalla',stepLogs:'Logs del Paso',successEmpty:'No se registraron logs de éxito.',errorEmpty:'No se registraron errores. ¡Excelente!',noVideo:'No se grabó video para esta ejecución.',noVideoHint:'Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.',generatedAt:'Generado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Acción',colMessage:'Mensaje',colDetails:'Detalles',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Éxito',errorCount:'Logs de Error'},
+en:{reportTitle:'SAI Test Report',footerMadeBy:'Made by Applied AI Team',tabExecutive:'Executive Summary',tabOverall:'Overall Results',tabResults:'Test Results',tabSteps:'Steps Details',tabSuccess:'Success Logs',tabErrors:'Error Logs',tabVideo:'Video',executiveTitle:'Executive Summary',executiveSubtitle:'Functional test summary with AI',noSummary:'Executive summary not available.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Success Rate',kpiDuration:'Duration',chartResults:'Results',chartDuration:'Duration per Step (ms)',lgPassing:'Passing',lgFailed:'Failed',lgPending:'Pending',lgSkipped:'Skipped',lgIgnored:'Ignored',lgAborted:'Aborted',lgBroken:'Broken',lgCompromised:'Compromised',keyStats:'Key Statistics',ksScenarios:'Scenarios',ksTestCases:'Test Cases',ksStarted:'Tests Started',ksFinished:'Tests Finished',ksTotalDuration:'Total Duration',ksFastest:'Fastest Test',ksSlowest:'Slowest Test',ksAverage:'Average Execution Time',covOverview:'Functional Coverage Overview',covDetails:'Functional Coverage Details',covFeature:'Feature',covScenarios:'Scenarios',covTestCases:'Test Cases',covPassRate:'% Pass',covResult:'Result',covCoverage:'Coverage',failOverview:'Test Failure Overview',failFrequent:'Most Frequent Failures',failUnstable:'Most Unstable Features',noFailures:'No failures recorded.',noUnstable:'No unstable features.',infoScenario:'Scenario',infoEnvironment:'Environment',infoTester:'Tester',envBrowser:'Browser',colStep:'#',colDescription:'Description',colStatus:'Status',colDuration:'Duration',stepsLabel:'steps passed',screenshot:'Screenshot',stepLogs:'Step Logs',successEmpty:'No success logs recorded.',errorEmpty:'No errors recorded. Excellent!',noVideo:'No video recorded for this execution.',noVideoHint:'Set AURA_RECORD_VIDEO=true in .env to enable recording.',generatedAt:'Generated',colTimestamp:'Time',colElement:'Element',colAction:'Action',colMessage:'Message',colDetails:'Details',logTotal:'Total',logLogs:'logs',searchLogs:'Search logs...',successCount:'Success Logs',errorCount:'Error Logs'},
+pt:{reportTitle:'Relatório de Testes SAI',footerMadeBy:'Feito por Applied AI Team',tabExecutive:'Resumo Executivo',tabOverall:'Resultados Gerais',tabResults:'Resultados dos Testes',tabSteps:'Detalhes dos Passos',tabSuccess:'Logs de Sucesso',tabErrors:'Logs de Erro',tabVideo:'Vídeo',executiveTitle:'Resumo Executivo',executiveSubtitle:'Resumo de testes funcionais com IA',noSummary:'Resumo executivo não disponível.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiDuration:'Duração',chartResults:'Resultados',chartDuration:'Duração por Passo (ms)',lgPassing:'Aprovados',lgFailed:'Falhos',lgPending:'Pendentes',lgSkipped:'Omitidos',lgIgnored:'Ignorados',lgAborted:'Abortados',lgBroken:'Quebrados',lgCompromised:'Comprometidos',keyStats:'Estatísticas Principais',ksScenarios:'Cenários',ksTestCases:'Casos de Teste',ksStarted:'Início dos Testes',ksFinished:'Fim dos Testes',ksTotalDuration:'Duração Total',ksFastest:'Teste Mais Rápido',ksSlowest:'Teste Mais Lento',ksAverage:'Tempo Médio de Execução',covOverview:'Visão Geral de Cobertura Funcional',covDetails:'Detalhes de Cobertura Funcional',covFeature:'Feature',covScenarios:'Cenários',covTestCases:'Casos',covPassRate:'% Sucesso',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Visão Geral de Falhas',failFrequent:'Falhas Mais Frequentes',failUnstable:'Features Mais Instáveis',noFailures:'Nenhuma falha registrada.',noUnstable:'Nenhuma feature instável.',infoScenario:'Cenário',infoEnvironment:'Ambiente',infoTester:'Executor',envBrowser:'Navegador',colStep:'#',colDescription:'Descrição',colStatus:'Status',colDuration:'Duração',stepsLabel:'passos aprovados',screenshot:'Captura de Tela',stepLogs:'Logs do Passo',successEmpty:'Nenhum log de sucesso registrado.',errorEmpty:'Nenhum erro registrado. Excelente!',noVideo:'Nenhum vídeo gravado para esta execução.',noVideoHint:'Configure AURA_RECORD_VIDEO=true em .env para habilitar gravação.',generatedAt:'Gerado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Ação',colMessage:'Mensagem',colDetails:'Detalhes',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Sucesso',errorCount:'Logs de Erro'}
 };
 function renderExecutiveSummary(lang){
   const container=document.getElementById('executive-summary-content');
@@ -390,17 +390,70 @@ function e(s: string): string {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function mdInline(raw: string): string {
+  let h = e(raw);
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em class="text-gray-300">$1</em>');
+  return h;
+}
+
+/** Line-based Markdown for AI executive summary (## / ###, bullets). */
 function mdHtml(md: string): string {
-  return md.split('\n\n').map(b => {
-    b = b.trim(); if (!b) return '';
-    if (b.startsWith('# '))   return `<h2 class="text-xl font-bold text-white mt-4 mb-2">${e(b.slice(2))}</h2>`;
-    if (b.startsWith('## '))  return `<h3 class="text-lg font-semibold text-white mt-3 mb-2">${e(b.slice(3))}</h3>`;
-    if (b.startsWith('### ')) return `<h4 class="text-base font-semibold text-gray-200 mt-3 mb-1">${e(b.slice(4))}</h4>`;
-    let h = e(b);
-    h = h.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>');
-    h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    return `<p class="mb-3">${h}</p>`;
-  }).join('\n');
+  if (!md) return '';
+  const lines = md.replace(/\r\n/g, '\n').split('\n');
+  const out: string[] = [];
+  let para: string[] = [];
+  let list: string[] = [];
+
+  const flushPara = (): void => {
+    if (para.length === 0) return;
+    const text = para.join(' ').trim();
+    para = [];
+    if (text) out.push(`<p class="mb-3 text-gray-300 leading-relaxed">${mdInline(text)}</p>`);
+  };
+  const flushList = (): void => {
+    if (list.length === 0) return;
+    const items = list.map((li) => `<li class="mb-1.5 pl-0">${mdInline(li)}</li>`).join('');
+    out.push(`<ul class="list-disc pl-5 mb-4 text-gray-300 space-y-1 marker:text-aura-400">${items}</ul>`);
+    list = [];
+  };
+
+  for (const line of lines) {
+    const t = line.trim();
+    if (t.startsWith('### ')) {
+      flushList();
+      flushPara();
+      out.push(`<h4 class="text-base font-semibold text-aura-200 mt-4 mb-1.5">${mdInline(t.slice(4))}</h4>`);
+      continue;
+    }
+    if (t.startsWith('## ')) {
+      flushList();
+      flushPara();
+      out.push(`<h2 class="text-xl font-bold text-white mt-6 mb-2 first:mt-0 border-b border-gray-700/50 pb-2">${mdInline(t.slice(3))}</h2>`);
+      continue;
+    }
+    if (t.startsWith('# ')) {
+      flushList();
+      flushPara();
+      out.push(`<h2 class="text-xl font-bold text-white mt-6 mb-2 border-b border-gray-700/50 pb-2">${mdInline(t.slice(2))}</h2>`);
+      continue;
+    }
+    if (/^[-*]\s+/.test(t)) {
+      flushPara();
+      list.push(t.replace(/^[-*]\s+/, ''));
+      continue;
+    }
+    if (t === '') {
+      flushList();
+      flushPara();
+      continue;
+    }
+    flushList();
+    para.push(t);
+  }
+  flushList();
+  flushPara();
+  return out.join('\n');
 }
 
 function fmtDur(ms: number): string {

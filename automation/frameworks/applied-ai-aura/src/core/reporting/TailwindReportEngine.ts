@@ -242,38 +242,67 @@ export class TailwindReportEngine {
       ? summary.changelog.slice(0, 8).map((c) => `${c.version}: ${c.title} — ${c.description}`).join(' | ')
       : '';
 
-    const systemPrompt = `You are a senior QA / test automation lead writing a structured EXECUTIVE TEST REPORT for business and engineering stakeholders.
+    const systemPrompt = `You are a senior QA / test automation lead writing a structured EXECUTIVE FUNCTIONAL TEST REPORT (Cucumber / browser automation) for business and engineering stakeholders.
 You MUST use the LLM output only as Markdown (no HTML). For EACH language, follow the SAME outline and depth.
 
-Rules:
-- Be specific: reference features, scenario outcomes, pass rates, and duration using the data provided.
-- Use ## for the 10 main sections. Under the findings section use ### for the three subsections (what worked / failures / warnings).
+Style and audience:
+- Explain at a high level in clear, professional prose. Readers may not be deeply technical: define acronyms once, avoid jargon dumps, connect results to user-facing risk and quality.
+- Be substantive: each section should add real insight from the data (not filler).
+- Do NOT use emojis, decorative symbols, or numeric reference markers like [1] or [12].
+- Do NOT include fenced code blocks (\`\`\`), inline code snippets, file paths in backticks, or pasted JSON.
+- Use ## for the 10 main sections. Under "Hallazgos" / "Findings" / "Achados" use exactly these three ### subsections.
 - Use short bullet lists where helpful (- item).
-- Avoid raw code, CSS selectors, and full stack traces; you may paraphrase error themes.
-- For historical trend: this payload is usually a single run. Say explicitly when no prior runs exist; if changelog hints are present, relate them cautiously.
-- Glossary: 4–8 terms used in THIS report (Feature, Scenario, Gherkin step, pass rate, etc.) in the target language.
+- Avoid raw code, CSS selectors, and full stack traces; paraphrase error themes.
+- Historical trend: this payload is usually a single run. Say explicitly when no prior runs exist; if changelog hints are present, relate them cautiously.
+- Glossary: 4–8 plain-language terms used in THIS report (Feature, Scenario, Gherkin step, pass rate, etc.) in the target language.
 
 Return ONLY valid JSON with this exact schema (no markdown fences):
 {"en":"<markdown string>","es":"<markdown string>","pt":"<markdown string>"}
 
-Section order and titles BY LANGUAGE:
-- **es** — use EXACTLY these ## headings (and ### under Hallazgos):
-## 📌 Encabezado de Contexto
-## 🏆 Resultado General (Semáforo)
-## 🗂️ Alcance — ¿Qué se probó?
-## 🔍 Hallazgos Detallados
-### ✅ Lo que funcionó
-### ❌ Fallos encontrados
-### ⚠️ Advertencias
-## ⏱️ Métricas de Rendimiento
-## 🚨 Evaluación de Riesgos
-## 📊 Cobertura de Pruebas
-## 💡 Recomendaciones Accionables
-## 📈 Tendencia Histórica
-## 📝 Glosario de Términos
+**es** — use EXACTLY these headings (no leading icons or extra characters):
+## Encabezado de Contexto
+## Resultado General (Semáforo)
+## Alcance — ¿Qué se probó?
+## Hallazgos Detallados
+### Lo que funcionó
+### Fallos encontrados
+### Advertencias
+## Métricas de Rendimiento
+## Evaluación de Riesgos
+## Cobertura de Pruebas
+## Recomendaciones Accionables
+## Tendencia Histórica
+## Glosario de Términos
 
-- **en** — same structure with natural English titles (keep emojis), e.g. "## 📌 Context Header", "## 🏆 Overall Result (Traffic Light)", "## 🔍 Detailed Findings" with "### ✅ What worked", etc.
-- **pt** — same structure with natural Portuguese titles.`;
+**en** — same structure with natural English titles:
+## Context Header
+## Overall Result (Traffic Light)
+## Scope — What Was Tested?
+## Detailed Findings
+### What Worked
+### Failures Found
+### Warnings
+## Performance Metrics
+## Risk Assessment
+## Test Coverage
+## Actionable Recommendations
+## Historical Trend
+## Glossary of Terms
+
+**pt** — same structure in Portuguese:
+## Cabeçalho de Contexto
+## Resultado Geral (Semáforo)
+## Escopo — O que foi testado?
+## Achados Detalhados
+### O que funcionou
+### Falhas encontradas
+### Avisos
+## Métricas de Desempenho
+## Avaliação de Riscos
+## Cobertura de Testes
+## Recomendações Acionáveis
+## Tendência Histórica
+## Glossário de Termos`;
 
     const first = scenarioDataList[0];
     const browserLine = first
@@ -313,10 +342,35 @@ ${summary.failed > 0 ? 'There were failures: prioritize risk, root-cause themes,
     const parsed = this.parseSummaryJson(response.content);
     if (parsed) {
       console.info(`[AURA/Report] ✓ AI summaries generated (${response.tokensUsed} tokens, ${response.latencyMs}ms)`);
-      return parsed;
+      return this.sanitizeExecutiveSummaryByLang(parsed);
     }
     console.warn('[AURA/Report] AI summary JSON invalid, using raw content.');
-    return { en: response.content.trim(), es: response.content.trim(), pt: response.content.trim() };
+    return this.sanitizeExecutiveSummaryByLang({
+      en: response.content.trim(),
+      es: response.content.trim(),
+      pt: response.content.trim(),
+    });
+  }
+
+  private sanitizeExecutiveMarkdown(md: string): string {
+    if (!md) return '';
+    let s = md.replace(/\[\d+\]/g, '');
+    s = s.replace(/```[\s\S]*?```/g, '');
+    s = s.replace(/\p{Extended_Pictographic}/gu, '');
+    s = s.replace(/\n{3,}/g, '\n\n').trim();
+    return s;
+  }
+
+  private sanitizeExecutiveSummaryByLang(obj: { en: string; es: string; pt: string }): {
+    en: string;
+    es: string;
+    pt: string;
+  } {
+    return {
+      en: this.sanitizeExecutiveMarkdown(obj.en),
+      es: this.sanitizeExecutiveMarkdown(obj.es),
+      pt: this.sanitizeExecutiveMarkdown(obj.pt),
+    };
   }
 
   private parseSummaryJson(raw: string): { en: string; es: string; pt: string } | null {
@@ -452,9 +506,9 @@ html[data-theme="grey"] tbody tr{border-color:#94a3b8!important}
 <!-- TAB: EXECUTIVE SUMMARY -->
 <section id="tab-executive" class="tab-panel active">
 <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
-  <div class="flex items-center gap-3 mb-4">
-    <div class="w-10 h-10 rounded-lg bg-aura-600/20 flex items-center justify-center"><i class="bi bi-stars text-aura-400 text-xl"></i></div>
-    <div><h2 class="text-xl font-bold text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2><p class="text-xs text-gray-400" data-i18n="executiveSubtitle">Generado con Inteligencia Artificial</p></div>
+  <div class="mb-4">
+    <h2 class="text-xl font-bold text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2>
+    <p class="text-xs text-gray-400 mt-1" data-i18n="executiveSubtitle">Resumen de pruebas funcionales con AI</p>
   </div>
   <div id="executive-summary-content" class="prose max-w-none text-slate-700 leading-relaxed">
     ${summaryHtml.es || '<p class="text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible.</p>'}
@@ -730,9 +784,9 @@ const stepDurCtx=document.getElementById('chart-step-durations');
 if(stepDurCtx&&R.allStepDurations&&R.allStepDurations.length){new Chart(stepDurCtx,{type:'bar',data:{labels:R.allStepDurations.map(function(_,i){return 'Step '+(i+1)}),datasets:[{label:'ms',data:R.allStepDurations,backgroundColor:R.allStepStatuses.map(function(s){return s==='passed'?'#6366f1':'#ef4444'}),borderRadius:6,barThickness:Math.min(28,Math.max(8,600/R.allStepDurations.length))}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7280',maxRotation:45},grid:{display:false}},y:{ticks:{color:'#6b7280'},grid:{color:'rgba(255,255,255,.05)'}}}}})}
 
 const i18n={
-es:{reportTitle:'Reporte de Pruebas SAI',footerMadeBy:'Hecho por Applied AI Team',tabExecutive:'Resumen Ejecutivo',tabOverall:'Resultados Generales',tabResults:'Resultados de Pruebas',tabSteps:'Detalle de Pasos',tabSuccess:'Logs de Éxito',tabErrors:'Logs de Error',tabVideo:'Video',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Generado con Inteligencia Artificial',noSummary:'Resumen ejecutivo no disponible.',suiteComposition:'Composición de suite',suiteFeatWord:'feature(s) (test)',suiteScenWord:'escenario(s)',suiteOneReport:'un solo informe para esta ejecución.',colFeatureTest:'Feature (test)',suiteColPassed:'Passed',suiteColFailed:'Failed',suiteColSkip:'Skip/Pend',kpiFeatures:'Features (tests)',kpiScenPassed:'Aprobados',kpiScenFailed:'Fallidos',kpiScenSkipped:'Omitidos / pend.',chartByFeature:'Resultados por feature',chartResults:'Distribución de resultados',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiDuration:'Duración',chartDuration:'Duración por paso (ms)',covSteps:'Pasos',ksTotalSteps:'Pasos Gherkin',lgPassing:'Exitosos',lgFailed:'Fallidos',lgPending:'Pendientes',lgSkipped:'Omitidos',keyStats:'Estadísticas Clave',ksFeatures:'Features',ksScenarios:'Escenarios',ksTestCases:'Casos de Prueba',ksStarted:'Inicio de Pruebas',ksFinished:'Fin de Pruebas',ksTotalDuration:'Duración Total',ksFastest:'Prueba Más Rápida',ksSlowest:'Prueba Más Lenta',ksAverage:'Tiempo Promedio',covOverview:'Cobertura Funcional',covDetails:'Detalle de Cobertura Funcional',covFeature:'Feature',covScenarios:'Escenarios',covTestCases:'Casos de prueba',covPassRate:'% Éxito',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Resumen de Fallos',failFrequent:'Fallos Más Frecuentes',failUnstable:'Features Más Inestables',noFailures:'No se registraron fallos.',noUnstable:'No hay features inestables.',infoScenario:'Escenario',infoEnvironment:'Entorno',infoTester:'Ejecutor',envBrowser:'Navegador',colStep:'#',colDescription:'Descripción',colStatus:'Estado',colDuration:'Duración',stepsLabel:'pasos exitosos',screenshot:'Captura de Pantalla',stepLogs:'Logs del Paso',successEmpty:'No se registraron logs de éxito.',errorEmpty:'No se registraron errores. ¡Excelente!',noVideo:'No se grabó video para esta ejecución.',noVideoHint:'Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.',generatedAt:'Generado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Acción',colMessage:'Mensaje',colDetails:'Detalles',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Éxito',errorCount:'Logs de Error'},
-en:{reportTitle:'SAI Test Report',footerMadeBy:'Made by Applied AI Team',tabExecutive:'Executive Summary',tabOverall:'Overall Results',tabResults:'Test Results',tabSteps:'Steps Details',tabSuccess:'Success Logs',tabErrors:'Error Logs',tabVideo:'Video',executiveTitle:'Executive Summary',executiveSubtitle:'AI-Generated Analysis',noSummary:'Executive summary not available.',suiteComposition:'Suite composition',suiteFeatWord:'feature(s) (test)',suiteScenWord:'scenario(s)',suiteOneReport:'one report for this run.',colFeatureTest:'Feature (test)',suiteColPassed:'Passed',suiteColFailed:'Failed',suiteColSkip:'Skip/Pend',kpiFeatures:'Features (tests)',kpiScenPassed:'Passed',kpiScenFailed:'Failed',kpiScenSkipped:'Skipped',chartByFeature:'Results by Feature',chartResults:'Result distribution',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Success Rate',kpiDuration:'Duration',chartDuration:'Duration per step (ms)',covSteps:'Steps',ksTotalSteps:'Gherkin steps',lgPassing:'Passing',lgFailed:'Failed',lgPending:'Pending',lgSkipped:'Skipped',keyStats:'Key Statistics',ksFeatures:'Features',ksScenarios:'Scenarios',ksTestCases:'Test Cases',ksStarted:'Tests Started',ksFinished:'Tests Finished',ksTotalDuration:'Total Duration',ksFastest:'Fastest Test',ksSlowest:'Slowest Test',ksAverage:'Average Time',covOverview:'Functional Coverage',covDetails:'Functional Coverage Details',covFeature:'Feature',covScenarios:'Scenarios',covTestCases:'Test Cases',covPassRate:'% Pass',covResult:'Result',covCoverage:'Coverage',failOverview:'Failure Overview',failFrequent:'Most Frequent Failures',failUnstable:'Most Unstable Features',noFailures:'No failures recorded.',noUnstable:'No unstable features.',infoScenario:'Scenario',infoEnvironment:'Environment',infoTester:'Tester',envBrowser:'Browser',colStep:'#',colDescription:'Description',colStatus:'Status',colDuration:'Duration',stepsLabel:'steps passed',screenshot:'Screenshot',stepLogs:'Step Logs',successEmpty:'No success logs recorded.',errorEmpty:'No errors recorded. Excellent!',noVideo:'No video recorded.',noVideoHint:'Set AURA_RECORD_VIDEO=true in .env to enable.',generatedAt:'Generated',colTimestamp:'Time',colElement:'Element',colAction:'Action',colMessage:'Message',colDetails:'Details',logTotal:'Total',logLogs:'logs',searchLogs:'Search logs...',successCount:'Success Logs',errorCount:'Error Logs'},
-pt:{reportTitle:'Relatório de Testes SAI',footerMadeBy:'Feito por Applied AI Team',tabExecutive:'Resumo Executivo',tabOverall:'Resultados Gerais',tabResults:'Resultados dos Testes',tabSteps:'Detalhes dos Passos',tabSuccess:'Logs de Sucesso',tabErrors:'Logs de Erro',tabVideo:'Vídeo',executiveTitle:'Resumo Executivo',executiveSubtitle:'Gerado com Inteligência Artificial',noSummary:'Resumo executivo não disponível.',suiteComposition:'Composição da suite',suiteFeatWord:'feature(s) (test)',suiteScenWord:'cenário(s)',suiteOneReport:'um único relatório para esta execução.',colFeatureTest:'Feature (test)',suiteColPassed:'Passed',suiteColFailed:'Failed',suiteColSkip:'Skip/Pend',kpiFeatures:'Features (tests)',kpiScenPassed:'Aprovados',kpiScenFailed:'Falhos',kpiScenSkipped:'Omitidos / pend.',chartByFeature:'Resultados por feature',chartResults:'Distribuição de resultados',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiDuration:'Duração',chartDuration:'Duração por passo (ms)',covSteps:'Passos',ksTotalSteps:'Passos Gherkin',lgPassing:'Aprovados',lgFailed:'Falhos',lgPending:'Pendentes',lgSkipped:'Omitidos',keyStats:'Estatísticas Principais',ksFeatures:'Features',ksScenarios:'Cenários',ksTestCases:'Casos de Teste',ksStarted:'Início dos Testes',ksFinished:'Fim dos Testes',ksTotalDuration:'Duração Total',ksFastest:'Teste Mais Rápido',ksSlowest:'Teste Mais Lento',ksAverage:'Tempo Médio',covOverview:'Cobertura Funcional',covDetails:'Detalhes de Cobertura',covFeature:'Feature',covScenarios:'Cenários',covTestCases:'Casos',covPassRate:'% Sucesso',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Visão Geral de Falhas',failFrequent:'Falhas Frequentes',failUnstable:'Features Instáveis',noFailures:'Nenhuma falha registrada.',noUnstable:'Nenhuma feature instável.',infoScenario:'Cenário',infoEnvironment:'Ambiente',infoTester:'Executor',envBrowser:'Navegador',colStep:'#',colDescription:'Descrição',colStatus:'Status',colDuration:'Duração',stepsLabel:'passos aprovados',screenshot:'Captura de Tela',stepLogs:'Logs do Passo',successEmpty:'Nenhum log de sucesso.',errorEmpty:'Nenhum erro. Excelente!',noVideo:'Nenhum vídeo gravado.',noVideoHint:'Configure AURA_RECORD_VIDEO=true em .env.',generatedAt:'Gerado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Ação',colMessage:'Mensagem',colDetails:'Detalhes',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Sucesso',errorCount:'Logs de Erro'}
+es:{reportTitle:'Reporte de Pruebas SAI',footerMadeBy:'Hecho por Applied AI Team',tabExecutive:'Resumen Ejecutivo',tabOverall:'Resultados Generales',tabResults:'Resultados de Pruebas',tabSteps:'Detalle de Pasos',tabSuccess:'Logs de Éxito',tabErrors:'Logs de Error',tabVideo:'Video',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Resumen de pruebas funcionales con AI',noSummary:'Resumen ejecutivo no disponible.',suiteComposition:'Composición de suite',suiteFeatWord:'feature(s) (test)',suiteScenWord:'escenario(s)',suiteOneReport:'un solo informe para esta ejecución.',colFeatureTest:'Feature (test)',suiteColPassed:'Passed',suiteColFailed:'Failed',suiteColSkip:'Skip/Pend',kpiFeatures:'Features (tests)',kpiScenPassed:'Aprobados',kpiScenFailed:'Fallidos',kpiScenSkipped:'Omitidos / pend.',chartByFeature:'Resultados por feature',chartResults:'Distribución de resultados',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiDuration:'Duración',chartDuration:'Duración por paso (ms)',covSteps:'Pasos',ksTotalSteps:'Pasos Gherkin',lgPassing:'Exitosos',lgFailed:'Fallidos',lgPending:'Pendientes',lgSkipped:'Omitidos',keyStats:'Estadísticas Clave',ksFeatures:'Features',ksScenarios:'Escenarios',ksTestCases:'Casos de Prueba',ksStarted:'Inicio de Pruebas',ksFinished:'Fin de Pruebas',ksTotalDuration:'Duración Total',ksFastest:'Prueba Más Rápida',ksSlowest:'Prueba Más Lenta',ksAverage:'Tiempo Promedio',covOverview:'Cobertura Funcional',covDetails:'Detalle de Cobertura Funcional',covFeature:'Feature',covScenarios:'Escenarios',covTestCases:'Casos de prueba',covPassRate:'% Éxito',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Resumen de Fallos',failFrequent:'Fallos Más Frecuentes',failUnstable:'Features Más Inestables',noFailures:'No se registraron fallos.',noUnstable:'No hay features inestables.',infoScenario:'Escenario',infoEnvironment:'Entorno',infoTester:'Ejecutor',envBrowser:'Navegador',colStep:'#',colDescription:'Descripción',colStatus:'Estado',colDuration:'Duración',stepsLabel:'pasos exitosos',screenshot:'Captura de Pantalla',stepLogs:'Logs del Paso',successEmpty:'No se registraron logs de éxito.',errorEmpty:'No se registraron errores. ¡Excelente!',noVideo:'No se grabó video para esta ejecución.',noVideoHint:'Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.',generatedAt:'Generado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Acción',colMessage:'Mensaje',colDetails:'Detalles',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Éxito',errorCount:'Logs de Error'},
+en:{reportTitle:'SAI Test Report',footerMadeBy:'Made by Applied AI Team',tabExecutive:'Executive Summary',tabOverall:'Overall Results',tabResults:'Test Results',tabSteps:'Steps Details',tabSuccess:'Success Logs',tabErrors:'Error Logs',tabVideo:'Video',executiveTitle:'Executive Summary',executiveSubtitle:'Functional test summary with AI',noSummary:'Executive summary not available.',suiteComposition:'Suite composition',suiteFeatWord:'feature(s) (test)',suiteScenWord:'scenario(s)',suiteOneReport:'one report for this run.',colFeatureTest:'Feature (test)',suiteColPassed:'Passed',suiteColFailed:'Failed',suiteColSkip:'Skip/Pend',kpiFeatures:'Features (tests)',kpiScenPassed:'Passed',kpiScenFailed:'Failed',kpiScenSkipped:'Skipped',chartByFeature:'Results by Feature',chartResults:'Result distribution',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Success Rate',kpiDuration:'Duration',chartDuration:'Duration per step (ms)',covSteps:'Steps',ksTotalSteps:'Gherkin steps',lgPassing:'Passing',lgFailed:'Failed',lgPending:'Pending',lgSkipped:'Skipped',keyStats:'Key Statistics',ksFeatures:'Features',ksScenarios:'Scenarios',ksTestCases:'Test Cases',ksStarted:'Tests Started',ksFinished:'Tests Finished',ksTotalDuration:'Total Duration',ksFastest:'Fastest Test',ksSlowest:'Slowest Test',ksAverage:'Average Time',covOverview:'Functional Coverage',covDetails:'Functional Coverage Details',covFeature:'Feature',covScenarios:'Scenarios',covTestCases:'Test Cases',covPassRate:'% Pass',covResult:'Result',covCoverage:'Coverage',failOverview:'Failure Overview',failFrequent:'Most Frequent Failures',failUnstable:'Most Unstable Features',noFailures:'No failures recorded.',noUnstable:'No unstable features.',infoScenario:'Scenario',infoEnvironment:'Environment',infoTester:'Tester',envBrowser:'Browser',colStep:'#',colDescription:'Description',colStatus:'Status',colDuration:'Duration',stepsLabel:'steps passed',screenshot:'Screenshot',stepLogs:'Step Logs',successEmpty:'No success logs recorded.',errorEmpty:'No errors recorded. Excellent!',noVideo:'No video recorded.',noVideoHint:'Set AURA_RECORD_VIDEO=true in .env to enable.',generatedAt:'Generated',colTimestamp:'Time',colElement:'Element',colAction:'Action',colMessage:'Message',colDetails:'Details',logTotal:'Total',logLogs:'logs',searchLogs:'Search logs...',successCount:'Success Logs',errorCount:'Error Logs'},
+pt:{reportTitle:'Relatório de Testes SAI',footerMadeBy:'Feito por Applied AI Team',tabExecutive:'Resumo Executivo',tabOverall:'Resultados Gerais',tabResults:'Resultados dos Testes',tabSteps:'Detalhes dos Passos',tabSuccess:'Logs de Sucesso',tabErrors:'Logs de Erro',tabVideo:'Vídeo',executiveTitle:'Resumo Executivo',executiveSubtitle:'Resumo de testes funcionais com IA',noSummary:'Resumo executivo não disponível.',suiteComposition:'Composição da suite',suiteFeatWord:'feature(s) (test)',suiteScenWord:'cenário(s)',suiteOneReport:'um único relatório para esta execução.',colFeatureTest:'Feature (test)',suiteColPassed:'Passed',suiteColFailed:'Failed',suiteColSkip:'Skip/Pend',kpiFeatures:'Features (tests)',kpiScenPassed:'Aprovados',kpiScenFailed:'Falhos',kpiScenSkipped:'Omitidos / pend.',chartByFeature:'Resultados por feature',chartResults:'Distribuição de resultados',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiDuration:'Duração',chartDuration:'Duração por passo (ms)',covSteps:'Passos',ksTotalSteps:'Passos Gherkin',lgPassing:'Aprovados',lgFailed:'Falhos',lgPending:'Pendentes',lgSkipped:'Omitidos',keyStats:'Estatísticas Principais',ksFeatures:'Features',ksScenarios:'Cenários',ksTestCases:'Casos de Teste',ksStarted:'Início dos Testes',ksFinished:'Fim dos Testes',ksTotalDuration:'Duração Total',ksFastest:'Teste Mais Rápido',ksSlowest:'Teste Mais Lento',ksAverage:'Tempo Médio',covOverview:'Cobertura Funcional',covDetails:'Detalhes de Cobertura',covFeature:'Feature',covScenarios:'Cenários',covTestCases:'Casos',covPassRate:'% Sucesso',covResult:'Resultado',covCoverage:'Cobertura',failOverview:'Visão Geral de Falhas',failFrequent:'Falhas Frequentes',failUnstable:'Features Instáveis',noFailures:'Nenhuma falha registrada.',noUnstable:'Nenhuma feature instável.',infoScenario:'Cenário',infoEnvironment:'Ambiente',infoTester:'Executor',envBrowser:'Navegador',colStep:'#',colDescription:'Descrição',colStatus:'Status',colDuration:'Duração',stepsLabel:'passos aprovados',screenshot:'Captura de Tela',stepLogs:'Logs do Passo',successEmpty:'Nenhum log de sucesso.',errorEmpty:'Nenhum erro. Excelente!',noVideo:'Nenhum vídeo gravado.',noVideoHint:'Configure AURA_RECORD_VIDEO=true em .env.',generatedAt:'Gerado',colTimestamp:'Hora',colElement:'Elemento',colAction:'Ação',colMessage:'Mensagem',colDetails:'Detalhes',logTotal:'Total',logLogs:'logs',searchLogs:'Buscar logs...',successCount:'Logs de Sucesso',errorCount:'Logs de Erro'}
 };
 function renderExecutiveSummary(lang){
   const c=document.getElementById('executive-summary-content');
