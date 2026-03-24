@@ -381,9 +381,12 @@ Mention explicitly the gap between "tests ejecutados" and "código fuente sin cu
 
   const content = await callExecutiveLLM(systemPrompt, userPrompt);
   if (!content) return { en: '', es: '', pt: '' };
+  console.log(`  AI response first 200 chars: ${content.slice(0, 200).replace(/\n/g, '\\n')}`);
   const parsed = parseSummaryJson(content);
   if (parsed) return sanitizeExecutiveSummaryByLang(parsed);
-  return sanitizeExecutiveSummaryByLang({ en: content.trim(), es: content.trim(), pt: content.trim() });
+  console.warn('  parseSummaryJson returned null — falling back to raw content.');
+  const unescaped = content.trim().replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+  return sanitizeExecutiveSummaryByLang({ en: unescaped, es: unescaped, pt: unescaped });
 }
 
 function parseSummaryJson(raw) {
@@ -402,6 +405,28 @@ function parseSummaryJson(raw) {
     }
   };
 
+  // Fix literal newlines/tabs inside JSON string values so JSON.parse succeeds
+  const fixNewlines = (str) => {
+    let out = '';
+    let inStr = false;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i];
+      if (ch === '"' && (i === 0 || str[i - 1] !== '\\')) {
+        inStr = !inStr;
+        out += ch;
+      } else if (inStr && ch === '\n') {
+        out += '\\n';
+      } else if (inStr && ch === '\r') {
+        out += '\\r';
+      } else if (inStr && ch === '\t') {
+        out += '\\t';
+      } else {
+        out += ch;
+      }
+    }
+    return out;
+  };
+
   const s = raw.trim();
   const candidates = [];
   const push = (x) => {
@@ -418,22 +443,57 @@ function parseSummaryJson(raw) {
     push(inner);
   }
 
-  // Markdown fence: pair opening ``` with the *last* closing ``` so a greedy inner ``` does not truncate JSON
-  const fenceOpen = s.match(/```(?:json)?\s*/i);
-  if (fenceOpen) {
-    const start = fenceOpen.index + fenceOpen[0].length;
-    const close = s.lastIndexOf('```');
-    if (close > start) push(s.slice(start, close).trim());
+  // Handle 1-4 backtick fences (LLMs sometimes use 2 or 4 instead of 3)
+  const fenceMatch = /^(`{1,4})(?:json)?\s*/im.exec(s);
+  if (fenceMatch) {
+    const start = fenceMatch.index + fenceMatch[0].length;
+    const closePattern = fenceMatch[1]; // same number of backticks
+    const closeIdx = s.indexOf(closePattern, start);
+    if (closeIdx > start) push(s.slice(start, closeIdx).trim());
+    const lastClose = s.lastIndexOf(closePattern);
+    if (lastClose > start && lastClose !== closeIdx) push(s.slice(start, lastClose).trim());
+  }
+
+  // Handle bare "json" prefix without backticks (e.g. "json\n{...}")
+  if (/^json\s/i.test(s)) {
+    push(s.replace(/^json\s*/i, '').trim());
   }
 
   const b0 = s.indexOf('{');
   const b1 = s.lastIndexOf('}');
   if (b0 !== -1 && b1 > b0) push(s.slice(b0, b1 + 1));
 
+  // Try each candidate as-is, then with literal-newline fixing
   for (const c of candidates) {
     const parsed = tryParse(c);
     if (parsed) return parsed;
   }
+  for (const c of candidates) {
+    const parsed = tryParse(fixNewlines(c));
+    if (parsed) return parsed;
+  }
+
+  // Last resort: regex-extract each language key individually
+  // This handles cases where the JSON is technically malformed but the
+  // individual string values are intact (common with LLM outputs)
+  const extractKey = (text, key) => {
+    const pattern = new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"`);
+    const m = pattern.exec(text);
+    if (m) {
+      try { return JSON.parse(`"${m[1]}"`); } catch { return m[1]; }
+    }
+    return '';
+  };
+
+  for (const c of candidates) {
+    const en = extractKey(c, 'en');
+    const es = extractKey(c, 'es');
+    const pt = extractKey(c, 'pt');
+    if (en || es || pt) {
+      return { en: en || es || pt, es: es || en || pt, pt: pt || en || es };
+    }
+  }
+
   return null;
 }
 

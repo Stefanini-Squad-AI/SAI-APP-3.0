@@ -298,8 +298,9 @@ export class AuraReportCollector {
     if (!writeScenarioAura) {
       const jsonl = path.join(this.reportDir, 'aura-scenarios.jsonl');
       fs.appendFileSync(jsonl, `${JSON.stringify(data)}\n`, 'utf8');
+      const reportName = process.env['AURA_REPORT_FILENAME']?.trim() || 'aura-report.html';
       console.info(
-        `[AURA/Report] Datos escenario → ${jsonl} (informe consolidado: automation-functional-report.html)`,
+        `[AURA/Report] Datos escenario \u2192 ${jsonl} (informe consolidado: ${reportName})`,
       );
       return '';
     }
