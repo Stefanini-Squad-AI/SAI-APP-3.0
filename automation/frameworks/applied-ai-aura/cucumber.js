@@ -4,6 +4,8 @@
  */
 module.exports = {
   default: {
+    paths: ['src/features/**/*.feature'],
+
     // ── TS module first, then support files ────────────────────────────────
     requireModule: ['ts-node/register'],
     require: [
