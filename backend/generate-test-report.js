@@ -134,6 +134,24 @@ function extractCoverageInfo(coberturaData) {
 
 // ─── Perplexity AI Executive Summary ──────────────────────────────────────────
 
+function sanitizeExecutiveMarkdown(md) {
+  if (!md || typeof md !== 'string') return '';
+  let s = md.replace(/\[\d+\]/g, '');
+  s = s.replace(/```[\s\S]*?```/g, '');
+  s = s.replace(/\p{Extended_Pictographic}/gu, '');
+  s = s.replace(/\n{3,}/g, '\n\n').trim();
+  return s;
+}
+
+function sanitizeExecutiveSummaryByLang(obj) {
+  if (!obj) return obj;
+  return {
+    en: sanitizeExecutiveMarkdown(obj.en),
+    es: sanitizeExecutiveMarkdown(obj.es),
+    pt: sanitizeExecutiveMarkdown(obj.pt),
+  };
+}
+
 async function generateExecutiveSummary(testInfo, coverageInfo) {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey || apiKey.startsWith('your_')) {
@@ -151,15 +169,67 @@ async function generateExecutiveSummary(testInfo, coverageInfo) {
     testsByClass[cls].push(t);
   });
 
-  const systemPrompt = `You are a senior QA manager writing executive test summaries for stakeholders.
-Write concise executive summaries (3-5 short paragraphs each), non-technical and business-oriented.
-Include: overall result, key findings, risk assessment, and recommendation.
-Do NOT include code, selectors, stack traces, or low-level technical details.
-Return ONLY valid JSON with this exact schema:
-{"en":"...","es":"...","pt":"..."}
-Where "en" is English, "es" is Spanish, "pt" is Portuguese.
-Use markdown formatting (**bold**, *italic*, bullet points) within each summary.
-Do not add markdown code fences or extra keys.`;
+  const systemPrompt = `You are a senior QA / engineering lead writing a structured EXECUTIVE UNIT-TEST REPORT for a .NET / xUnit backend.
+Output Markdown only inside JSON string values (no HTML). For EACH language use the SAME outline and depth.
+
+Style and audience:
+- Explain at a high level in clear, professional prose. Readers may not be deeply technical: define acronyms once, avoid jargon dumps, connect numbers to business impact.
+- Be substantive: each section should add real insight from the data (not filler).
+- Do NOT use emojis, decorative symbols, or numeric reference markers like [1] or [12].
+- Do NOT include fenced code blocks (\`\`\`), inline code snippets of config files, file paths in backticks, or pasted JSON.
+- Use ## for the 10 main sections. Under "Hallazgos" / "Findings" / "Achados" use exactly these three ### subsections.
+- Use bullet lists (- item) where helpful.
+- Avoid raw stack traces; paraphrase failure themes.
+- Historical trend: usually single run — state explicitly if no prior data.
+- Glossary: 4–8 plain-language terms (unit test, xUnit, line/branch coverage, etc.) in the target language.
+
+Return ONLY valid JSON (no markdown fences):
+{"en":"<markdown>","es":"<markdown>","pt":"<markdown>"}
+
+**es** — use EXACTLY these headings:
+## Encabezado de Contexto
+## Resultado General (Semáforo)
+## Alcance — ¿Qué se probó?
+## Hallazgos Detallados
+### Lo que funcionó
+### Fallos encontrados
+### Advertencias
+## Métricas de Rendimiento
+## Evaluación de Riesgos
+## Cobertura de Pruebas
+## Recomendaciones Accionables
+## Tendencia Histórica
+## Glosario de Términos
+
+**en** — same structure with natural English titles:
+## Context Header
+## Overall Result (Traffic Light)
+## Scope — What Was Tested?
+## Detailed Findings
+### What Worked
+### Failures Found
+### Warnings
+## Performance Metrics
+## Risk Assessment
+## Test Coverage
+## Actionable Recommendations
+## Historical Trend
+## Glossary of Terms
+
+**pt** — same structure in Portuguese:
+## Cabeçalho de Contexto
+## Resultado Geral (Semáforo)
+## Escopo — O que foi testado?
+## Achados Detalhados
+### O que funcionou
+### Falhas encontradas
+### Avisos
+## Métricas de Desempenho
+## Avaliação de Riscos
+## Cobertura de Testes
+## Recomendações Acionáveis
+## Tendência Histórica
+## Glossário de Termos`;
 
   const classSummary = Object.entries(testsByClass).map(([cls, tests]) => {
     const p = tests.filter(t => t.outcome === 'Passed').length;
@@ -194,15 +264,15 @@ ${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`
   try {
     console.log(`  Calling Perplexity API (model: ${model})...`);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), 120000);
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({
         model,
-        max_tokens: 1800,
-        temperature: 0.4,
+        max_tokens: 8192,
+        temperature: 0.35,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -222,7 +292,9 @@ ${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`
     const content = data.choices?.[0]?.message?.content ?? '';
     console.log(`  AI response received (${data.usage?.total_tokens ?? '?'} tokens).`);
 
-    return parseSummaryJson(content) || { en: content.trim(), es: content.trim(), pt: content.trim() };
+    const parsed = parseSummaryJson(content);
+    if (parsed) return sanitizeExecutiveSummaryByLang(parsed);
+    return sanitizeExecutiveSummaryByLang({ en: content.trim(), es: content.trim(), pt: content.trim() });
   } catch (err) {
     console.warn(`  Perplexity API call failed: ${err?.message ?? String(err)}`);
     return { en: '', es: '', pt: '' };
@@ -253,22 +325,67 @@ function esc(s) {
   return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
 
+function mdInline(raw) {
+  let h = esc(raw);
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 dark:text-white font-semibold">$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em class="text-slate-600 dark:text-gray-400">$1</em>');
+  return h;
+}
+
 function mdToHtml(md) {
   if (!md) return '';
-  return md.split('\n\n').map(block => {
-    block = block.trim();
-    if (!block) return '';
-    if (block.startsWith('### ')) return `<h4 class="text-base font-semibold text-slate-700 dark:text-gray-200 mt-3 mb-1">${esc(block.slice(4))}</h4>`;
-    if (block.startsWith('## '))  return `<h3 class="text-lg font-semibold text-slate-800 dark:text-white mt-3 mb-2">${esc(block.slice(3))}</h3>`;
-    if (block.startsWith('# '))   return `<h2 class="text-xl font-bold text-slate-800 dark:text-white mt-4 mb-2">${esc(block.slice(2))}</h2>`;
-    let h = esc(block);
-    h = h.replaceAll(/\*\*(.+?)\*\*/g, '<strong class="text-slate-900 dark:text-white">$1</strong>');
-    h = h.replaceAll(/\*(.+?)\*/g, '<em>$1</em>');
-    h = h.replaceAll(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
-    if (h.includes('<li')) h = `<ul class="space-y-1 mb-3">${h}</ul>`;
-    else h = `<p class="mb-3">${h}</p>`;
-    return h;
-  }).join('\n');
+  const lines = md.replace(/\r\n/g, '\n').split('\n');
+  const out = [];
+  let para = [];
+  let list = [];
+  const flushPara = () => {
+    if (!para.length) return;
+    const text = para.join(' ').trim();
+    para = [];
+    if (text) out.push(`<p class="mb-3 text-slate-600 dark:text-slate-300 leading-relaxed">${mdInline(text)}</p>`);
+  };
+  const flushList = () => {
+    if (!list.length) return;
+    const items = list.map((li) => `<li class="mb-1.5">${mdInline(li)}</li>`).join('');
+    out.push(`<ul class="list-disc pl-5 mb-4 text-slate-600 dark:text-slate-300 space-y-1 marker:text-violet-500">${items}</ul>`);
+    list = [];
+  };
+  for (const line of lines) {
+    const t = line.trim();
+    if (t.startsWith('### ')) {
+      flushList();
+      flushPara();
+      out.push(`<h4 class="text-base font-semibold text-violet-700 dark:text-violet-300 mt-4 mb-1.5">${mdInline(t.slice(4))}</h4>`);
+      continue;
+    }
+    if (t.startsWith('## ')) {
+      flushList();
+      flushPara();
+      out.push(`<h2 class="text-xl font-bold text-slate-800 dark:text-white mt-6 mb-2 first:mt-0 border-b border-slate-200 dark:border-zinc-700 pb-2">${mdInline(t.slice(3))}</h2>`);
+      continue;
+    }
+    if (t.startsWith('# ')) {
+      flushList();
+      flushPara();
+      out.push(`<h2 class="text-xl font-bold text-slate-800 dark:text-white mt-6 mb-2 border-b border-slate-200 dark:border-zinc-700 pb-2">${mdInline(t.slice(2))}</h2>`);
+      continue;
+    }
+    if (/^[-*]\s+/.test(t)) {
+      flushPara();
+      list.push(t.replace(/^[-*]\s+/, ''));
+      continue;
+    }
+    if (t === '') {
+      flushList();
+      flushPara();
+      continue;
+    }
+    flushList();
+    para.push(t);
+  }
+  flushList();
+  flushPara();
+  return out.join('\n');
 }
 
 function formatDuration(duration) {
@@ -426,12 +543,9 @@ tailwind.config = {
 <!-- ═══ TAB: EXECUTIVE SUMMARY ═══ -->
 <section id="tab-executive" class="tab-panel active">
 <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
-  <div class="flex items-center gap-3 mb-4">
-    <div class="w-10 h-10 rounded-lg bg-aura-100 dark:bg-aura-600/20 flex items-center justify-center"><i class="bi bi-stars text-aura-600 dark:text-aura-400 text-xl"></i></div>
-    <div>
-      <h2 class="text-xl font-bold text-slate-800 dark:text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2>
-      <p class="text-xs text-slate-500 dark:text-gray-400" data-i18n="executiveSubtitle">Generado con Inteligencia Artificial (Perplexity)</p>
-    </div>
+  <div class="mb-4">
+    <h2 class="text-xl font-bold text-slate-800 dark:text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2>
+    <p class="text-xs text-slate-500 dark:text-gray-400 mt-1" data-i18n="executiveSubtitle">Resumen de pruebas unitarias con AI</p>
   </div>
   <div id="executive-summary-content" class="prose max-w-none text-slate-600 dark:text-slate-300 leading-relaxed">
     ${summaryHtmlByLang.es || '<p class="text-slate-400 dark:text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidad.</p>'}
@@ -820,9 +934,9 @@ if (barCtx) {
 
 // ── i18n ──
 const i18n = {
-es:{reportTitle:'Reporte de Pruebas Unitarias — Backend',tabExecutive:'Resumen Ejecutivo',tabOverview:'Resultados Generales',tabDetails:'Detalle de Tests',tabCoverage:'Cobertura',tabErrors:'Logs de Error',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Generado con Inteligencia Artificial (Perplexity)',noSummary:'Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidad.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiSkipped:'Omitidos',chartDistribution:'Distribución de Tests',chartClasses:'Resultados por Clase',overallProgress:'Progreso General',lblPassed:'exitosos',lblFailed:'fallidos',testClasses:'Clases de Test',searchTests:'Buscar tests...',colTest:'Test',colStatus:'Estado',colDuration:'Duración',colModule:'Módulo',colFile:'Archivo',colLines:'Líneas',lineCoverage:'Cobertura de Líneas',branchCoverage:'Cobertura de Ramas',covByModule:'Cobertura por Módulo',noErrors:'No se registraron errores. ¡Excelente!',errorCount:'Tests Fallidos',errorMessage:'Error',stackTrace:'Stack Trace',footerMadeBy:'Hecho por Applied AI Team — Stefanini',generatedAt:'Generado'},
-en:{reportTitle:'Unit Test Report — Backend',tabExecutive:'Executive Summary',tabOverview:'Overall Results',tabDetails:'Test Details',tabCoverage:'Coverage',tabErrors:'Error Logs',executiveTitle:'Executive Summary',executiveSubtitle:'AI-Generated Analysis (Perplexity)',noSummary:'Executive summary not available. Set PERPLEXITY_API_KEY to enable this feature.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Pass Rate',kpiSkipped:'Skipped',chartDistribution:'Test Distribution',chartClasses:'Results by Class',overallProgress:'Overall Progress',lblPassed:'passed',lblFailed:'failed',testClasses:'Test Classes',searchTests:'Search tests...',colTest:'Test',colStatus:'Status',colDuration:'Duration',colModule:'Module',colFile:'File',colLines:'Lines',lineCoverage:'Line Coverage',branchCoverage:'Branch Coverage',covByModule:'Coverage by Module',noErrors:'No errors recorded. Excellent!',errorCount:'Failed Tests',errorMessage:'Error',stackTrace:'Stack Trace',footerMadeBy:'Made by Applied AI Team — Stefanini',generatedAt:'Generated'},
-pt:{reportTitle:'Relatório de Testes Unitários — Backend',tabExecutive:'Resumo Executivo',tabOverview:'Resultados Gerais',tabDetails:'Detalhes dos Testes',tabCoverage:'Cobertura',tabErrors:'Logs de Erro',executiveTitle:'Resumo Executivo',executiveSubtitle:'Gerado com Inteligência Artificial (Perplexity)',noSummary:'Resumo executivo não disponível. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidade.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiSkipped:'Omitidos',chartDistribution:'Distribuição de Testes',chartClasses:'Resultados por Classe',overallProgress:'Progresso Geral',lblPassed:'aprovados',lblFailed:'falhos',testClasses:'Classes de Teste',searchTests:'Buscar testes...',colTest:'Teste',colStatus:'Status',colDuration:'Duração',colModule:'Módulo',colFile:'Arquivo',colLines:'Linhas',lineCoverage:'Cobertura de Linhas',branchCoverage:'Cobertura de Branches',covByModule:'Cobertura por Módulo',noErrors:'Nenhum erro registrado. Excelente!',errorCount:'Testes com Falha',errorMessage:'Erro',stackTrace:'Stack Trace',footerMadeBy:'Feito por Applied AI Team — Stefanini',generatedAt:'Gerado'}
+es:{reportTitle:'Reporte de Pruebas Unitarias — Backend',tabExecutive:'Resumen Ejecutivo',tabOverview:'Resultados Generales',tabDetails:'Detalle de Tests',tabCoverage:'Cobertura',tabErrors:'Logs de Error',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Resumen de pruebas unitarias con AI',noSummary:'Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidad.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiSkipped:'Omitidos',chartDistribution:'Distribución de Tests',chartClasses:'Resultados por Clase',overallProgress:'Progreso General',lblPassed:'exitosos',lblFailed:'fallidos',testClasses:'Clases de Test',searchTests:'Buscar tests...',colTest:'Test',colStatus:'Estado',colDuration:'Duración',colModule:'Módulo',colFile:'Archivo',colLines:'Líneas',lineCoverage:'Cobertura de Líneas',branchCoverage:'Cobertura de Ramas',covByModule:'Cobertura por Módulo',noErrors:'No se registraron errores. ¡Excelente!',errorCount:'Tests Fallidos',errorMessage:'Error',stackTrace:'Stack Trace',footerMadeBy:'Hecho por Applied AI Team — Stefanini',generatedAt:'Generado'},
+en:{reportTitle:'Unit Test Report — Backend',tabExecutive:'Executive Summary',tabOverview:'Overall Results',tabDetails:'Test Details',tabCoverage:'Coverage',tabErrors:'Error Logs',executiveTitle:'Executive Summary',executiveSubtitle:'Unit test summary with AI',noSummary:'Executive summary not available. Set PERPLEXITY_API_KEY to enable this feature.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Pass Rate',kpiSkipped:'Skipped',chartDistribution:'Test Distribution',chartClasses:'Results by Class',overallProgress:'Overall Progress',lblPassed:'passed',lblFailed:'failed',testClasses:'Test Classes',searchTests:'Search tests...',colTest:'Test',colStatus:'Status',colDuration:'Duration',colModule:'Module',colFile:'File',colLines:'Lines',lineCoverage:'Line Coverage',branchCoverage:'Branch Coverage',covByModule:'Coverage by Module',noErrors:'No errors recorded. Excellent!',errorCount:'Failed Tests',errorMessage:'Error',stackTrace:'Stack Trace',footerMadeBy:'Made by Applied AI Team — Stefanini',generatedAt:'Generated'},
+pt:{reportTitle:'Relatório de Testes Unitários — Backend',tabExecutive:'Resumo Executivo',tabOverview:'Resultados Gerais',tabDetails:'Detalhes dos Testes',tabCoverage:'Cobertura',tabErrors:'Logs de Erro',executiveTitle:'Resumo Executivo',executiveSubtitle:'Resumo de testes unitários com IA',noSummary:'Resumo executivo não disponível. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidade.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiSkipped:'Omitidos',chartDistribution:'Distribuição de Testes',chartClasses:'Resultados por Classe',overallProgress:'Progresso Geral',lblPassed:'aprovados',lblFailed:'falhos',testClasses:'Classes de Teste',searchTests:'Buscar testes...',colTest:'Teste',colStatus:'Status',colDuration:'Duração',colModule:'Módulo',colFile:'Arquivo',colLines:'Linhas',lineCoverage:'Cobertura de Linhas',branchCoverage:'Cobertura de Branches',covByModule:'Cobertura por Módulo',noErrors:'Nenhum erro registrado. Excelente!',errorCount:'Testes com Falha',errorMessage:'Erro',stackTrace:'Stack Trace',footerMadeBy:'Feito por Applied AI Team — Stefanini',generatedAt:'Gerado'}
 };
 
 function renderExecutiveSummary(lang) {

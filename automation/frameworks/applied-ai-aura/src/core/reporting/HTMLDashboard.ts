@@ -1,10 +1,10 @@
-﻿/**
+/**
  * AURA — HTML Dashboard
  * Generates a self-contained, zero-dependency HTML/CSS dashboard
  * inspired by Linear and Vercel design systems.
  *
  * Features:
- *  - Dark / Light mode
+ *  - Dark / Grey mode
  *  - Pass-rate donut chart (pure SVG)
  *  - Collapsible scenario cards with step details
  *  - Embedded screenshots
@@ -14,7 +14,7 @@
 import type { ReportSummary, ScenarioResult, StepResult, ChangeEntry } from '../../types/index';
 
 export class HTMLDashboard {
-  constructor(private readonly theme: 'dark' | 'light' = 'dark') {}
+  constructor(private readonly theme: 'dark' | 'grey' = 'dark') {}
 
   render(summary: ReportSummary): string {
     const css = this.buildCSS();
@@ -70,8 +70,12 @@ export class HTMLDashboard {
 <section class="metrics">
   <div class="metrics-grid">
     <div class="metric-card metric-total">
+      <div class="metric-value">${s.totalFeatures}</div>
+      <div class="metric-label">Features (tests)</div>
+    </div>
+    <div class="metric-card metric-total">
       <div class="metric-value">${s.totalScenarios}</div>
-      <div class="metric-label">Total</div>
+      <div class="metric-label">Scenarios</div>
     </div>
     <div class="metric-card metric-passed">
       <div class="metric-value">${s.passed}</div>
@@ -213,16 +217,16 @@ export class HTMLDashboard {
   --radius: 8px; --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --mono: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
 }
-[data-theme="light"] {
-  --bg: #f8f8f8; --surface: #fff; --surface2: #f0f0f0; --border: #e0e0e0;
-  --text: #111; --muted: #888; --accent: #4f5ec0;
+[data-theme="grey"] {
+  --bg: #e2e8f0; --surface: #f8fafc; --surface2: #f1f5f9; --border: #cbd5e1;
+  --text: #1e293b; --muted: #64748b; --accent: #4f46e5;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.6; }
 .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1.25rem 2rem; }
 .header-inner { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
 .logo { font-size: 1.2rem; font-weight: 800; letter-spacing: -.02em; color: #fff; }
-[data-theme="light"] .logo { color: #111; }
+[data-theme="grey"] .logo { color: #0f172a; }
 .header-sub { color: var(--muted); margin-left: .5rem; font-size: .85rem; }
 .header-meta { display: flex; align-items: center; gap: 1rem; }
 .meta-item { color: var(--muted); font-size: .82rem; }

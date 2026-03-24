@@ -6,7 +6,8 @@
 const ALLOWED_KEYS = {
   AUTH_TOKEN: 'auth_token',
   REFRESH_TOKEN: 'refresh_token',
-  TOKEN_EXPIRY: 'token_expiry'
+  TOKEN_EXPIRY: 'token_expiry',
+  LANGUAGE: 'tco-user-language',
 };
 
 class SecureStorage {

@@ -1579,13 +1579,13 @@ jobs:
           printf "AURA_TESTER_EMAIL=sai-latam@stefanini.com\n" >> .env
           printf "AURA_BROWSER=chromium\n" >> .env
           printf "AURA_HEADLESS=true\n" >> .env
-          printf "AURA_TIMEOUT=15000\n" >> .env
+          printf "AURA_TIMEOUT=30000\n" >> .env
           printf "AURA_COGNITIVE_ENABLED=true\n" >> .env
           printf "AURA_COGNITIVE_CACHE=true\n" >> .env
-          printf "AURA_COGNITIVE_CACHE_TTL=86400\n" >> .env
+          printf "AURA_COGNITIVE_CACHE_TTL=3600\n" >> .env
           printf "AURA_REPORT_TITLE=SAI Test Report\n" >> .env
           printf "AURA_REPORT_VERSION=1.0.0\n" >> .env
-          printf "AURA_REPORT_THEME=light\n" >> .env
+          printf "AURA_REPORT_THEME=dark\n" >> .env
           printf "AURA_RECORD_VIDEO=true\n" >> .env
           printf "AURA_DOCS_DIR=docs\n" >> .env
           printf "AURA_TARGET_URL=%s\n" "${{ needs.deploy-preview.outputs.preview_url }}" >> .env

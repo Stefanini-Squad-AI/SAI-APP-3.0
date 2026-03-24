@@ -1,13 +1,16 @@
 /**
  * AURA — Report Collector & Generator
- * Collects test execution data and generates rich HTML + JSON reports.
+ * Evidencias por paso (screenshots/videos) en la carpeta **única** de la ejecución.
  *
- * Folder structure:
- *   reports/<YYYY-MM-DD>/<scenario-name>/<vN>/
- *     ├─ aura-report.html
- *     ├─ aura-report.json
- *     ├─ screenshots/
+ * Estructura (una por corrida, no por escenario):
+ *   reports/<YYYY-MM-DD>/<suiteFolder>/vN/
+ *     ├─ automation-functional-report.html   ← informe único (TailwindReportEngine)
+ *     ├─ cucumber-report.json (copia opcional)
+ *     ├─ screenshots/   (prefijo = nombre escenario)
  *     └─ videos/
+ *
+ * HTML rico por escenario (AuraHtmlTemplate) solo si AURA_WRITE_SCENARIO_AURA_HTML=true.
+ * En modo normal, escribe JSONL completo para que TailwindReportEngine genere el reporte consolidado.
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -16,6 +19,7 @@ import { createLLMAdapter } from '../cognitive/LLMAdapterFactory';
 import type { AIAdapter } from '../cognitive/LLMAdapterFactory';
 import { renderAuraHtml } from './AuraHtmlTemplate';
 import type { IntentResult } from '../../types/index';
+import { allocateVersionedRunDirectory } from './reportRunDirectory';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -125,6 +129,11 @@ export class AuraReportCollector {
     this.addLog('INFO', `Starting step: ${keyword} ${text}`, text, keyword);
   }
 
+  /** Prefijo de archivo para no pisar capturas entre escenarios en la misma carpeta vN. */
+  private scenarioFilePrefix(): string {
+    return `${sanitize(this.scenarioName)}-`;
+  }
+
   /**
    * Captures a screenshot BEFORE a destructive action (e.g. click).
    * Called via the WebActions beforeClick hook so the evidence shows
@@ -132,7 +141,7 @@ export class AuraReportCollector {
    */
   async capturePreActionScreenshot(page: Page): Promise<void> {
     try {
-      const fileName = `step-${this.currentStepNumber}-pre-click.png`;
+      const fileName = `${this.scenarioFilePrefix()}step-${this.currentStepNumber}-pre-click.png`;
       const fullPath = path.join(this.screenshotsDir, fileName);
       await page.screenshot({ path: fullPath, fullPage: false });
       this.preActionScreenshot = `screenshots/${fileName}`;
@@ -182,7 +191,7 @@ export class AuraReportCollector {
       this.addLog('SUCCESS', 'Captured pre-action screenshot', undefined, 'screenshot');
     } else if (page && status !== 'skipped') {
       try {
-        const fileName = `step-${this.currentStepNumber}-${sanitize(keyword)}.png`;
+        const fileName = `${this.scenarioFilePrefix()}step-${this.currentStepNumber}-${sanitize(keyword)}.png`;
         const fullPath = path.join(this.screenshotsDir, fileName);
         await page.screenshot({ path: fullPath, fullPage: false });
         screenshotPath = `screenshots/${fileName}`;
@@ -240,7 +249,7 @@ export class AuraReportCollector {
 
     let videoRelPath: string | undefined;
     if (videoSourcePath && fs.existsSync(videoSourcePath)) {
-      const videoName = 'test-recording.webm';
+      const videoName = `${sanitize(this.scenarioName)}.webm`;
       const dest = path.join(this.videosDir, videoName);
       fs.copyFileSync(videoSourcePath, dest);
       videoRelPath = `videos/${videoName}`;
@@ -285,6 +294,16 @@ export class AuraReportCollector {
       reportVersion: process.env['AURA_REPORT_VERSION'] ?? '1.0.0',
     };
 
+    const writeScenarioAura = process.env['AURA_WRITE_SCENARIO_AURA_HTML'] === 'true';
+    if (!writeScenarioAura) {
+      const jsonl = path.join(this.reportDir, 'aura-scenarios.jsonl');
+      fs.appendFileSync(jsonl, `${JSON.stringify(data)}\n`, 'utf8');
+      console.info(
+        `[AURA/Report] Datos escenario → ${jsonl} (informe consolidado: automation-functional-report.html)`,
+      );
+      return '';
+    }
+
     const executiveSummaries = await this.generateExecutiveSummaries(data);
     data.executiveSummaryByLang = executiveSummaries;
     data.executiveSummary = executiveSummaries.en || '';
@@ -312,17 +331,65 @@ export class AuraReportCollector {
     try {
       const adapter: AIAdapter = createLLMAdapter();
 
-      const systemPrompt = `You are a senior QA manager writing executive test summaries for stakeholders.
-Write concise executive summaries (3-5 short paragraphs each), non-technical and business-oriented.
-Include: overall result, key findings, risk assessment, and recommendation.
-Do NOT include code, selectors, stack traces, or low-level technical details.
-Return ONLY valid JSON with this exact schema:
-{"en":"...","es":"...","pt":"..."}
-Where:
-- "en" is English
-- "es" is Spanish
-- "pt" is Portuguese
-Do not add markdown code fences or extra keys.`;
+      const systemPrompt = `You are a senior QA / test automation lead writing a structured EXECUTIVE FUNCTIONAL TEST REPORT for business and engineering stakeholders.
+Output Markdown only inside JSON string values (no HTML). For EACH language use the SAME outline and depth.
+
+Style and audience:
+- Explain at a high level in clear, professional prose. Readers may not be deeply technical: define acronyms once, avoid jargon dumps, connect results to user-facing risk and quality.
+- Be substantive: each section should add real insight from the data (not filler).
+- Do NOT use emojis, decorative symbols, or numeric reference markers like [1] or [12].
+- Do NOT include fenced code blocks (\`\`\`), inline code snippets, file paths in backticks, or pasted JSON.
+- Use ## for the 10 main sections. Under "Hallazgos" / "Findings" / "Achados" use exactly these three ### subsections.
+- Use bullet lists (- item) where helpful.
+- Avoid raw stack traces; paraphrase error themes.
+
+Return ONLY valid JSON (no markdown fences):
+{"en":"<markdown>","es":"<markdown>","pt":"<markdown>"}
+
+**es** — use EXACTLY these headings:
+## Encabezado de Contexto
+## Resultado General (Semáforo)
+## Alcance — ¿Qué se probó?
+## Hallazgos Detallados
+### Lo que funcionó
+### Fallos encontrados
+### Advertencias
+## Métricas de Rendimiento
+## Evaluación de Riesgos
+## Cobertura de Pruebas
+## Recomendaciones Accionables
+## Tendencia Histórica
+## Glosario de Términos
+
+**en** — same structure with natural English titles:
+## Context Header
+## Overall Result (Traffic Light)
+## Scope — What Was Tested?
+## Detailed Findings
+### What Worked
+### Failures Found
+### Warnings
+## Performance Metrics
+## Risk Assessment
+## Test Coverage
+## Actionable Recommendations
+## Historical Trend
+## Glossary of Terms
+
+**pt** — same structure in Portuguese:
+## Cabeçalho de Contexto
+## Resultado Geral (Semáforo)
+## Escopo — O que foi testado?
+## Achados Detalhados
+### O que funcionou
+### Falhas encontradas
+### Avisos
+## Métricas de Desempenho
+## Avaliação de Riscos
+## Cobertura de Testes
+## Recomendações Acionáveis
+## Tendência Histórica
+## Glossário de Termos`;
 
       const userPrompt = `Analyze these test results and generate an executive summary:
 
@@ -344,22 +411,22 @@ ${data.errorLogs.length > 0 ? 'Errors found:\n' + data.errorLogs.map(l => `  - $
       const response = await adapter.complete({
         system: systemPrompt,
         user: userPrompt,
-        temperature: 0.4,
-        maxTokens: 1800,
+        temperature: 0.35,
+        maxTokens: 8192,
       });
 
       const parsed = parseSummaryJson(response.content);
       if (parsed) {
         console.info(`[AURA/Report] ✓ Multilingual executive summaries generated (${response.tokensUsed} tokens, ${response.latencyMs}ms)`);
-        return parsed;
+        return sanitizeExecutiveSummaryByLang(parsed);
       }
 
       console.warn('[AURA/Report] ⚠ AI summary JSON was invalid. Falling back to English-only summary.');
-      return {
+      return sanitizeExecutiveSummaryByLang({
         en: response.content.trim(),
         es: response.content.trim(),
         pt: response.content.trim(),
-      };
+      });
     } catch (err) {
       console.warn('[AURA/Report] ⚠ Could not generate AI executive summaries:', err instanceof Error ? err.message : err);
       return { en: '', es: '', pt: '' };
@@ -369,20 +436,16 @@ ${data.errorLogs.length > 0 ? 'Errors found:\n' + data.errorLogs.map(l => `  - $
   // ─── Folder Structure ───────────────────────────────────────────────────────
 
   private buildReportDir(): string {
-    const today = new Date().toISOString().slice(0, 10);
-    const scenarioDir = sanitize(this.scenarioName);
-    const datePath = path.join(this.baseDir, today, scenarioDir);
-
-    fs.mkdirSync(datePath, { recursive: true });
-
-    let version = 1;
-    while (fs.existsSync(path.join(datePath, `v${version}`))) {
-      version++;
+    const envDir = process.env['AURA_RUN_REPORT_DIR']?.trim();
+    if (envDir) {
+      const resolved = path.resolve(envDir);
+      fs.mkdirSync(resolved, { recursive: true });
+      return resolved;
     }
-
-    const versionDir = path.join(datePath, `v${version}`);
-    fs.mkdirSync(versionDir, { recursive: true });
-    return versionDir;
+    const suite = process.env['AURA_SUITE_FOLDER']?.trim() || 'Aura';
+    const runDir = allocateVersionedRunDirectory(this.baseDir, suite);
+    process.env['AURA_RUN_REPORT_DIR'] = runDir;
+    return runDir;
   }
 }
 
@@ -394,6 +457,27 @@ function sanitize(name: string): string {
     .replace(/[^a-z0-9]+/gi, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
+}
+
+function sanitizeExecutiveMarkdown(md: string): string {
+  if (!md) return '';
+  let s = md.replace(/\[\d+\]/g, '');
+  s = s.replace(/```[\s\S]*?```/g, '');
+  s = s.replace(/\p{Extended_Pictographic}/gu, '');
+  s = s.replace(/\n{3,}/g, '\n\n').trim();
+  return s;
+}
+
+function sanitizeExecutiveSummaryByLang(obj: { en: string; es: string; pt: string }): {
+  en: string;
+  es: string;
+  pt: string;
+} {
+  return {
+    en: sanitizeExecutiveMarkdown(obj.en),
+    es: sanitizeExecutiveMarkdown(obj.es),
+    pt: sanitizeExecutiveMarkdown(obj.pt),
+  };
 }
 
 function parseSummaryJson(raw: string): { en: string; es: string; pt: string } | null {
