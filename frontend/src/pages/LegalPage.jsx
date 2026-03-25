@@ -1,0 +1,65 @@
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+
+const LegalPage = () => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero */}
+      <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl font-bold mb-4">{t('legalPage.title')}</h1>
+          <p className="text-primary-100 text-lg">{t('legalPage.description')}</p>
+        </div>
+      </section>
+
+      {/* Content */}
+      <section className="py-16">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="bg-white rounded-2xl shadow-soft p-8 md:p-12 space-y-8">
+
+            {/* Privacy Policy Section */}
+            <div className="border-l-4 border-primary-600 pl-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">{t('legalPage.privacyTitle')}</h2>
+              <p className="text-gray-600 leading-relaxed mb-4">{t('legalPage.privacyDescription')}</p>
+              <Link to="/privacy" className="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold transition">
+                {t('legalPage.readMore')} →
+              </Link>
+            </div>
+
+            {/* Terms and Conditions Section */}
+            <div className="border-l-4 border-primary-600 pl-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">{t('legalPage.termsTitle')}</h2>
+              <p className="text-gray-600 leading-relaxed mb-4">{t('legalPage.termsDescription')}</p>
+              <Link to="/terms" className="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold transition">
+                {t('legalPage.readMore')} →
+              </Link>
+            </div>
+
+            {/* Legal Notice Section */}
+            <div className="border-l-4 border-primary-600 pl-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">{t('legalPage.legalNoticeTitle')}</h2>
+              <p className="text-gray-600 leading-relaxed mb-4">{t('legalPage.legalNoticeDescription')}</p>
+              <Link to="/terms" className="inline-flex items-center text-primary-600 hover:text-primary-700 font-semibold transition">
+                {t('legalPage.readMore')} →
+              </Link>
+            </div>
+
+            {/* Call-to-Action */}
+            <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row gap-4">
+              <Link to="/contact" className="btn-primary text-center">
+                {t('legalPage.contactUs')}
+              </Link>
+              <Link to="/" className="text-primary-600 hover:text-primary-700 font-medium self-center">
+                ← {t('notFoundPage.backHome')}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default LegalPage;

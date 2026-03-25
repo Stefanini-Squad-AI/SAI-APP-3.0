@@ -75,6 +75,7 @@
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="vLegal">Legal Information</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
         </tbody>
       </table>
@@ -150,6 +151,13 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/legal</code></td>
+            <td data-i18n="rLegalPurpose">Provide centralized access to all key legal documents and policies.</td>
+            <td data-i18n="rLegalContains">Three sectioned cards with descriptions and links to privacy policy, terms and conditions, and legal notice pages.</td>
+            <td data-i18n="rLegalActions">Review legal sections, navigate to detailed legal documents, contact support.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
@@ -190,6 +198,7 @@
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
+        vLegal: "Legal Information",
         vNotFound: "Not found",
         rHomePurpose: "Present brand value and convert visitors into simulation and contact flows.",
         rHomeContains: "Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.",
@@ -215,6 +224,9 @@
         rTermsPurpose: "Describe contract and usage conditions for platform services.",
         rTermsContains: "Five terms sections with update date, plus contact and back-home links.",
         rTermsActions: "Review legal obligations, then navigate to contact/home pages.",
+        rLegalPurpose: "Provide centralized access to all key legal documents and policies.",
+        rLegalContains: "Three sectioned cards with descriptions and links to privacy policy, terms and conditions, and legal notice pages.",
+        rLegalActions: "Review legal sections, navigate to detailed legal documents, contact support.",
         r404Purpose: "Handle unknown URLs and recover navigation.",
         r404Contains: "404 code, explanatory text, and CTA back to home.",
         r404Actions: "Return safely to root route.",
@@ -250,7 +262,38 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
+        vLegal: "Informaciones Legales",
         vNotFound: "No encontrado",
+        rHomePurpose: "Presentar valor de marca y convertir visitantes en flujos de simulación y contacto.",
+        rHomeContains: "Hero con botones CTA, tarjetas sobre/misión/visión/valores, tarjetas vista previa de servicios, franja de estadísticas y bloques de ubicación/contacto.",
+        rHomeActions: "Navegar a páginas de calculadora/servicios, explorar tarjetas de productos destacadas, cambiar idioma desde selector global.",
+        rServicesPurpose: "Explicar productos de crédito disponibles y dirigir usuario al siguiente paso de simulación/contacto.",
+        rServicesContains: "Tarjetas de tipo de crédito con monto, plazo, tasa base, lista de características, requisitos y CTA a calculadora o asesor.",
+        rServicesActions: "Revisar productos, comparar límites/tasas, abrir flujo de calculadora, contactar asesor.",
+        rCalcPurpose: "Estimar cuota e términos de financiamiento antes de enviar solicitud formal.",
+        rCalcContains: "Controles de entrada (tipo, propósito, ingresos, monto, plazo), tarjetas de resultados calculados, panel de desglose y disparador de asistente de solicitud.",
+        rCalcActions: "Ajustar variables de simulación, comparar resultados de pago, abrir asistente de solicitud para enviar aplicación.",
+        rAboutPurpose: "Generar confianza a través de antecedentes de la empresa y diferenciadores.",
+        rAboutContains: "Sección de historia de la empresa, seis tarjetas de valor/beneficio y CTA a calculadora.",
+        rAboutActions: "Leer narrativa institucional, evaluar señales de confianza, continuar a simulación de crédito.",
+        rFaqPurpose: "Resolver dudas comunes sin contactar soporte.",
+        rFaqContains: "Acordeón por categoría (general, requisitos, montos, proceso) y bloque CTA de soporte.",
+        rFaqActions: "Expandir/contraer respuestas, saltar a página de contacto, llamar teléfono de soporte.",
+        rContactPurpose: "Capturar consultas de clientes y abrir canal de soporte.",
+        rContactContains: "Formulario de contacto validado, tarjetas de información de contacto, enlaces de soporte, mapa integrado y detalles de oficina.",
+        rContactActions: "Enviar consulta, activar retroalimentación éxito/error, opciones de llamada o soporte por WhatsApp.",
+        rPrivacyPurpose: "Divulgar manejo de datos y derechos de privacidad del usuario.",
+        rPrivacyContains: "Cinco secciones de política con fecha de actualización, más enlaces de contacto e inicio.",
+        rPrivacyActions: "Leer cláusulas legales y navegar a páginas de contacto/inicio.",
+        rTermsPurpose: "Describir contrato y condiciones de uso para servicios de plataforma.",
+        rTermsContains: "Cinco secciones de términos con fecha de actualización, más enlaces de contacto e inicio.",
+        rTermsActions: "Revisar obligaciones legales, luego navegar a páginas de contacto/inicio.",
+        rLegalPurpose: "Proporcionar acceso centralizado a todos los documentos legales clave y políticas.",
+        rLegalContains: "Tres tarjetas seccionales con descripciones y enlaces a páginas de política de privacidad, términos y condiciones y aviso legal.",
+        rLegalActions: "Revisar secciones legales, navegar a documentos legales detallados, contactar soporte.",
+        r404Purpose: "Manejar URLs desconocidas y recuperar navegación.",
+        r404Contains: "Código 404, texto explicativo y CTA de regreso a inicio.",
+        r404Actions: "Regresar con seguridad a ruta raíz.",
         noApi: "Sin llamadas al backend.",
         authYes: "Sí",
         authNo: "No"
@@ -283,7 +326,38 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
+        vLegal: "Informações Legais",
         vNotFound: "Não encontrado",
+        rHomePurpose: "Apresentar valor da marca e converter visitantes em fluxos de simulação e contato.",
+        rHomeContains: "Hero com botões CTA, cartões sobre/missão/visão/valores, cartões de visualização de serviços, faixa de estatísticas e blocos de localização/contato.",
+        rHomeActions: "Navegar para páginas de calculadora/serviços, explorar cartões de produtos destacados, alterar idioma do seletor global.",
+        rServicesPurpose: "Explicar produtos de crédito disponíveis e direcionar usuário para próxima etapa de simulação/contato.",
+        rServicesContains: "Cartões de tipo de crédito com valor, prazo, taxa base, lista de características, requisitos e CTA para calculadora ou consultor.",
+        rServicesActions: "Revisar produtos, comparar limites/taxas, abrir fluxo de calculadora, contactar consultor.",
+        rCalcPurpose: "Estimar prestação e prazos de financiamento antes de enviar solicitação formal.",
+        rCalcContains: "Controles de entrada (tipo, finalidade, renda, valor, prazo), cartões de resultados calculados, painel de detalhamento e acionador do assistente de solicitação.",
+        rCalcActions: "Ajustar variáveis de simulação, comparar resultados de pagamento, abrir assistente de solicitação para enviar aplicação.",
+        rAboutPurpose: "Construir confiança através do histórico da empresa e diferenciais.",
+        rAboutContains: "Seção de história da empresa, seis cartões de valor/benefício e CTA para calculadora.",
+        rAboutActions: "Ler narrativa institucional, avaliar sinais de confiança, continuar para simulação de crédito.",
+        rFaqPurpose: "Resolver dúvidas comuns sem contactar suporte.",
+        rFaqContains: "Acordeão por categoria (geral, requisitos, valores, processo) e bloco CTA de suporte.",
+        rFaqActions: "Expandir/recolher respostas, pular para página de contato, ligar para telefone de suporte.",
+        rContactPurpose: "Capturar consultas de clientes e abrir canal de suporte.",
+        rContactContains: "Formulário de contato validado, cartões de informações de contato, links de suporte, mapa incorporado e detalhes de escritório.",
+        rContactActions: "Enviar consulta, acionar feedback sucesso/erro, opções de chamada ou suporte por WhatsApp.",
+        rPrivacyPurpose: "Divulgar tratamento de dados e direitos de privacidade do usuário.",
+        rPrivacyContains: "Cinco seções de política com data de atualização, mais links de contato e início.",
+        rPrivacyActions: "Ler cláusulas legais e navegar para páginas de contato/início.",
+        rTermsPurpose: "Descrever contrato e condições de uso para serviços de plataforma.",
+        rTermsContains: "Cinco seções de termos com data de atualização, mais links de contato e início.",
+        rTermsActions: "Revisar obrigações legais, depois navegar para páginas de contato/início.",
+        rLegalPurpose: "Fornecer acesso centralizado a todos os documentos legais chave e políticas.",
+        rLegalContains: "Três cartões seccionais com descrições e links para páginas de política de privacidade, termos e condições e aviso legal.",
+        rLegalActions: "Revisar seções legais, navegar para documentos legais detalhados, contactar suporte.",
+        r404Purpose: "Lidar com URLs desconhecidas e recuperar navegação.",
+        r404Contains: "Código 404, texto explicativo e CTA de volta ao início.",
+        r404Actions: "Retornar com segurança para rota raiz.",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
         authNo: "Não"
