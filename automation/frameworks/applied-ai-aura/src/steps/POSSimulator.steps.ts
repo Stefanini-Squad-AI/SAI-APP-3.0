@@ -56,10 +56,6 @@ Then('the online payment option should be {string}', async function (this: AuraW
 });
 
 Then('the POS payment option should be {string}', async function (this: AuraWorld, status: string) {
-  const selector = status === 'available' 
-    ? 'div:contains("Pago por POS") >> text:Disponible'
-    : 'div:contains("Pago por POS") >> text:No Disponible';
-  
   if (status === 'available') {
     // Check if POS card has an available badge
     await this.webActions.expectVisible('div:contains("Pago por POS") ~ div:contains("Disponible")');
