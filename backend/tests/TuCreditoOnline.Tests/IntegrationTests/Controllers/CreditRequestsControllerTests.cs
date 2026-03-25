@@ -78,7 +78,7 @@ public class CreditRequestsControllerTests : IClassFixture<TestWebApplicationFac
             var result = await response.Content.ReadFromJsonAsync<CreditRequestResponseDto>();
             result.Should().NotBeNull();
             result!.FullName.Should().Be(dto.FullName);
-            result.Email.Should().Be(dto.Email);
+            result.Email.Should().Be(dto.Email.Trim().ToLowerInvariant());
             result.Status.Should().Be("Pending");
             result.Id.Should().NotBeNullOrEmpty();
         }

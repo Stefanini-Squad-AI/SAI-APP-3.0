@@ -14,25 +14,25 @@ namespace TuCreditoOnline.Tests.UnitTests.Services;
 public class AuthServiceTests
 {
     private readonly Mock<UserRepository> _mockUserRepository;
-    private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly IConfiguration _configuration;
     private readonly AuthService _authService;
 
     public AuthServiceTests()
     {
         _mockUserRepository = new Mock<UserRepository>();
-        _mockConfiguration = new Mock<IConfiguration>();
-        
-        // Setup JWT configuration
-        var jwtSection = new Mock<IConfigurationSection>();
-        jwtSection.Setup(x => x["Secret"]).Returns("superSecretKeyForDevelopmentOnly1234567890");
-        jwtSection.Setup(x => x["Issuer"]).Returns("TuCreditoOnline");
-        jwtSection.Setup(x => x["Audience"]).Returns("TuCreditoOnlineUsers");
-        jwtSection.Setup(x => x["ExpirationMinutes"]).Returns("60");
-        jwtSection.Setup(x => x["RefreshTokenExpirationDays"]).Returns("7");
-        
-        _mockConfiguration.Setup(x => x.GetSection("JwtSettings")).Returns(jwtSection.Object);
-        
-        _authService = new AuthService(_mockUserRepository.Object, _mockConfiguration.Object);
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JwtSettings:Secret"] = "superSecretKeyForDevelopmentOnly1234567890",
+                ["JwtSettings:Issuer"] = "TuCreditoOnline",
+                ["JwtSettings:Audience"] = "TuCreditoOnlineUsers",
+                ["JwtSettings:ExpirationMinutes"] = "60",
+                ["JwtSettings:RefreshTokenExpirationDays"] = "7",
+                ["IntegrationTests:AllowRequestRoleInRegistration"] = "false",
+            })
+            .Build();
+
+        _authService = new AuthService(_mockUserRepository.Object, _configuration);
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class AuthServiceTests
         result.Data.Should().NotBeNull();
         result.Data.Token.Should().NotBeNullOrEmpty();
         result.Data.RefreshToken.Should().NotBeNullOrEmpty();
-        result.Data.User.Email.Should().Be(loginDto.Email);
+        result.Data.User.Email.Should().Be(loginDto.Email.Trim().ToLowerInvariant());
     }
 
     [Fact]

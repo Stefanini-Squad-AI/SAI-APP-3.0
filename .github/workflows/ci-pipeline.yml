@@ -971,9 +971,12 @@ jobs:
               --configuration Release \
               --filter "FullyQualifiedName~.IntegrationTests." \
               --logger "trx;LogFileName=integration-results.trx" \
-              --results-directory ../test-results/integration \
-              --verbosity minimal 2>&1 | tee ../test-results/logs/integration.log
-            echo $? > ../test-results/integration/exit-code.txt
+              --results-directory ./TestResults/integration \
+              --verbosity minimal \
+              --collect:"XPlat Code Coverage" \
+              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
+              2>&1 | tee ../test-results/logs/integration.log
+            echo $? > ./TestResults/integration/exit-code.txt
           ) &
           INTEGRATION_PID=$!
 
@@ -1047,11 +1050,23 @@ jobs:
         run: |
           node scripts/generate-security-tailwind-report.cjs || echo "Security dashboard v2: skipped or failed (non-blocking)"
 
+      - name: Generate backend integration report (TRX + Cobertura → HTML, resumen IA)
+        if: always()
+        working-directory: ./backend
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          BACKEND_REPORT_MODE: integration
+        run: |
+          npm ci
+          node generate-test-report.js --integration || echo "Integration report generation skipped or failed"
+
       - name: Evaluate integration exit code
         if: always()
         run: |
           EXIT_CODE="1"
-          if [ -f "test-results/integration/exit-code.txt" ]; then
+          if [ -f "backend/TestResults/integration/exit-code.txt" ]; then
+            EXIT_CODE="$(cat backend/TestResults/integration/exit-code.txt | tr -d '\r\n')"
+          elif [ -f "test-results/integration/exit-code.txt" ]; then
             EXIT_CODE="$(cat test-results/integration/exit-code.txt | tr -d '\r\n')"
           fi
           echo "INTEGRATION_EXIT_CODE=$EXIT_CODE" >> $GITHUB_ENV
@@ -1068,7 +1083,7 @@ jobs:
         with:
           name: integration-test-report
           path: |
-            test-results/integration/**
+            backend/TestResults/integration/**
             test-results/logs/integration.log
             test-results/logs/docker-compose.log
             test-results/logs/backend.log

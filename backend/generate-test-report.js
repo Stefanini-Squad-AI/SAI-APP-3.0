@@ -1,15 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * Backend Unit Test Report Generator — AURA Style
+ * Backend Test Report Generator — AURA Style (unitarias e integración homologadas)
  *
- * Reads TRX + Cobertura XML and produces:
- *   - test-report.html  (TailwindCSS, i18n ES/EN/PT, Dark/Grey Mode, Perplexity AI Executive Summary)
- *   - test-report.md    (Markdown summary)
+ * Unit (default): lee TestResults/test-results.trx → TestResults/test-report.html
+ * Integración:    node generate-test-report.js --integration
+ *                 lee TestResults/integration/integration-results.trx
+ *                 → TestResults/integration/test-report.html
  *
- * Environment variables (optional):
- *   PERPLEXITY_API_KEY  — enables AI executive summary
- *   PERPLEXITY_MODEL    — model to use (default: sonar)
+ * Cobertura: se usa el coverage.cobertura.xml más reciente bajo el directorio de resultados.
+ *
+ * Environment variables:
+ *   PERPLEXITY_API_KEY     — IA (obligatoria si --integration)
+ *   BACKEND_REPORT_MODE=integration — equivalente a --integration
+ *   PERPLEXITY_MODEL       — default: sonar
  */
 
 import fs from 'node:fs';
@@ -26,26 +30,39 @@ try {
   dotenv.config({ path: path.resolve(__dirname, '.env') });
 } catch { /* dotenv is optional */ }
 
-const TRX_PATH = path.join(__dirname, 'TestResults', 'test-results.trx');
-const TEST_RESULTS_DIR = path.join(__dirname, 'TestResults');
-const HTML_REPORT_PATH = path.join(__dirname, 'TestResults', 'test-report.html');
-const MARKDOWN_REPORT_PATH = path.join(__dirname, 'TestResults', 'test-report.md');
+/** `--integration` | BACKEND_REPORT_MODE=integration → salida en TestResults/integration/ (misma UI que unitarias) */
+const IS_INTEGRATION =
+  process.argv.includes('--integration') || process.env.BACKEND_REPORT_MODE === 'integration';
+const RESULTS_REL = IS_INTEGRATION ? path.join('TestResults', 'integration') : 'TestResults';
+const TRX_NAME = IS_INTEGRATION ? 'integration-results.trx' : 'test-results.trx';
+const TRX_PATH = path.join(__dirname, RESULTS_REL, TRX_NAME);
+const TEST_RESULTS_DIR = path.join(__dirname, RESULTS_REL);
+const HTML_REPORT_PATH = path.join(__dirname, RESULTS_REL, 'test-report.html');
+const MARKDOWN_REPORT_PATH = path.join(__dirname, RESULTS_REL, 'test-report.md');
 
 // ─── XML Parsing ──────────────────────────────────────────────────────────────
 
-function findCoberturaFile(dir) {
-  const files = fs.readdirSync(dir);
-  for (const file of files) {
-    const fullPath = path.join(dir, file);
-    const stat = fs.statSync(fullPath);
-    if (stat.isDirectory()) {
-      const found = findCoberturaFile(fullPath);
-      if (found) return found;
-    } else if (file === 'coverage.cobertura.xml') {
-      return fullPath;
+/** Usa el coverage.cobertura.xml más reciente (mtime) dentro del directorio de resultados. */
+function findNewestCoberturaFile(dir) {
+  if (!fs.existsSync(dir)) return null;
+  const found = [];
+  const walk = (d) => {
+    for (const file of fs.readdirSync(d)) {
+      const fullPath = path.join(d, file);
+      let stat;
+      try {
+        stat = fs.statSync(fullPath);
+      } catch {
+        continue;
+      }
+      if (stat.isDirectory()) walk(fullPath);
+      else if (file === 'coverage.cobertura.xml') found.push({ path: fullPath, mtime: stat.mtimeMs });
     }
-  }
-  return null;
+  };
+  walk(dir);
+  if (found.length === 0) return null;
+  found.sort((a, b) => b.mtime - a.mtime);
+  return found[0].path;
 }
 
 async function parseTrxFile() {
@@ -58,7 +75,7 @@ async function parseTrxFile() {
 }
 
 async function parseCoberturaFile() {
-  const cobPath = findCoberturaFile(TEST_RESULTS_DIR);
+  const cobPath = findNewestCoberturaFile(TEST_RESULTS_DIR);
   if (!cobPath) {
     console.warn(`  Coverage file not found in: ${TEST_RESULTS_DIR}`);
     return null;
@@ -107,9 +124,14 @@ function extractTestInfo(trxData) {
 function extractCoverageInfo(coberturaData) {
   if (!coberturaData) return null;
   const cov = coberturaData.coverage;
+  const root = cov.$ || {};
   const packages = cov.packages?.[0]?.package || [];
-  const lineRate = Number.parseFloat(cov.$['line-rate'] || 0) * 100;
-  const branchRate = Number.parseFloat(cov.$['branch-rate'] || 0) * 100;
+  const lineRate = Number.parseFloat(root['line-rate'] || 0) * 100;
+  const branchRate = Number.parseFloat(root['branch-rate'] || 0) * 100;
+  const linesValid = Number.parseInt(String(root['lines-valid'] ?? 0), 10) || 0;
+  const linesCovered = Number.parseInt(String(root['lines-covered'] ?? 0), 10) || 0;
+  const branchesValid = Number.parseInt(String(root['branches-valid'] ?? 0), 10) || 0;
+  const branchesCovered = Number.parseInt(String(root['branches-covered'] ?? 0), 10) || 0;
 
   const packageDetails = packages.map(pkg => {
     const pkgLineRate = Number.parseFloat(pkg.$['line-rate'] || 0) * 100;
@@ -129,7 +151,15 @@ function extractCoverageInfo(coberturaData) {
     return { name: pkg.$.name || 'Unknown', lineRate: pkgLineRate, branchRate: pkgBranchRate, classes };
   });
 
-  return { lineRate, branchRate, packages: packageDetails };
+  return {
+    lineRate,
+    branchRate,
+    linesValid,
+    linesCovered,
+    branchesValid,
+    branchesCovered,
+    packages: packageDetails,
+  };
 }
 
 // ─── Perplexity AI Executive Summary ──────────────────────────────────────────
@@ -152,9 +182,13 @@ function sanitizeExecutiveSummaryByLang(obj) {
   };
 }
 
-async function generateExecutiveSummary(testInfo, coverageInfo) {
+async function generateExecutiveSummary(testInfo, coverageInfo, reportKind = 'unit') {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey || apiKey.startsWith('your_')) {
+    if (reportKind === 'integration') {
+      console.error('  PERPLEXITY_API_KEY requerida para el informe de integración (resumen ejecutivo obligatorio).');
+      return { en: '', es: '', pt: '' };
+    }
     console.log('  PERPLEXITY_API_KEY not set — skipping AI executive summary.');
     return { en: '', es: '', pt: '' };
   }
@@ -169,7 +203,7 @@ async function generateExecutiveSummary(testInfo, coverageInfo) {
     testsByClass[cls].push(t);
   });
 
-  const systemPrompt = `You are a senior QA / engineering lead writing a structured EXECUTIVE UNIT-TEST REPORT for a .NET / xUnit backend.
+  const systemPromptUnit = `You are a senior QA / engineering lead writing a structured EXECUTIVE UNIT-TEST REPORT for a .NET / xUnit backend.
 Output Markdown only inside JSON string values (no HTML). For EACH language use the SAME outline and depth.
 
 Style and audience:
@@ -231,6 +265,72 @@ Return ONLY valid JSON (no markdown fences):
 ## Tendência Histórica
 ## Glossário de Termos`;
 
+  const systemPromptIntegration = `You are a senior QA / engineering lead writing a structured EXECUTIVE INTEGRATION TEST REPORT for a .NET 8 / xUnit backend.
+Output Markdown only inside JSON string values (no HTML). For EACH language use the SAME outline and depth.
+
+Context: these tests validate the API and infrastructure together (IntegrationTests), typically via HTTP against a test host (e.g. WebApplicationFactory), with MongoDB and related services — in local development often orchestrated with Docker Compose.
+
+Style and audience:
+- Explain at a high level in clear, professional prose. Readers may not be deeply technical: define acronyms once, connect failures to user-visible or operational risk.
+- Be substantive: each section should add real insight from the data (not filler).
+- Do NOT use emojis, decorative symbols, or numeric reference markers like [1] or [12].
+- Do NOT include fenced code blocks (\`\`\`), inline code snippets, file paths in backticks, or pasted JSON.
+- Use ## for the 10 main sections. Under "Hallazgos" / "Findings" / "Achados" use exactly these three ### subsections.
+- Use bullet lists (- item) where helpful.
+- Avoid raw stack traces; paraphrase failure themes (HTTP status, auth, DB connectivity, timeouts).
+- Historical trend: usually single run — state explicitly if no prior data.
+- Glossary: 4–8 plain-language terms (integration test, API, WebApplicationFactory, HTTP, MongoDB, Docker, line/branch coverage, etc.) in the target language.
+
+Return ONLY valid JSON (no markdown fences):
+{"en":"<markdown>","es":"<markdown>","pt":"<markdown>"}
+
+**es** — use EXACTLY these headings:
+## Encabezado de Contexto
+## Resultado General (Semáforo)
+## Alcance — ¿Qué se probó?
+## Hallazgos Detallados
+### Lo que funcionó
+### Fallos encontrados
+### Advertencias
+## Métricas de Rendimiento
+## Evaluación de Riesgos
+## Cobertura de Pruebas
+## Recomendaciones Accionables
+## Tendencia Histórica
+## Glosario de Términos
+
+**en** — same structure with natural English titles:
+## Context Header
+## Overall Result (Traffic Light)
+## Scope — What Was Tested?
+## Detailed Findings
+### What Worked
+### Failures Found
+### Warnings
+## Performance Metrics
+## Risk Assessment
+## Test Coverage
+## Actionable Recommendations
+## Historical Trend
+## Glossary of Terms
+
+**pt** — same structure in Portuguese:
+## Cabeçalho de Contexto
+## Resultado Geral (Semáforo)
+## Escopo — O que foi testado?
+## Achados Detalhados
+### O que funcionou
+### Falhas encontradas
+### Avisos
+## Métricas de Desempenho
+## Avaliação de Riscos
+## Cobertura de Testes
+## Recomendações Acionáveis
+## Tendência Histórica
+## Glossário de Termos`;
+
+  const systemPrompt = reportKind === 'integration' ? systemPromptIntegration : systemPromptUnit;
+
   const classSummary = Object.entries(testsByClass).map(([cls, tests]) => {
     const p = tests.filter(t => t.outcome === 'Passed').length;
     const f = tests.filter(t => t.outcome === 'Failed').length;
@@ -245,7 +345,27 @@ Return ONLY valid JSON (no markdown fences):
     ? `\nCode Coverage:\n  Line Coverage: ${coverageInfo.lineRate.toFixed(2)}%\n  Branch Coverage: ${coverageInfo.branchRate.toFixed(2)}%`
     : '';
 
-  const userPrompt = `Analyze these Backend unit test results and generate an executive summary:
+  const userPrompt =
+    reportKind === 'integration'
+      ? `Analyze these Backend INTEGRATION test results (namespace IntegrationTests, HTTP/API, WebApplicationFactory) and generate an executive summary:
+
+Project: TuCreditoOnline — Backend (.NET 8, xUnit)
+Test type: Integration (API + infrastructure; services often run via Docker Compose locally)
+Total Tests: ${testInfo.total}
+Passed: ${testInfo.passed}
+Failed: ${testInfo.failed}
+Skipped: ${testInfo.skipped}
+Pass Rate: ${passRate}%
+Date: ${new Date().toISOString()}
+${coverageSummary}
+
+Test classes / areas:
+${classSummary}
+
+${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}
+
+Relate coverage (lines/branches) to how much of the application code was exercised by these integration scenarios when metrics are present.`
+      : `Analyze these Backend unit test results and generate an executive summary:
 
 Project: TuCreditoOnline — Backend (.NET 8, xUnit, Clean Architecture)
 Total Tests: ${testInfo.total}
@@ -262,7 +382,7 @@ ${classSummary}
 ${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`;
 
   try {
-    console.log(`  Calling Perplexity API (model: ${model})...`);
+    console.log(`  Calling Perplexity API (model: ${model}) [${reportKind}]...`);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120000);
 
@@ -442,6 +562,335 @@ function getCoverageBadge(rate) {
   return 'text-red-700 dark:text-red-400';
 }
 
+/** Textos i18n embebidos en el HTML (unit vs integration). */
+function buildI18nPayload(reportKind) {
+  const int = reportKind === 'integration';
+  return {
+    es: {
+      reportTitle: int ? 'Reporte de Pruebas de Integración — Backend' : 'Reporte de Pruebas Unitarias — Backend',
+      tabExecutive: 'Resumen Ejecutivo',
+      tabOverview: 'Resultados Generales',
+      tabDetails: 'Detalle de Tests',
+      tabCoverage: 'Cobertura',
+      tabErrors: 'Logs de Error',
+      executiveTitle: 'Resumen Ejecutivo',
+      executiveSubtitle: int ? 'Resumen de pruebas de integración con AI' : 'Resumen de pruebas unitarias con AI',
+      noSummary: int
+        ? 'Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY (obligatorio para el informe de integración).'
+        : 'Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidad.',
+      kpiTotal: 'Total',
+      kpiPassed: 'Exitosos',
+      kpiFailed: 'Fallidos',
+      kpiRate: 'Tasa de Éxito',
+      kpiSkipped: 'Omitidos',
+      chartDistribution: 'Distribución de Tests',
+      chartClasses: 'Resultados por Clase',
+      overallProgress: 'Progreso General',
+      lblPassed: 'exitosos',
+      lblFailed: 'fallidos',
+      testClasses: 'Clases de Test',
+      searchTests: 'Buscar tests...',
+      colTest: 'Test',
+      colStatus: 'Estado',
+      colDuration: 'Duración',
+      colModule: 'Módulo',
+      colFile: 'Archivo',
+      colLines: 'Líneas',
+      lineCoverage: 'Cobertura de Líneas',
+      branchCoverage: 'Cobertura de Ramas',
+      covByModule: 'Cobertura por Módulo',
+      noErrors: 'No se registraron errores. ¡Excelente!',
+      errorCount: 'Tests Fallidos',
+      errorMessage: 'Error',
+      stackTrace: 'Stack Trace',
+      footerMadeBy: 'Hecho por Applied AI Team — Stefanini',
+      generatedAt: 'Generado',
+      covIntBridgeTitle: 'Puente: escenarios de integración y código de aplicación',
+      covIntBridgeIntro:
+        'Relaciona los escenarios ejecutados en esta corrida con el porcentaje de líneas y ramas del código instrumentado que quedaron ejercidos. La brecha estima cuánto código aún no fue tocado por estas pruebas; no implica un número fijo de “escenarios faltantes”.',
+      covIntScenarios: 'Escenarios en esta corrida',
+      covIntLineGlobal: 'Cobertura global (líneas)',
+      covIntBranchGlobal: 'Cobertura global (ramas)',
+      covIntLinesCount: 'Líneas cubiertas / instrumentadas',
+      covIntBranchCount: 'Ramas cubiertas / instrumentadas',
+      covIntGapLines: 'Brecha líneas (no ejercidas)',
+      covIntGapBranch: 'Brecha ramas (no ejercidas)',
+      covIntExpand:
+        'Integrar más escenarios que recorran flujos y ramas aún no cubiertas puede reducir la brecha. Un escenario puede cubrir muchas líneas si el flujo es amplio; la prioridad es cubrir rutas críticas de negocio y error.',
+      covMissingTitle: 'Métricas de cobertura no disponibles',
+      covMissingBody:
+        'No se encontró coverage.cobertura.xml bajo TestResults/integration. Ejecute las pruebas con Coverlet (ya referenciado en el proyecto de tests), por ejemplo: dotnet test ... /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/integration/coverage',
+      tabCoverageCode: 'Cobertura de código',
+    },
+    en: {
+      reportTitle: int ? 'Integration Test Report — Backend' : 'Unit Test Report — Backend',
+      tabExecutive: 'Executive Summary',
+      tabOverview: 'Overall Results',
+      tabDetails: 'Test Details',
+      tabCoverage: 'Coverage',
+      tabErrors: 'Error Logs',
+      executiveTitle: 'Executive Summary',
+      executiveSubtitle: int ? 'Integration test summary with AI' : 'Unit test summary with AI',
+      noSummary: int
+        ? 'Executive summary unavailable. PERPLEXITY_API_KEY is required for the integration report.'
+        : 'Executive summary not available. Set PERPLEXITY_API_KEY to enable this feature.',
+      kpiTotal: 'Total',
+      kpiPassed: 'Passed',
+      kpiFailed: 'Failed',
+      kpiRate: 'Pass Rate',
+      kpiSkipped: 'Skipped',
+      chartDistribution: 'Test Distribution',
+      chartClasses: 'Results by Class',
+      overallProgress: 'Overall Progress',
+      lblPassed: 'passed',
+      lblFailed: 'failed',
+      testClasses: 'Test Classes',
+      searchTests: 'Search tests...',
+      colTest: 'Test',
+      colStatus: 'Status',
+      colDuration: 'Duration',
+      colModule: 'Module',
+      colFile: 'File',
+      colLines: 'Lines',
+      lineCoverage: 'Line Coverage',
+      branchCoverage: 'Branch Coverage',
+      covByModule: 'Coverage by Module',
+      noErrors: 'No errors recorded. Excellent!',
+      errorCount: 'Failed Tests',
+      errorMessage: 'Error',
+      stackTrace: 'Stack Trace',
+      footerMadeBy: 'Made by Applied AI Team — Stefanini',
+      generatedAt: 'Generated',
+      covIntBridgeTitle: 'Bridge: integration scenarios and application code',
+      covIntBridgeIntro:
+        'Links the scenarios executed in this run with line and branch percentages of instrumented code that was exercised. The gap estimates how much code was not touched; it does not map to a fixed number of “missing scenarios”.',
+      covIntScenarios: 'Scenarios in this run',
+      covIntLineGlobal: 'Overall line coverage',
+      covIntBranchGlobal: 'Overall branch coverage',
+      covIntLinesCount: 'Lines covered / instrumented',
+      covIntBranchCount: 'Branches covered / instrumented',
+      covIntGapLines: 'Line gap (not exercised)',
+      covIntGapBranch: 'Branch gap (not exercised)',
+      covIntExpand:
+        'Adding scenarios that exercise uncovered flows and branches can reduce the gap. One scenario may cover many lines; prioritize critical business and error paths.',
+      covMissingTitle: 'Coverage metrics unavailable',
+      covMissingBody:
+        'coverage.cobertura.xml was not found under TestResults/integration. Run tests with Coverlet, e.g.: dotnet test ... /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/integration/coverage',
+      tabCoverageCode: 'Code coverage',
+    },
+    pt: {
+      reportTitle: int ? 'Relatório de Testes de Integração — Backend' : 'Relatório de Testes Unitários — Backend',
+      tabExecutive: 'Resumo Executivo',
+      tabOverview: 'Resultados Gerais',
+      tabDetails: 'Detalhes dos Testes',
+      tabCoverage: 'Cobertura',
+      tabErrors: 'Logs de Erro',
+      executiveTitle: 'Resumo Executivo',
+      executiveSubtitle: int ? 'Resumo de testes de integração com IA' : 'Resumo de testes unitários com IA',
+      noSummary: int
+        ? 'Resumo indisponível. PERPLEXITY_API_KEY é obrigatória para o relatório de integração.'
+        : 'Resumo executivo não disponível. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidade.',
+      kpiTotal: 'Total',
+      kpiPassed: 'Aprovados',
+      kpiFailed: 'Falhos',
+      kpiRate: 'Taxa de Sucesso',
+      kpiSkipped: 'Omitidos',
+      chartDistribution: 'Distribuição de Testes',
+      chartClasses: 'Resultados por Classe',
+      overallProgress: 'Progresso Geral',
+      lblPassed: 'aprovados',
+      lblFailed: 'falhos',
+      testClasses: 'Classes de Teste',
+      searchTests: 'Buscar testes...',
+      colTest: 'Teste',
+      colStatus: 'Status',
+      colDuration: 'Duração',
+      colModule: 'Módulo',
+      colFile: 'Arquivo',
+      colLines: 'Linhas',
+      lineCoverage: 'Cobertura de Linhas',
+      branchCoverage: 'Cobertura de Branches',
+      covByModule: 'Cobertura por Módulo',
+      noErrors: 'Nenhum erro registrado. Excelente!',
+      errorCount: 'Testes com Falha',
+      errorMessage: 'Erro',
+      stackTrace: 'Stack Trace',
+      footerMadeBy: 'Feito por Applied AI Team — Stefanini',
+      generatedAt: 'Gerado',
+      covIntBridgeTitle: 'Ponte: cenários de integração e código da aplicação',
+      covIntBridgeIntro:
+        'Relaciona os cenários desta execução com as percentagens de linhas e ramas instrumentadas exercitadas. A lacuna estima quanto código não foi tocado; não corresponde a um número fixo de “cenários em falta”.',
+      covIntScenarios: 'Cenários nesta execução',
+      covIntLineGlobal: 'Cobertura global (linhas)',
+      covIntBranchGlobal: 'Cobertura global (ramas)',
+      covIntLinesCount: 'Linhas cobertas / instrumentadas',
+      covIntBranchCount: 'Ramas cobertas / instrumentadas',
+      covIntGapLines: 'Lacuna de linhas (não exercidas)',
+      covIntGapBranch: 'Lacuna de ramas (não exercidas)',
+      covIntExpand:
+        'Novos cenários que percorram fluxos e ramos ainda não cobertos podem reduzir a lacuna. Um cenário pode cobrir muitas linhas; priorize fluxos críticos de negócio e erro.',
+      covMissingTitle: 'Métricas de cobertura indisponíveis',
+      covMissingBody:
+        'coverage.cobertura.xml não encontrado em TestResults/integration. Execute os testes com Coverlet, ex.: dotnet test ... /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/integration/coverage',
+      tabCoverageCode: 'Cobertura de código',
+    },
+  };
+}
+
+/**
+ * Panel superior solo para informes de integración: escenarios vs % líneas/ramas y brechas.
+ */
+function renderIntegrationCoverageBridge(testInfo, coverageInfo) {
+  const n = testInfo.total;
+  const has = coverageInfo != null;
+  const lineGap = has ? Math.max(0, 100 - coverageInfo.lineRate) : null;
+  const branchGap = has ? Math.max(0, 100 - coverageInfo.branchRate) : null;
+  const lv = has ? coverageInfo.linesValid : 0;
+  const lc = has ? coverageInfo.linesCovered : 0;
+  const bv = has ? coverageInfo.branchesValid : 0;
+  const bc = has ? coverageInfo.branchesCovered : 0;
+
+  const card = (titleKey, defTitle, value) => `
+    <div class="rounded-lg border border-indigo-200/80 dark:border-indigo-800/50 bg-white/80 dark:bg-zinc-900/60 p-3">
+      <p class="text-[10px] font-medium text-indigo-600 dark:text-indigo-300 leading-tight" data-i18n="${titleKey}">${defTitle}</p>
+      <p class="text-lg font-bold text-slate-800 dark:text-white mt-1">${value}</p>
+    </div>`;
+
+  return `
+  <div class="bg-indigo-50 dark:bg-indigo-950/25 border border-indigo-200 dark:border-indigo-800/40 rounded-xl p-5 mb-6">
+    <h3 class="text-sm font-semibold text-indigo-900 dark:text-indigo-200 mb-2" data-i18n="covIntBridgeTitle">Puente: escenarios de integración y código de aplicación</h3>
+    <p class="text-xs text-indigo-900/85 dark:text-indigo-200/90 mb-4 leading-relaxed" data-i18n="covIntBridgeIntro">Relaciona los escenarios ejecutados con el porcentaje de líneas y ramas instrumentadas ejercidas.</p>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+      ${card('covIntScenarios', 'Escenarios en esta corrida', String(n))}
+      ${card('covIntLineGlobal', 'Cobertura global (líneas)', has ? `${coverageInfo.lineRate.toFixed(2)}%` : '—')}
+      ${card('covIntBranchGlobal', 'Cobertura global (ramas)', has ? `${coverageInfo.branchRate.toFixed(2)}%` : '—')}
+      ${card('covIntLinesCount', 'Líneas cubiertas / instrumentadas', has && lv > 0 ? `${lc} / ${lv}` : '—')}
+      ${card('covIntGapLines', 'Brecha líneas (no ejercidas)', has ? `${lineGap.toFixed(2)}%` : '—')}
+      ${card('covIntGapBranch', 'Brecha ramas (no ejercidas)', has ? `${branchGap.toFixed(2)}%` : '—')}
+    </div>
+    ${has && bv > 0 ? `<p class="text-xs text-indigo-800 dark:text-indigo-300 mb-2"><span data-i18n="covIntBranchCount">Ramas cubiertas / instrumentadas</span>: <strong>${bc} / ${bv}</strong></p>` : ''}
+    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed border-t border-indigo-200/60 dark:border-indigo-800/40 pt-3" data-i18n="covIntExpand">Un mayor número de escenarios puede aumentar la cobertura; priorice rutas críticas.</p>
+  </div>`;
+}
+
+function renderCoverageMissingPanel() {
+  return `
+  <div class="rounded-xl border border-amber-300 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-950/20 p-5 mb-6">
+    <h4 class="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-2" data-i18n="covMissingTitle">Métricas de cobertura no disponibles</h4>
+    <p class="text-xs text-amber-900/90 dark:text-amber-200/85 leading-relaxed" data-i18n="covMissingBody">No se encontró coverage.cobertura.xml bajo TestResults/integration. Ejecute las pruebas con Coverlet (ya referenciado en el proyecto de tests), por ejemplo: dotnet test ... /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./TestResults/integration/coverage</p>
+  </div>`;
+}
+
+/** Bloques KPI + tablas de cobertura (mismo contenido que antes para unit/integration con XML). */
+function renderCoverageDetailBlocks(coverageInfo) {
+  return `
+  <div class="grid grid-cols-2 gap-4 mb-6">
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 mb-3" data-i18n="lineCoverage">Cobertura de Líneas</h3>
+      <div class="flex items-center gap-4">
+        <p class="text-3xl font-bold ${getCoverageBadge(coverageInfo.lineRate)}">${coverageInfo.lineRate.toFixed(2)}%</p>
+        <div class="flex-1">
+          <div class="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-3 overflow-hidden">
+            <div class="h-full rounded-full ${getCoverageClass(coverageInfo.lineRate)}" style="width:${Math.min(coverageInfo.lineRate, 100)}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 mb-3" data-i18n="branchCoverage">Cobertura de Ramas</h3>
+      <div class="flex items-center gap-4">
+        <p class="text-3xl font-bold ${getCoverageBadge(coverageInfo.branchRate)}">${coverageInfo.branchRate.toFixed(2)}%</p>
+        <div class="flex-1">
+          <div class="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-3 overflow-hidden">
+            <div class="h-full rounded-full ${getCoverageClass(coverageInfo.branchRate)}" style="width:${Math.min(coverageInfo.branchRate, 100)}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-6">
+    <div class="p-4 border-b border-slate-200 dark:border-zinc-800">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 flex items-center gap-2"><i class="bi bi-bar-chart-line"></i><span data-i18n="covByModule">Cobertura por Módulo</span></h3>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colModule">Módulo</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="lineCoverage">Cobertura de Líneas</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="branchCoverage">Cobertura de Ramas</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
+${coverageInfo.packages.map(pkg => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
+          <td class="px-4 py-3 font-medium text-slate-700 dark:text-gray-300">${esc(pkg.name)}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2.5 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(pkg.lineRate)}" style="width:${Math.min(pkg.lineRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(pkg.lineRate)} min-w-[50px] text-right">${pkg.lineRate.toFixed(2)}%</span>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2.5 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(pkg.branchRate)}" style="width:${Math.min(pkg.branchRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(pkg.branchRate)} min-w-[50px] text-right">${pkg.branchRate.toFixed(2)}%</span>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+
+${coverageInfo.packages.map(pkg => pkg.classes.length > 0 ? `
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-4">
+    <div class="p-4 border-b border-slate-200 dark:border-zinc-800">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 flex items-center gap-2"><i class="bi bi-file-earmark-code"></i> ${esc(pkg.name)}</h3>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colFile">Archivo</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colLines">Líneas</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="lineCoverage">Cobertura de Líneas</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="branchCoverage">Cobertura de Ramas</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
+${pkg.classes.map(cls => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
+          <td class="px-4 py-3"><code class="text-xs text-aura-600 dark:text-aura-400">${esc(cls.name)}</code></td>
+          <td class="px-4 py-3 text-xs"><span class="text-emerald-600 dark:text-emerald-400 font-semibold">${cls.coveredLines}</span><span class="text-slate-400 dark:text-gray-500"> / ${cls.totalLines}</span></td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(cls.lineRate)}" style="width:${Math.min(cls.lineRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(cls.lineRate)} min-w-[50px] text-right">${cls.lineRate.toFixed(2)}%</span>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(cls.branchRate)}" style="width:${Math.min(cls.branchRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(cls.branchRate)} min-w-[50px] text-right">${cls.branchRate.toFixed(2)}%</span>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>` : '').join('')}`;
+}
+
+function renderCoverageTabBody(testInfo, coverageInfo, int) {
+  let body = '';
+  if (int) body += renderIntegrationCoverageBridge(testInfo, coverageInfo);
+  if (int && !coverageInfo) body += renderCoverageMissingPanel();
+  if (coverageInfo) body += renderCoverageDetailBlocks(coverageInfo);
+  return body;
+}
+
 // ─── HTML Report ──────────────────────────────────────────────────────────────
 
 function renderStackTraceDetails(t) {
@@ -476,9 +925,18 @@ function getPassRateBgClass(rate) {
   return 'bg-red-500';
 }
 
-function generateHtmlReport(testInfo, coverageInfo, summaryByLang) {
+function generateHtmlReport(testInfo, coverageInfo, summaryByLang, reportKind = 'unit') {
   const passRate = testInfo.total > 0 ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) : '0';
   const passRateNum = Number.parseFloat(passRate);
+  const int = reportKind === 'integration';
+  const showCoverageTab = Boolean(coverageInfo || int);
+  const coverageTabI18nKey = int ? 'tabCoverageCode' : 'tabCoverage';
+  const coverageTabI18nDefault = int ? 'Cobertura de código' : 'Cobertura';
+  const pageTitle = int ? 'Backend Integration Test Report — TuCreditoOnline' : 'Backend Unit Test Report — TuCreditoOnline';
+  const headerSub = int
+    ? `.NET 8 · xUnit · Integración · API · WebApplicationFactory · ${new Date().toLocaleDateString('es-ES')}`
+    : `.NET 8 · xUnit · Moq · FluentAssertions · ${new Date().toLocaleDateString('es-ES')}`;
+  const i18nJson = JSON.stringify(buildI18nPayload(reportKind)).replaceAll('</', '<\\/');
 
   const summaryHtmlByLang = {
     en: mdToHtml(summaryByLang.en),
@@ -501,7 +959,7 @@ function generateHtmlReport(testInfo, coverageInfo, summaryByLang) {
 <html lang="es" class="">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Backend Unit Test Report — TuCreditoOnline</title>
+<title>${pageTitle}</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -544,8 +1002,8 @@ html.dark #lang-select option{color:#fafafa;background-color:#3f3f46}
   <div class="flex items-center gap-3">
     <div class="w-9 h-9 rounded-lg bg-white/20 dark:bg-aura-600 flex items-center justify-center font-bold text-white text-[10px] tracking-tight">SAI</div>
     <div>
-      <h1 class="text-lg font-bold text-white leading-tight" data-i18n="reportTitle">Reporte de Pruebas Unitarias — Backend</h1>
-      <p class="text-xs text-white/70">.NET 8 · xUnit · Moq · FluentAssertions · ${new Date().toLocaleDateString('es-ES')}</p>
+      <h1 class="text-lg font-bold text-white leading-tight" data-i18n="reportTitle">${int ? 'Reporte de Pruebas de Integración — Backend' : 'Reporte de Pruebas Unitarias — Backend'}</h1>
+      <p class="text-xs text-white/70">${headerSub}</p>
     </div>
   </div>
   <div class="flex items-center gap-3">
@@ -568,7 +1026,7 @@ html.dark #lang-select option{color:#fafafa;background-color:#3f3f46}
   <button data-tab="executive" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-aura-500 text-aura-600 bg-aura-500/10 dark:text-aura-300 transition-colors whitespace-nowrap active"><i class="bi bi-file-earmark-text"></i><span data-i18n="tabExecutive">Resumen Ejecutivo</span></button>
   <button data-tab="overview" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors whitespace-nowrap"><i class="bi bi-graph-up"></i><span data-i18n="tabOverview">Resultados Generales</span></button>
   <button data-tab="details" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors whitespace-nowrap"><i class="bi bi-list-check"></i><span data-i18n="tabDetails">Detalle de Tests</span></button>
-  ${coverageInfo ? `<button data-tab="coverage" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors whitespace-nowrap"><i class="bi bi-bar-chart-line"></i><span data-i18n="tabCoverage">Cobertura</span></button>` : ''}
+  ${showCoverageTab ? `<button data-tab="coverage" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors whitespace-nowrap"><i class="bi bi-bar-chart-line"></i><span data-i18n="${coverageTabI18nKey}">${coverageTabI18nDefault}</span></button>` : ''}
   <button data-tab="errors" class="tab-btn flex items-center gap-2 px-4 py-3 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200 transition-colors whitespace-nowrap"><i class="bi bi-exclamation-triangle"></i><span data-i18n="tabErrors">Logs de Error</span></button>
 </div>
 </nav>
@@ -580,10 +1038,10 @@ html.dark #lang-select option{color:#fafafa;background-color:#3f3f46}
 <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
   <div class="mb-4">
     <h2 class="text-xl font-bold text-slate-800 dark:text-white" data-i18n="executiveTitle">Resumen Ejecutivo</h2>
-    <p class="text-xs text-slate-500 dark:text-gray-400 mt-1" data-i18n="executiveSubtitle">Resumen de pruebas unitarias con AI</p>
+    <p class="text-xs text-slate-500 dark:text-gray-400 mt-1" data-i18n="executiveSubtitle">${int ? 'Resumen de pruebas de integración con AI' : 'Resumen de pruebas unitarias con AI'}</p>
   </div>
   <div id="executive-summary-content" class="prose max-w-none text-slate-600 dark:text-slate-300 leading-relaxed">
-    ${summaryHtmlByLang.es || '<p class="text-slate-400 dark:text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidad.</p>'}
+    ${summaryHtmlByLang.es || `<p class="text-slate-400 dark:text-gray-500 italic" data-i18n="noSummary">${int ? 'Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY (obligatorio para el informe de integración).' : 'Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidad.'}</p>`}
   </div>
 </div>
 </section>
@@ -698,109 +1156,10 @@ ${renderTestErrorRow(t)}`;
   </div>
 </section>
 
-${coverageInfo ? `
+${showCoverageTab ? `
 <!-- ═══ TAB: COVERAGE ═══ -->
 <section id="tab-coverage" class="tab-panel">
-  <!-- Coverage KPIs -->
-  <div class="grid grid-cols-2 gap-4 mb-6">
-    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
-      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 mb-3" data-i18n="lineCoverage">Cobertura de Líneas</h3>
-      <div class="flex items-center gap-4">
-        <p class="text-3xl font-bold ${getCoverageBadge(coverageInfo.lineRate)}">${coverageInfo.lineRate.toFixed(2)}%</p>
-        <div class="flex-1">
-          <div class="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-3 overflow-hidden">
-            <div class="h-full rounded-full ${getCoverageClass(coverageInfo.lineRate)}" style="width:${Math.min(coverageInfo.lineRate, 100)}%"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 p-6 shadow-sm">
-      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 mb-3" data-i18n="branchCoverage">Cobertura de Ramas</h3>
-      <div class="flex items-center gap-4">
-        <p class="text-3xl font-bold ${getCoverageBadge(coverageInfo.branchRate)}">${coverageInfo.branchRate.toFixed(2)}%</p>
-        <div class="flex-1">
-          <div class="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-3 overflow-hidden">
-            <div class="h-full rounded-full ${getCoverageClass(coverageInfo.branchRate)}" style="width:${Math.min(coverageInfo.branchRate, 100)}%"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Coverage by Module -->
-  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-6">
-    <div class="p-4 border-b border-slate-200 dark:border-zinc-800">
-      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 flex items-center gap-2"><i class="bi bi-bar-chart-line"></i><span data-i18n="covByModule">Cobertura por Módulo</span></h3>
-    </div>
-    <table class="w-full text-sm">
-      <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colModule">Módulo</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="lineCoverage">Cobertura de Líneas</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="branchCoverage">Cobertura de Ramas</th>
-      </tr></thead>
-      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
-${coverageInfo.packages.map(pkg => `
-        <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
-          <td class="px-4 py-3 font-medium text-slate-700 dark:text-gray-300">${esc(pkg.name)}</td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2.5 overflow-hidden">
-                <div class="h-full rounded-full ${getCoverageClass(pkg.lineRate)}" style="width:${Math.min(pkg.lineRate, 100)}%"></div>
-              </div>
-              <span class="text-xs font-semibold ${getCoverageBadge(pkg.lineRate)} min-w-[50px] text-right">${pkg.lineRate.toFixed(2)}%</span>
-            </div>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2.5 overflow-hidden">
-                <div class="h-full rounded-full ${getCoverageClass(pkg.branchRate)}" style="width:${Math.min(pkg.branchRate, 100)}%"></div>
-              </div>
-              <span class="text-xs font-semibold ${getCoverageBadge(pkg.branchRate)} min-w-[50px] text-right">${pkg.branchRate.toFixed(2)}%</span>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Coverage by File -->
-${coverageInfo.packages.map(pkg => pkg.classes.length > 0 ? `
-  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-4">
-    <div class="p-4 border-b border-slate-200 dark:border-zinc-800">
-      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 flex items-center gap-2"><i class="bi bi-file-earmark-code"></i> ${esc(pkg.name)}</h3>
-    </div>
-    <table class="w-full text-sm">
-      <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colFile">Archivo</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colLines">Líneas</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="lineCoverage">Cobertura de Líneas</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="branchCoverage">Cobertura de Ramas</th>
-      </tr></thead>
-      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
-${pkg.classes.map(cls => `
-        <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
-          <td class="px-4 py-3"><code class="text-xs text-aura-600 dark:text-aura-400">${esc(cls.name)}</code></td>
-          <td class="px-4 py-3 text-xs"><span class="text-emerald-600 dark:text-emerald-400 font-semibold">${cls.coveredLines}</span><span class="text-slate-400 dark:text-gray-500"> / ${cls.totalLines}</span></td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                <div class="h-full rounded-full ${getCoverageClass(cls.lineRate)}" style="width:${Math.min(cls.lineRate, 100)}%"></div>
-              </div>
-              <span class="text-xs font-semibold ${getCoverageBadge(cls.lineRate)} min-w-[50px] text-right">${cls.lineRate.toFixed(2)}%</span>
-            </div>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                <div class="h-full rounded-full ${getCoverageClass(cls.branchRate)}" style="width:${Math.min(cls.branchRate, 100)}%"></div>
-              </div>
-              <span class="text-xs font-semibold ${getCoverageBadge(cls.branchRate)} min-w-[50px] text-right">${cls.branchRate.toFixed(2)}%</span>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>` : '').join('')}
+${renderCoverageTabBody(testInfo, coverageInfo, int)}
 </section>
 ` : ''}
 
@@ -968,11 +1327,7 @@ if (barCtx) {
 }
 
 // ── i18n ──
-const i18n = {
-es:{reportTitle:'Reporte de Pruebas Unitarias — Backend',tabExecutive:'Resumen Ejecutivo',tabOverview:'Resultados Generales',tabDetails:'Detalle de Tests',tabCoverage:'Cobertura',tabErrors:'Logs de Error',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Resumen de pruebas unitarias con AI',noSummary:'Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidad.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiSkipped:'Omitidos',chartDistribution:'Distribución de Tests',chartClasses:'Resultados por Clase',overallProgress:'Progreso General',lblPassed:'exitosos',lblFailed:'fallidos',testClasses:'Clases de Test',searchTests:'Buscar tests...',colTest:'Test',colStatus:'Estado',colDuration:'Duración',colModule:'Módulo',colFile:'Archivo',colLines:'Líneas',lineCoverage:'Cobertura de Líneas',branchCoverage:'Cobertura de Ramas',covByModule:'Cobertura por Módulo',noErrors:'No se registraron errores. ¡Excelente!',errorCount:'Tests Fallidos',errorMessage:'Error',stackTrace:'Stack Trace',footerMadeBy:'Hecho por Applied AI Team — Stefanini',generatedAt:'Generado'},
-en:{reportTitle:'Unit Test Report — Backend',tabExecutive:'Executive Summary',tabOverview:'Overall Results',tabDetails:'Test Details',tabCoverage:'Coverage',tabErrors:'Error Logs',executiveTitle:'Executive Summary',executiveSubtitle:'Unit test summary with AI',noSummary:'Executive summary not available. Set PERPLEXITY_API_KEY to enable this feature.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Pass Rate',kpiSkipped:'Skipped',chartDistribution:'Test Distribution',chartClasses:'Results by Class',overallProgress:'Overall Progress',lblPassed:'passed',lblFailed:'failed',testClasses:'Test Classes',searchTests:'Search tests...',colTest:'Test',colStatus:'Status',colDuration:'Duration',colModule:'Module',colFile:'File',colLines:'Lines',lineCoverage:'Line Coverage',branchCoverage:'Branch Coverage',covByModule:'Coverage by Module',noErrors:'No errors recorded. Excellent!',errorCount:'Failed Tests',errorMessage:'Error',stackTrace:'Stack Trace',footerMadeBy:'Made by Applied AI Team — Stefanini',generatedAt:'Generated'},
-pt:{reportTitle:'Relatório de Testes Unitários — Backend',tabExecutive:'Resumo Executivo',tabOverview:'Resultados Gerais',tabDetails:'Detalhes dos Testes',tabCoverage:'Cobertura',tabErrors:'Logs de Erro',executiveTitle:'Resumo Executivo',executiveSubtitle:'Resumo de testes unitários com IA',noSummary:'Resumo executivo não disponível. Configure PERPLEXITY_API_KEY para habilitar esta funcionalidade.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiSkipped:'Omitidos',chartDistribution:'Distribuição de Testes',chartClasses:'Resultados por Classe',overallProgress:'Progresso Geral',lblPassed:'aprovados',lblFailed:'falhos',testClasses:'Classes de Teste',searchTests:'Buscar testes...',colTest:'Teste',colStatus:'Status',colDuration:'Duração',colModule:'Módulo',colFile:'Arquivo',colLines:'Linhas',lineCoverage:'Cobertura de Linhas',branchCoverage:'Cobertura de Branches',covByModule:'Cobertura por Módulo',noErrors:'Nenhum erro registrado. Excelente!',errorCount:'Testes com Falha',errorMessage:'Erro',stackTrace:'Stack Trace',footerMadeBy:'Feito por Applied AI Team — Stefanini',generatedAt:'Gerado'}
-};
+const i18n = ${i18nJson};
 
 function renderExecutiveSummary(lang) {
   const container = document.getElementById('executive-summary-content');
@@ -1007,9 +1362,12 @@ switchLang(document.getElementById('lang-select')?.value || 'es');
 
 // ─── Markdown Report ──────────────────────────────────────────────────────────
 
-function generateMarkdownReport(testInfo, coverageInfo) {
+function generateMarkdownReport(testInfo, coverageInfo, reportKind = 'unit') {
   const passRate = testInfo.total > 0 ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) : '0';
-  let md = `## Backend Unit Tests (.NET 8 / xUnit) Summary\n\n`;
+  const int = reportKind === 'integration';
+  let md = int
+    ? `## Backend Integration Tests (.NET 8 / xUnit / IntegrationTests) Summary\n\n`
+    : `## Backend Unit Tests (.NET 8 / xUnit) Summary\n\n`;
   md += `| Metric | Value |\n|--------|-------|\n`;
   md += `| **Total Tests** | ${testInfo.total} |\n`;
   md += `| **Passed** | ${testInfo.passed} |\n`;
@@ -1027,14 +1385,33 @@ function generateMarkdownReport(testInfo, coverageInfo) {
     md += `\n`;
   }
 
-  md += `> Download artifact **backend-unit-test-results** for the complete report with per-test details.\n`;
+  md += int
+    ? `> Artefacto: **backend/TestResults/integration/** — informe HTML homologado con pruebas unitarias.\n`
+    : `> Download artifact **backend-unit-test-results** for the complete report with per-test details.\n`;
   return md;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 try {
-  console.log('Generating backend unit test report...\n');
+  const reportKind = IS_INTEGRATION ? 'integration' : 'unit';
+  console.log(
+    reportKind === 'integration'
+      ? 'Generating backend integration test report...\n'
+      : 'Generating backend unit test report...\n',
+  );
+
+  if (reportKind === 'integration') {
+    const k = process.env.PERPLEXITY_API_KEY;
+    if (!k || k.startsWith('your_')) {
+      console.error(
+        'ERROR: El informe de integración exige PERPLEXITY_API_KEY en .env (resumen ejecutivo con IA obligatorio).',
+      );
+      process.exit(1);
+    }
+  }
+
+  fs.mkdirSync(TEST_RESULTS_DIR, { recursive: true });
 
   console.log('Parsing TRX file...');
   const trxData = await parseTrxFile();
@@ -1052,15 +1429,23 @@ try {
   }
 
   console.log('\nGenerating AI executive summary...');
-  const summaryByLang = await generateExecutiveSummary(testInfo, coverageInfo);
+  const summaryByLang = await generateExecutiveSummary(testInfo, coverageInfo, reportKind);
+
+  if (
+    reportKind === 'integration' &&
+    (!summaryByLang.es?.trim() && !summaryByLang.en?.trim() && !summaryByLang.pt?.trim())
+  ) {
+    console.error('ERROR: No se pudo generar el resumen ejecutivo con IA. Revise PERPLEXITY_API_KEY y la cuota de API.');
+    process.exit(1);
+  }
 
   console.log('\nGenerating HTML report...');
-  const htmlReport = generateHtmlReport(testInfo, coverageInfo, summaryByLang);
+  const htmlReport = generateHtmlReport(testInfo, coverageInfo, summaryByLang, reportKind);
   fs.writeFileSync(HTML_REPORT_PATH, htmlReport, 'utf-8');
   console.log(`  HTML report: ${HTML_REPORT_PATH}`);
 
   console.log('\nGenerating Markdown report...');
-  const markdownReport = generateMarkdownReport(testInfo, coverageInfo);
+  const markdownReport = generateMarkdownReport(testInfo, coverageInfo, reportKind);
   fs.writeFileSync(MARKDOWN_REPORT_PATH, markdownReport, 'utf-8');
   console.log(`  Markdown report: ${MARKDOWN_REPORT_PATH}`);
 

@@ -43,7 +43,7 @@ public class AuthControllerTests : IClassFixture<TestWebApplicationFactory>
             var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
             result.Should().NotBeNull();
             result!.User.Should().NotBeNull();
-            result.User.Email.Should().Be(registerDto.Email);
+            result.User.Email.Should().Be(registerDto.Email.Trim().ToLowerInvariant());
             result.Token.Should().NotBeNullOrEmpty();
         }
     }
@@ -133,7 +133,7 @@ public class AuthControllerTests : IClassFixture<TestWebApplicationFactory>
             result!.Token.Should().NotBeNullOrEmpty();
             result.RefreshToken.Should().NotBeNullOrEmpty();
             result.User.Should().NotBeNull();
-            result.User.Email.Should().Be(email);
+            result.User.Email.Should().Be(email.Trim().ToLowerInvariant());
         }
         else
         {
@@ -266,7 +266,7 @@ public class AuthControllerTests : IClassFixture<TestWebApplicationFactory>
         var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginResponseDto>();
         loginResult.Should().NotBeNull();
         loginResult!.User.Should().NotBeNull();
-        loginResult.User.Email.Should().Be(email);
+        loginResult.User.Email.Should().Be(email.Trim().ToLowerInvariant());
         loginResult.User.FullName.Should().Be(fullName);
         loginResult.Token.Should().NotBeNullOrEmpty();
         loginResult.RefreshToken.Should().NotBeNullOrEmpty();

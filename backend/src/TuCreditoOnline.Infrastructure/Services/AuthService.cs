@@ -162,7 +162,8 @@ public class AuthService
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(ClaimTypes.Name, user.FullName),
-            new Claim(ClaimTypes.Role, user.Role)
+            // Tipo "role" alineado con JwtBearer TokenValidationParameters.RoleClaimType (Program.cs)
+            new Claim("role", user.Role)
         };
 
         var token = new JwtSecurityToken(
@@ -174,6 +175,27 @@ public class AuthService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    /// <summary>
+    /// Solo si IntegrationTests:AllowRequestRoleInRegistration es true (appsettings.Testing.json)
+    /// se respeta <see cref="RegisterRequestDto.Role"/>; en el resto de entornos el registro crea rol User.
+    /// </summary>
+    private string ResolveRegistrationRole(RegisterRequestDto request)
+    {
+        var r = string.IsNullOrWhiteSpace(request.Role) ? "User" : request.Role.Trim();
+        var allowRoleFromRequest = string.Equals(
+            _configuration["IntegrationTests:AllowRequestRoleInRegistration"],
+            "true",
+            StringComparison.OrdinalIgnoreCase);
+        if (!allowRoleFromRequest)
+            return "User";
+
+        return r switch
+        {
+            "Admin" or "SuperAdmin" or "User" => r,
+            _ => "User"
+        };
     }
 
     private static string HashPassword(string password)
