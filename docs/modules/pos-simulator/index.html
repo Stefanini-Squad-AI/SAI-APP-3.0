@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Module - POS Simulator Feature</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 18px 40px; }
+    .head { background: linear-gradient(135deg, #059669, #047857); color: white; border-radius: 14px; padding: 24px; margin-bottom: 18px; }
+    .head p { color: rgba(255, 255, 255, 0.94); margin: 0; line-height: 1.55; }
+    .head h1 { margin: 0 0 8px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    .back { display: inline-block; color: #059669; text-decoration: none; font-weight: 600; }
+    .card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    h2 { margin: 0 0 10px; font-size: 1.12rem; }
+    p, li { line-height: 1.55; color: #374151; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #e5e7eb; padding: 8px 10px; text-align: left; font-size: 0.92rem; vertical-align: top; }
+    th { background: #f1f5f9; }
+    code { background: #eef2ff; padding: 2px 6px; border-radius: 6px; }
+    pre { background: #f1f5f9; padding: 12px; border-radius: 8px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="toolbar">
+      <a class="back" href="../../index.html">← Back to docs hub</a>
+    </div>
+
+    <section class="head">
+      <h1>POS Simulator Feature (SAIAPP3-56)</h1>
+      <p>Comprehensive Point of Sale simulation module enabling users to model special banking products, calculate online payment equivalents, and explore POS payment options.</p>
+    </section>
+
+    <section class="card">
+      <h2>Overview</h2>
+      <p>The <strong>POS Simulator</strong> feature allows customers and advisors to:</p>
+      <ul>
+        <li>Select and simulate special banking products with configurable parameters</li>
+        <li>Calculate monthly payments, total cost, and interest breakdown</li>
+        <li>View equivalent amounts for online payment channels</li>
+        <li>Explore POS payment options with installment plans</li>
+        <li>Compare payment methods before committing</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Technical Foundation</h2>
+      <ul>
+        <li><strong>Frontend:</strong> React 18 SPA page with form validation and results display</li>
+        <li><strong>Backend:</strong> ASP.NET Core controller with POST /api/pos-simulator/calculate</li>
+        <li><strong>Routing:</strong> React Router at /pos-simulator</li>
+        <li><strong>i18n:</strong> Spanish, English, Portuguese support</li>
+        <li><strong>Styling:</strong> Tailwind CSS with responsive design</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>File Inventory</h2>
+      <h3>Frontend</h3>
+      <ul>
+        <li>frontend/src/pages/POSSimulatorPage.jsx</li>
+        <li>frontend/src/App.jsx (updated)</li>
+        <li>frontend/src/components/layout/Header.jsx (updated)</li>
+        <li>frontend/src/i18n/locales/*.json (updated)</li>
+      </ul>
+      <h3>Backend</h3>
+      <ul>
+        <li>backend/src/TuCreditoOnline.API/Controllers/POSSimulatorController.cs</li>
+      </ul>
+      <h3>Tests (AURA)</h3>
+      <ul>
+        <li>automation/frameworks/applied-ai-aura/src/constants/POSSimulatorConstants.ts</li>
+        <li>automation/frameworks/applied-ai-aura/src/features/POSSimulator.feature</li>
+        <li>automation/frameworks/applied-ai-aura/src/steps/POSSimulator.steps.ts</li>
+        <li>automation/frameworks/applied-ai-aura/src/tests/POSSimulatorTest.ts</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Testing</h2>
+      <p>Run functional tests:</p>
+      <pre><code>cd automation/frameworks/applied-ai-aura
+npx ts-node src/tests/POSSimulatorTest.ts --tag @smoke</code></pre>
+      <p>CI runs: <code>npx cucumber-js --tags "@preview or @smoke"</code></p>
+    </section>
+
+    <section class="card">
+      <h2>Acceptance Criteria</h2>
+      <table>
+        <tr><td>AC-1: Tab accessible without errors</td><td>✅</td></tr>
+        <tr><td>AC-2: Calculate payment equivalents</td><td>✅</td></tr>
+        <tr><td>AC-3: Form validation</td><td>✅</td></tr>
+        <tr><td>AC-4: POS compatibility rules</td><td>✅</td></tr>
+        <tr><td>AC-5: Error handling</td><td>✅</td></tr>
+        <tr><td>AC-6: Multilingual support</td><td>✅</td></tr>
+      </table>
+    </section>
+  </div>
+</body>
+</html>
