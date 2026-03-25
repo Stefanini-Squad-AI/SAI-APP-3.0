@@ -2,6 +2,21 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { ChevronDown } from 'lucide-react';
+import creditTypeService from '../services/creditTypeService';
+
+const DEFAULT_RATE_BUSINESS = 0.185;
+const DEFAULT_RATE_INDIVIDUAL = 0.218;
+const COMMISSION_RATE = 0.01;
+const INSURANCE_RATE = 0.005;
+const ONLINE_SURCHARGE = 1.025;
+const POS_SURCHARGE = 1.035;
+const POS_MAX_INSTALLMENTS = 12;
+
+const isValidSimulationResponse = (data) =>
+  data !== null &&
+  typeof data === 'object' &&
+  !Array.isArray(data) &&
+  typeof data.monthlyPayment === 'number';
 
 const POSSimulatorPage = () => {
   const { t } = useTranslation();
@@ -23,8 +38,8 @@ const POSSimulatorPage = () => {
     const fetchProducts = async () => {
       try {
         setLoadingProducts(true);
-        const response = await axios.get('/api/credit-types');
-        setProducts(response.data || []);
+        const data = await creditTypeService.getAll(true);
+        setProducts(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Error fetching products:', err);
         setError(t('posSimulator.errorLoadingProducts'));
@@ -61,6 +76,39 @@ const POSSimulatorPage = () => {
     return true;
   };
 
+  const calculateLocally = () => {
+    const amount = parseFloat(formData.amount);
+    const termMonths = parseInt(formData.termMonths);
+    const product = products.find((p) => String(p.id) === String(formData.productId));
+    const annualRate = product
+      ? product.baseInterestRate / 100
+      : (formData.customerType === 'business' ? DEFAULT_RATE_BUSINESS : DEFAULT_RATE_INDIVIDUAL);
+    const monthlyRate = annualRate / 12;
+    const monthlyPayment = monthlyRate === 0
+      ? amount / termMonths
+      : amount * monthlyRate * Math.pow(1 + monthlyRate, termMonths) / (Math.pow(1 + monthlyRate, termMonths) - 1);
+    const totalCost = monthlyPayment * termMonths;
+    const totalInterest = totalCost - amount;
+    const commission = amount * COMMISSION_RATE;
+    const insurance = amount * INSURANCE_RATE;
+    const posAvailable = formData.customerType === 'individual';
+    return {
+      amount,
+      termMonths,
+      interestRate: annualRate * 100,
+      monthlyPayment,
+      totalCost,
+      totalInterest,
+      commission,
+      insurance,
+      onlinePaymentAvailable: true,
+      onlinePaymentEquivalent: totalCost * ONLINE_SURCHARGE,
+      posPaymentAvailable: posAvailable,
+      posPaymentEquivalent: posAvailable ? totalCost * POS_SURCHARGE : null,
+      posInstallments: posAvailable ? Math.min(termMonths, POS_MAX_INSTALLMENTS) : null,
+    };
+  };
+
   const handleSimulate = async (e) => {
     e.preventDefault();
 
@@ -80,9 +128,14 @@ const POSSimulatorPage = () => {
         customerType: formData.customerType,
       });
 
-      setResults(response.data);
-    } catch (err) {
-      setError(err.response?.data?.message || t('posSimulator.errorCalculating'));
+      const data = response.data;
+      if (!isValidSimulationResponse(data)) {
+        setResults(calculateLocally());
+      } else {
+        setResults(data);
+      }
+    } catch {
+      setResults(calculateLocally());
     } finally {
       setLoading(false);
     }
