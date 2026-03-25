@@ -30,6 +30,9 @@ const Header = () => {
             <Link to="/calculator" className="text-gray-700 hover:text-primary-600 transition font-medium">
               {t('header.calculator')}
             </Link>
+            <Link to="/pos-simulator" className="text-gray-700 hover:text-primary-600 transition font-medium">
+              {t('header.posSimulator')}
+            </Link>
             <Link to="/about" className="text-gray-700 hover:text-primary-600 transition font-medium">
               {t('header.about')}
             </Link>
@@ -87,6 +90,9 @@ const Header = () => {
                 {t('header.calculator')}
               </Link>
               <Link to="/about" className="text-gray-700 hover:text-primary-600 transition font-medium" onClick={() => setMobileMenuOpen(false)}>
+               <Link to="/pos-simulator" className="text-gray-700 hover:text-primary-600 transition font-medium" onClick={() => setMobileMenuOpen(false)}>
+                 {t('header.posSimulator')}
+               </Link>
                 {t('header.about')}
               </Link>
               <Link to="/faq" className="text-gray-700 hover:text-primary-600 transition font-medium" onClick={() => setMobileMenuOpen(false)}>
