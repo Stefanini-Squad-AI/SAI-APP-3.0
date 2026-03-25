@@ -69,6 +69,13 @@ Then('the URL should contain {string}', async function (this: AuraWorld, path: s
   await this.webActions.expectUrlContains(path);
 });
 
+Then(
+  'the URL should contain {string} and not contain {string}',
+  async function (this: AuraWorld, mustInclude: string, mustNotInclude: string) {
+    await this.webActions.expectUrlContainsAndNotContains(mustInclude, mustNotInclude);
+  },
+);
+
 Then('the page title should contain {string}', async function (this: AuraWorld, text: string) {
   await this.webActions.expectTitleContains(text);
 });

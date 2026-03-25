@@ -1408,6 +1408,20 @@ jobs:
         run: npx cucumber-js --tags "@preview or @smoke"
         continue-on-error: true
 
+      # cucumber-js alone only writes aura-scenarios.jsonl per scenario; aura-report.html
+      # is produced by TailwindReportEngine (normally invoked after Cucumber in auraRunner).
+      - name: Generate consolidated AURA HTML report
+        if: always()
+        working-directory: automation/frameworks/applied-ai-aura
+        run: |
+          JSONL=$(find reports -name 'aura-scenarios.jsonl' -type f 2>/dev/null | sort | tail -n 1 || true)
+          if [ -z "$JSONL" ] || [ ! -f "reports/cucumber-report.json" ]; then
+            echo "Skipping Tailwind report: need reports/cucumber-report.json and a aura-scenarios.jsonl under reports/"
+            exit 0
+          fi
+          export AURA_REPORT_OUTPUT="$(dirname "$JSONL")"
+          npx ts-node src/core/reporting/TailwindReportEngine.ts
+
       - name: Locate latest report and video
         if: always()
         id: locate-report
