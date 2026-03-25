@@ -411,63 +411,131 @@ ${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content ?? '';
     console.log(`  AI response received (${data.usage?.total_tokens ?? '?'} tokens).`);
+    const escNewlineForLog = String.raw`\n`;
+    console.log(`  AI response first 200 chars: ${content.slice(0, 200).replaceAll('\n', escNewlineForLog)}`);
 
     const parsed = parseSummaryJson(content);
     if (parsed) return sanitizeExecutiveSummaryByLang(parsed);
-    return sanitizeExecutiveSummaryByLang({ en: content.trim(), es: content.trim(), pt: content.trim() });
+    console.warn('  parseSummaryJson returned null — falling back to raw content as single-lang summary.');
+    // Fallback: unescape literal \n sequences so mdToHtml can split lines properly
+    const unescaped = content.trim().replaceAll(String.raw`\n`, '\n').replaceAll(String.raw`\t`, '\t');
+    return sanitizeExecutiveSummaryByLang({ en: unescaped, es: unescaped, pt: unescaped });
   } catch (err) {
     console.warn(`  Perplexity API call failed: ${err?.message ?? String(err)}`);
     return { en: '', es: '', pt: '' };
   }
 }
 
-function parseSummaryJson(raw) {
-  if (raw == null || typeof raw !== 'string') return null;
+function tryParseSummaryJson(str) {
+  try {
+    const p = JSON.parse(str.trim());
+    const en = typeof p.en === 'string' ? p.en.trim() : '';
+    const es = typeof p.es === 'string' ? p.es.trim() : '';
+    const pt = typeof p.pt === 'string' ? p.pt.trim() : '';
+    if (!en && !es && !pt) return null;
+    return { en: en || es || pt, es: es || en || pt, pt: pt || en || es };
+  } catch {
+    return null;
+  }
+}
 
-  const tryParse = (str) => {
-    try {
-      const p = JSON.parse(str.trim());
-      const en = typeof p.en === 'string' ? p.en.trim() : '';
-      const es = typeof p.es === 'string' ? p.es.trim() : '';
-      const pt = typeof p.pt === 'string' ? p.pt.trim() : '';
-      if (!en && !es && !pt) return null;
-      return { en: en || es || pt, es: es || en || pt, pt: pt || en || es };
-    } catch {
-      return null;
+/** Fix literal newlines/tabs inside JSON string values so JSON.parse succeeds */
+function fixJsonLiteralNewlines(str) {
+  let out = '';
+  let inStr = false;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (ch === '"' && (i === 0 || str[i - 1] !== '\\')) {
+      inStr = !inStr;
+      out += ch;
+    } else if (inStr && ch === '\n') {
+      out += String.raw`\n`;
+    } else if (inStr && ch === '\r') {
+      out += String.raw`\r`;
+    } else if (inStr && ch === '\t') {
+      out += String.raw`\t`;
+    } else {
+      out += ch;
     }
-  };
+  }
+  return out;
+}
 
-  const s = raw.trim();
+function pushUniqueCandidate(candidates, x) {
+  const t = typeof x === 'string' ? x.trim() : '';
+  if (t && !candidates.includes(t)) candidates.push(t);
+}
+
+function collectSummaryJsonCandidates(s) {
   const candidates = [];
-  const push = (x) => {
-    const t = typeof x === 'string' ? x.trim() : '';
-    if (t && !candidates.includes(t)) candidates.push(t);
-  };
-
-  push(s);
+  pushUniqueCandidate(candidates, s);
 
   if (s.startsWith('"""')) {
     let inner = s.replace(/^"""\s*(?:json\s*)?/i, '').trim();
     if (inner.endsWith('"""')) inner = inner.slice(0, -3).trim();
-    push(inner);
+    pushUniqueCandidate(candidates, inner);
   }
 
-  const fenceOpen = /```(?:json)?\s*/i.exec(s);
-  if (fenceOpen) {
-    const start = fenceOpen.index + fenceOpen[0].length;
-    const close = s.lastIndexOf('```');
-    if (close > start) push(s.slice(start, close).trim());
+  const fenceMatch = /^(`{1,4})(?:json)?\s*/im.exec(s);
+  if (fenceMatch) {
+    const start = fenceMatch.index + fenceMatch[0].length;
+    const closePattern = fenceMatch[1];
+    const closeIdx = s.indexOf(closePattern, start);
+    if (closeIdx > start) pushUniqueCandidate(candidates, s.slice(start, closeIdx).trim());
+    const lastClose = s.lastIndexOf(closePattern);
+    if (lastClose > start && lastClose !== closeIdx) pushUniqueCandidate(candidates, s.slice(start, lastClose).trim());
+  }
+
+  if (/^json\s/i.test(s)) {
+    pushUniqueCandidate(candidates, s.replace(/^json\s*/i, '').trim());
   }
 
   const b0 = s.indexOf('{');
   const b1 = s.lastIndexOf('}');
-  if (b0 !== -1 && b1 > b0) push(s.slice(b0, b1 + 1));
+  if (b0 !== -1 && b1 > b0) pushUniqueCandidate(candidates, s.slice(b0, b1 + 1));
 
+  return candidates;
+}
+
+/** Match "key": "..." where value can contain escaped quotes (LLM-malformed JSON). */
+function extractSummaryLangValue(text, key) {
+  const pattern = new RegExp(String.raw`"` + key + String.raw`"\s*:\s*"((?:[^"\\]|\\.)*)"`);
+  const m = pattern.exec(text);
+  if (!m) return '';
+  try {
+    return JSON.parse(`"${m[1]}"`);
+  } catch {
+    return m[1];
+  }
+}
+
+function parseSummaryJsonFromRegexCandidates(candidates) {
   for (const c of candidates) {
-    const parsed = tryParse(c);
-    if (parsed) return parsed;
+    const en = extractSummaryLangValue(c, 'en');
+    const es = extractSummaryLangValue(c, 'es');
+    const pt = extractSummaryLangValue(c, 'pt');
+    if (en || es || pt) {
+      return { en: en || es || pt, es: es || en || pt, pt: pt || en || es };
+    }
   }
   return null;
+}
+
+function parseSummaryJson(raw) {
+  if (raw == null || typeof raw !== 'string') return null;
+
+  const candidates = collectSummaryJsonCandidates(raw.trim());
+
+  for (const c of candidates) {
+    const parsed = tryParseSummaryJson(c);
+    if (parsed) return parsed;
+  }
+  for (const c of candidates) {
+    const parsed = tryParseSummaryJson(fixJsonLiteralNewlines(c));
+    if (parsed) return parsed;
+  }
+
+  return parseSummaryJsonFromRegexCandidates(candidates);
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

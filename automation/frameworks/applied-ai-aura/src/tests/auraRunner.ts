@@ -1,6 +1,6 @@
 /**
  * AURA — Runner unificado: una sola invocación a Cucumber → un único cucumber-report.json
- * → un solo informe bajo reports/<fecha>/<suite>/vN/automation-functional-report.html
+ * → un solo informe bajo reports/<fecha>/<suite>/vN/aura-report.html
  */
 import { copyFileSync, existsSync } from 'node:fs';
 import * as path from 'node:path';
@@ -22,7 +22,7 @@ export interface AuraTestRunOptions {
    * Si se omite: un .feature → nombre del archivo; varios → Regresion.
    */
   readonly suiteFolder?: string;
-  /** Nombre del HTML dentro de la carpeta vN (por defecto automation-functional-report.html). */
+  /** Nombre del HTML dentro de la carpeta vN (por defecto aura-report.html). */
   readonly reportFilename?: string;
   readonly skipConfluence?: boolean;
 }
@@ -92,7 +92,7 @@ export async function runAuraCucumberAndReport(opts: AuraTestRunOptions): Promis
   if (opts.tags) console.log(`   Tags:     ${opts.tags}`);
   console.log('');
 
-  const twName = opts.reportFilename ?? 'automation-functional-report.html';
+  const twName = opts.reportFilename ?? 'aura-report.html';
   const prevFilename = process.env['AURA_REPORT_FILENAME'];
   process.env['AURA_REPORT_FILENAME'] = twName;
 
