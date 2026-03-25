@@ -87,6 +87,12 @@ const HomePage = () => {
                 >
                   {t('home.hero.viewServices')}
                 </Link>
+                <Link
+                  to="/pos-simulator"
+                  className="px-8 py-4 bg-transparent text-white border-2 border-primary-300 rounded-lg hover:bg-white/10 transition font-semibold text-lg text-center"
+                >
+                  Simulador POS
+                </Link>
               </div>
             </div>
             <div className="hidden lg:block">
@@ -182,6 +188,41 @@ const HomePage = () => {
           </div>
 
           {servicesSectionContent}
+        </div>
+      </section>
+
+      {/* POS Simulator CTA Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-12 flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="text-white max-w-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                <span className="text-primary-200 font-semibold text-sm uppercase tracking-wider">Nuevo</span>
+              </div>
+              <h2 className="text-3xl font-bold mb-4">Simulador de Pago POS</h2>
+              <p className="text-primary-100 text-lg">
+                Simula productos bancarios especiales, calcula equivalentes de pago en línea y explora opciones por terminal POS. Todo en segundos.
+              </p>
+              <ul className="mt-6 space-y-2 text-primary-100">
+                <li className="flex items-center gap-2"><span className="text-white font-bold">✓</span> Cálculo en tiempo real</li>
+                <li className="flex items-center gap-2"><span className="text-white font-bold">✓</span> Pago en línea y por terminal POS</li>
+                <li className="flex items-center gap-2"><span className="text-white font-bold">✓</span> Sin compromiso, 100% simulado</li>
+              </ul>
+            </div>
+            <div className="flex-shrink-0">
+              <Link
+                to="/pos-simulator"
+                className="inline-block px-10 py-4 bg-white text-primary-600 rounded-xl hover:bg-primary-50 transition font-bold text-lg shadow-lg"
+              >
+                Probar Simulador POS →
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
