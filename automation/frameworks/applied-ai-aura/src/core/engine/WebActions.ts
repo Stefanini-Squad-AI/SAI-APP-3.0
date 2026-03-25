@@ -321,6 +321,32 @@ export class WebActions {
     );
   }
 
+  async expectUrlContainsAndNotContains(
+    mustInclude: string,
+    mustNotInclude: string,
+    timeoutMs = 15000,
+  ): Promise<void> {
+    const url = this.page.url();
+    console.info(
+      `[AURA/WebActions] ◆ expectUrlContainsAndNotContains("${mustInclude}", not: "${mustNotInclude}") — current: "${url}"`,
+    );
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const current = this.page.url();
+      if (current.includes(mustInclude) && !current.includes(mustNotInclude)) {
+        console.info(
+          `[AURA/WebActions] ✓ URL contains "${mustInclude}" and does not contain "${mustNotInclude}"`,
+        );
+        return;
+      }
+      await this.page.waitForTimeout(250);
+    }
+    const finalUrl = this.page.url();
+    throw new Error(
+      `[AURA/WebActions] Expected URL to contain "${mustInclude}" and not contain "${mustNotInclude}" but got "${finalUrl}"`,
+    );
+  }
+
   async expectTitleContains(text: string): Promise<void> {
     const title = await this.page.title();
     console.info(`[AURA/WebActions] ◆ expectTitleContains("${text}") — current: "${title}"`);
