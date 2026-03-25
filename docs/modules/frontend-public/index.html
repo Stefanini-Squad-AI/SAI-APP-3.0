@@ -71,6 +71,7 @@
           <tr><td><code>/services</code></td><td data-i18n="vServices">Services</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/ServicesPage.jsx</code></td></tr>
           <tr><td><code>/about</code></td><td data-i18n="vAbout">About</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/AboutPage.jsx</code></td></tr>
           <tr><td><code>/faq</code></td><td data-i18n="vFaq">FAQ</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/FAQPage.jsx</code></td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="vLegal">Legal Notice</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalPage.jsx</code></td></tr>
           <tr><td><code>/contact</code></td><td data-i18n="vContact">Contact</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/ContactPage.jsx</code></td></tr>
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
@@ -150,6 +151,13 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/legal</code></td>
+            <td data-i18n="rLegalPurpose">Disclose company legal basis, authorizations, and liability limitations.</td>
+            <td data-i18n="rLegalContains">Five legal sections covering jurisdiction, authorization, consumer rights, intellectual property, and liability; with update date, plus contact and back-home links.</td>
+            <td data-i18n="rLegalActions">Review legal information and liability terms, then navigate to contact/home pages.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
@@ -186,6 +194,7 @@
         vServices: "Services",
         vAbout: "About",
         vFaq: "FAQ",
+        vLegal: "Legal Notice",
         vContact: "Contact",
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
@@ -215,6 +224,9 @@
         rTermsPurpose: "Describe contract and usage conditions for platform services.",
         rTermsContains: "Five terms sections with update date, plus contact and back-home links.",
         rTermsActions: "Review legal obligations, then navigate to contact/home pages.",
+        rLegalPurpose: "Disclose company legal basis, authorizations, and liability limitations.",
+        rLegalContains: "Five legal sections covering jurisdiction, authorization, consumer rights, intellectual property, and liability; with update date, plus contact and back-home links.",
+        rLegalActions: "Review legal information and liability terms, then navigate to contact/home pages.",
         r404Purpose: "Handle unknown URLs and recover navigation.",
         r404Contains: "404 code, explanatory text, and CTA back to home.",
         r404Actions: "Return safely to root route.",
@@ -246,11 +258,15 @@
         vServices: "Servicios",
         vAbout: "Nosotros",
         vFaq: "FAQ",
+        vLegal: "Aviso Legal",
         vContact: "Contacto",
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
         vNotFound: "No encontrado",
+        rLegalPurpose: "Divulgar base legal de la empresa, autorizaciones y limitaciones de responsabilidad.",
+        rLegalContains: "Cinco secciones legales sobre jurisdicción, autorización, derechos del consumidor, propiedad intelectual y responsabilidad; con fecha de actualización, más enlaces de contacto y volver a inicio.",
+        rLegalActions: "Revisar información legal y términos de responsabilidad, luego navegar a contacto/inicio.",
         noApi: "Sin llamadas al backend.",
         authYes: "Sí",
         authNo: "No"
@@ -279,11 +295,15 @@
         vServices: "Serviços",
         vAbout: "Sobre",
         vFaq: "FAQ",
+        vLegal: "Aviso Legal",
         vContact: "Contato",
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
         vNotFound: "Não encontrado",
+        rLegalPurpose: "Divulgar base legal, autorizações e limitações de responsabilidade da empresa.",
+        rLegalContains: "Cinco seções legais cobrindo jurisdição, autorização, direitos do consumidor, propriedade intelectual e responsabilidade; com data de atualização, mais links de contato e voltar ao início.",
+        rLegalActions: "Revisar informações legais e termos de responsabilidade, depois navegar para contato/início.",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
         authNo: "Não"
