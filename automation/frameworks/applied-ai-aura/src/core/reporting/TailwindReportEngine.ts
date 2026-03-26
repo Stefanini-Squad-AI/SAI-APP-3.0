@@ -344,12 +344,10 @@ ${summary.failed > 0 ? 'There were failures: prioritize risk, root-cause themes,
       console.info(`[AURA/Report] ✓ AI summaries generated (${response.tokensUsed} tokens, ${response.latencyMs}ms)`);
       return this.sanitizeExecutiveSummaryByLang(parsed);
     }
-    console.warn('[AURA/Report] AI summary JSON invalid, using raw content.');
-    return this.sanitizeExecutiveSummaryByLang({
-      en: response.content.trim(),
-      es: response.content.trim(),
-      pt: response.content.trim(),
-    });
+    console.warn(
+      '[AURA/Report] AI summary JSON could not be parsed (e.g. triple-quote or extra wrapping); executive summary omitted.',
+    );
+    return { en: '', es: '', pt: '' };
   }
 
   private sanitizeExecutiveMarkdown(md: string): string {
@@ -373,16 +371,35 @@ ${summary.failed > 0 ? 'There were failures: prioritize risk, root-cause themes,
     };
   }
 
+  /** Normaliza respuestas del modelo: """json ... """, fences, texto antes de la primera {. */
+  private extractSummaryJsonPayload(raw: string): string {
+    let t = String(raw ?? '').trim();
+    const fullFence = /^```(?:json)?\s*([\s\S]*?)```$/im.exec(t);
+    if (fullFence?.[1]) t = fullFence[1].trim();
+    t = t.replace(/^[`"'´]{3}\s*json\s*/i, '');
+    t = t.replace(/^[`"'´]{3}\s*/i, '');
+    t = t.replace(/\s*[`"'´]{3}\s*$/i, '');
+    t = t.trim();
+    const i = t.indexOf('{');
+    if (i > 0) t = t.slice(i);
+    const j = t.lastIndexOf('}');
+    if (j !== -1) t = t.slice(0, j + 1);
+    return t.trim();
+  }
+
   private parseSummaryJson(raw: string): { en: string; es: string; pt: string } | null {
     const tryParse = (s: string): { en: string; es: string; pt: string } | null => {
       try {
-        const p = JSON.parse(s.trim()) as Record<string, unknown>;
+        const payload = this.extractSummaryJsonPayload(s);
+        const p = JSON.parse(payload) as Record<string, unknown>;
         const en = typeof p.en === 'string' ? p.en.trim() : '';
         const es = typeof p.es === 'string' ? p.es.trim() : '';
         const pt = typeof p.pt === 'string' ? p.pt.trim() : '';
         if (!en && !es && !pt) return null;
         return { en: en || es || pt, es: es || en || pt, pt: pt || en || es };
-      } catch { return null; }
+      } catch {
+        return null;
+      }
     };
     const direct = tryParse(raw);
     if (direct) return direct;
@@ -441,27 +458,51 @@ ${summary.failed > 0 ? 'There were failures: prioritize risk, root-cause themes,
 .acc-chevron{transition:transform .2s}.acc-chevron.open{transform:rotate(90deg)}
 .search-input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:.5rem;padding:.5rem .75rem;color:#e5e7eb;font-size:.75rem;width:100%}
 .search-input:focus{outline:none;border-color:#6366f1}
-/* Grey mode: mid-slate (más contraste que slate-100, sin llegar a dark) */
-html[data-theme="grey"] body{background:#cbd5e1!important;color:#0f172a!important}
-html[data-theme="grey"] header.bg-gray-900{background:linear-gradient(to right,#4338ca,#312e81)!important;border-color:#312e81!important}
-html[data-theme="grey"] nav.bg-gray-900\\/50{background:#94a3b8!important;border-color:#64748b!important}
-html[data-theme="grey"] .bg-gray-950{background:#cbd5e1!important}
-html[data-theme="grey"] main .bg-gray-900,html[data-theme="grey"] footer.border-gray-800{border-color:#64748b!important}
-html[data-theme="grey"] main .bg-gray-900,html[data-theme="grey"] main .bg-gray-800\\/30{background:#e2e8f0!important;box-shadow:0 2px 8px rgba(15,23,42,.08)!important}
-html[data-theme="grey"] main .border-gray-800,html[data-theme="grey"] main .border-gray-700\\/50,html[data-theme="grey"] main .divide-gray-800\\/50>*{border-color:#94a3b8!important}
-html[data-theme="grey"] main .text-white,html[data-theme="grey"] footer .text-gray-400{color:#0f172a!important}
-html[data-theme="grey"] main .text-gray-200,html[data-theme="grey"] main .text-gray-300,html[data-theme="grey"] main .text-gray-400,html[data-theme="grey"] main .text-gray-500{color:#334155!important}
-html[data-theme="grey"] main .text-aura-300,html[data-theme="grey"] main .text-aura-400{color:#3730a3!important}
-html[data-theme="grey"] .log-row:nth-child(even){background:#d8dee9!important}
-html[data-theme="grey"] .search-input{background:#e2e8f0!important;border:1px solid #64748b!important;color:#0f172a!important}
-html[data-theme="grey"] .tab-btn.active{border-color:#4f46e5!important;color:#312e81!important;background:rgba(79,70,229,.18)!important}
-html[data-theme="grey"] .tab-btn:not(.active){color:#475569!important}
+/* Light / grey toggle — mismo lenguaje visual que el panel OWASP ZAP v2 (fondo slate-100, tarjetas blancas, cabecera índigo) */
+html[data-theme="grey"] body{background:#f1f5f9!important;color:#0f172a!important}
+html[data-theme="grey"] header.bg-gray-900{
+  background:linear-gradient(to right,#4f46e5,#312e81)!important;
+  border-bottom:1px solid #1e1b4b!important;
+}
+html[data-theme="grey"] header .text-white,
+html[data-theme="grey"] header .text-white\\/70{color:#fff!important}
+html[data-theme="grey"] header button[class*="bg-gray-800"]{background:rgba(255,255,255,.15)!important;border:1px solid rgba(255,255,255,.25)!important;color:#fff!important}
+html[data-theme="grey"] header select[class*="bg-gray-800"]{background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.22)!important;color:#fff!important}
+html[data-theme="grey"] nav.bg-gray-900\\/50{background:rgba(226,232,240,.95)!important;border-color:#cbd5e1!important}
+html[data-theme="grey"] .tab-btn{border-color:transparent!important;color:#64748b!important}
+html[data-theme="grey"] .tab-btn.active{border-color:#6366f1!important;color:#4338ca!important;background:rgba(99,102,241,.1)!important}
 html[data-theme="grey"] .tab-btn:not(.active):hover{color:#0f172a!important}
-html[data-theme="grey"] main .prose,html[data-theme="grey"] main .prose p,html[data-theme="grey"] #executive-summary-content p,html[data-theme="grey"] #executive-summary-content li{color:#1e293b!important}
-html[data-theme="grey"] main .prose strong,html[data-theme="grey"] #executive-summary-content strong{color:#0f172a!important}
-html[data-theme="grey"] #executive-summary-content h2{border-color:#94a3b8!important}
-html[data-theme="grey"] thead.bg-gray-800\\/50,html[data-theme="grey"] thead.bg-gray-950\\/40{background:#94a3b8!important}
-html[data-theme="grey"] tbody tr{border-color:#94a3b8!important}
+html[data-theme="grey"] .bg-gray-950{background:#f1f5f9!important}
+html[data-theme="grey"] main .bg-gray-900,
+html[data-theme="grey"] main .bg-gray-800\\/30{background:#fff!important;border-color:#e2e8f0!important;box-shadow:0 1px 3px rgba(15,23,42,.06)!important}
+html[data-theme="grey"] main .border-gray-800,
+html[data-theme="grey"] main .border-gray-700\\/50,
+html[data-theme="grey"] footer.border-gray-800{border-color:#e2e8f0!important}
+html[data-theme="grey"] main .text-white{color:#0f172a!important}
+html[data-theme="grey"] main .text-gray-200,
+html[data-theme="grey"] main .text-gray-300,
+html[data-theme="grey"] main .text-gray-400,
+html[data-theme="grey"] main .text-gray-500{color:#475569!important}
+html[data-theme="grey"] footer .text-gray-400,
+html[data-theme="grey"] footer .text-gray-500{color:#64748b!important}
+html[data-theme="grey"] main .text-aura-300,
+html[data-theme="grey"] main .text-aura-400{color:#4338ca!important}
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-emerald"]{background:#ecfdf5!important;border-color:#a7f3d0!important}
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-red"]{background:#fef2f2!important;border-color:#fecaca!important}
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-aura"],
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-blue"]{background:#eef2ff!important;border-color:#c7d2fe!important}
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-gray"]{background:#f8fafc!important;border-color:#e2e8f0!important}
+html[data-theme="grey"] .log-row:nth-child(even){background:#f8fafc!important}
+html[data-theme="grey"] .search-input{background:#fff!important;border:1px solid #cbd5e1!important;color:#0f172a!important}
+html[data-theme="grey"] main .prose,html[data-theme="grey"] #executive-summary-content p,
+html[data-theme="grey"] #executive-summary-content li{color:#334155!important}
+html[data-theme="grey"] #executive-summary-content h2,
+html[data-theme="grey"] #executive-summary-content h4{color:#0f172a!important;border-color:#cbd5e1!important}
+html[data-theme="grey"] #executive-summary-content strong{color:#0f172a!important}
+html[data-theme="grey"] #executive-summary-content .text-gray-300{color:#475569!important}
+html[data-theme="grey"] thead.bg-gray-800\\/50,
+html[data-theme="grey"] thead.bg-gray-950\\/40{background:#e2e8f0!important}
+html[data-theme="grey"] tbody tr{border-color:#e2e8f0!important}
 </style>
 </head>
 <body class="bg-gray-950 text-gray-200 min-h-screen font-sans">
