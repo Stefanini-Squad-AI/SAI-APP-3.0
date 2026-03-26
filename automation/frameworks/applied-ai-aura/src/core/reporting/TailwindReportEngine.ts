@@ -122,7 +122,12 @@ export class TailwindReportEngine {
 
   private loadCucumberJSON(): CucumberFeature[] {
     if (!fs.existsSync(this.inputPath)) return [];
-    return JSON.parse(fs.readFileSync(this.inputPath, 'utf-8')) as CucumberFeature[];
+    try {
+      return JSON.parse(fs.readFileSync(this.inputPath, 'utf-8')) as CucumberFeature[];
+    } catch (err) {
+      console.warn('[AURA/Report] Failed to parse cucumber JSON, file may be corrupt:', (err as Error).message);
+      return [];
+    }
   }
 
   private loadScenarioJSONL(): AuraReportData[] {
@@ -387,6 +392,66 @@ ${summary.failed > 0 ? 'There were failures: prioritize risk, root-cause themes,
     return t.trim();
   }
 
+  /**
+   * Attempts to repair malformed JSON from LLM output by escaping
+   * unescaped control characters inside string values.
+   */
+  private repairJsonString(s: string): string {
+    return s.replace(
+      /("(?:[^"\\]|\\.)*")/g,
+      (match) => {
+        const inner = match.slice(1, -1);
+        const fixed = inner
+          .replace(/(?<!\\)\t/g, '\\t')
+          .replace(/(?<!\\)\r/g, '\\r')
+          .replace(/(?<!\\)\n/g, '\\n');
+        return `"${fixed}"`;
+      },
+    );
+  }
+
+  /**
+   * Last-resort: split the raw response by language keys and extract
+   * markdown content without relying on JSON.parse at all.
+   */
+  private extractByLanguageMarkers(raw: string): { en: string; es: string; pt: string } | null {
+    const keys = ['en', 'es', 'pt'] as const;
+    const result: Record<string, string> = { en: '', es: '', pt: '' };
+    for (let k = 0; k < keys.length; k++) {
+      const key = keys[k];
+      const pattern = new RegExp(`"${key}"\\s*:\\s*"`, 'i');
+      const start = raw.search(pattern);
+      if (start === -1) continue;
+      const valueStart = raw.indexOf('"', raw.indexOf(':', start) + 1) + 1;
+      if (valueStart <= 0) continue;
+      let depth = 0;
+      let end = -1;
+      for (let i = valueStart; i < raw.length; i++) {
+        if (raw[i] === '\\') { i++; continue; }
+        if (raw[i] === '"' && depth === 0) { end = i; break; }
+      }
+      if (end === -1) {
+        const nextKey = k + 1 < keys.length ? keys[k + 1] : null;
+        if (nextKey) {
+          const nextPattern = new RegExp(`"${nextKey}"\\s*:`, 'i');
+          const nextStart = raw.slice(valueStart).search(nextPattern);
+          if (nextStart !== -1) end = valueStart + nextStart;
+        }
+        if (end === -1) end = raw.length;
+        result[key] = raw.slice(valueStart, end).replace(/[",}\s]+$/, '').trim();
+      } else {
+        result[key] = raw.slice(valueStart, end);
+      }
+      try { result[key] = JSON.parse(`"${result[key]}"`); } catch { /* keep as-is */ }
+    }
+    if (!result.en && !result.es && !result.pt) return null;
+    return {
+      en: result.en || result.es || result.pt,
+      es: result.es || result.en || result.pt,
+      pt: result.pt || result.en || result.es,
+    };
+  }
+
   private parseSummaryJson(raw: string): { en: string; es: string; pt: string } | null {
     const tryParse = (s: string): { en: string; es: string; pt: string } | null => {
       try {
@@ -401,10 +466,25 @@ ${summary.failed > 0 ? 'There were failures: prioritize risk, root-cause themes,
         return null;
       }
     };
+
     const direct = tryParse(raw);
     if (direct) return direct;
+
     const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    return fenced?.[1] ? tryParse(fenced[1]) : null;
+    const fromFence = fenced?.[1] ? tryParse(fenced[1]) : null;
+    if (fromFence) return fromFence;
+
+    const repaired = tryParse(this.repairJsonString(raw));
+    if (repaired) return repaired;
+
+    const byMarkers = this.extractByLanguageMarkers(raw);
+    if (byMarkers) {
+      console.info('[AURA/Report] Recovered AI summary via language-marker fallback.');
+      return byMarkers;
+    }
+
+    console.warn('[AURA/Report] Raw AI response (first 500 chars):', raw.slice(0, 500));
+    return null;
   }
 
   // ─── Screenshot Embedding ──────────────────────────────────────────────────
@@ -468,6 +548,7 @@ html[data-theme="grey"] header .text-white,
 html[data-theme="grey"] header .text-white\\/70{color:#fff!important}
 html[data-theme="grey"] header button[class*="bg-gray-800"]{background:rgba(255,255,255,.15)!important;border:1px solid rgba(255,255,255,.25)!important;color:#fff!important}
 html[data-theme="grey"] header select[class*="bg-gray-800"]{background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.22)!important;color:#fff!important}
+html[data-theme="grey"] header select option{color:#0f172a;background:#fff}
 html[data-theme="grey"] nav.bg-gray-900\\/50{background:rgba(226,232,240,.95)!important;border-color:#cbd5e1!important}
 html[data-theme="grey"] .tab-btn{border-color:transparent!important;color:#64748b!important}
 html[data-theme="grey"] .tab-btn.active{border-color:#6366f1!important;color:#4338ca!important;background:rgba(99,102,241,.1)!important}
@@ -488,10 +569,33 @@ html[data-theme="grey"] footer .text-gray-500{color:#64748b!important}
 html[data-theme="grey"] main .text-aura-300,
 html[data-theme="grey"] main .text-aura-400{color:#4338ca!important}
 html[data-theme="grey"] main div.rounded-xl.border[class*="bg-emerald"]{background:#ecfdf5!important;border-color:#a7f3d0!important}
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-emerald"] .text-emerald-300{color:#047857!important}
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-emerald"] .text-white{color:#065f46!important}
 html[data-theme="grey"] main div.rounded-xl.border[class*="bg-red"]{background:#fef2f2!important;border-color:#fecaca!important}
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-red"] .text-red-300{color:#b91c1c!important}
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-red"] .text-white{color:#991b1b!important}
 html[data-theme="grey"] main div.rounded-xl.border[class*="bg-aura"],
 html[data-theme="grey"] main div.rounded-xl.border[class*="bg-blue"]{background:#eef2ff!important;border-color:#c7d2fe!important}
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-aura"] .text-white,
+html[data-theme="grey"] main div.rounded-xl.border[class*="bg-blue"] .text-white{color:#3730a3!important}
 html[data-theme="grey"] main div.rounded-xl.border[class*="bg-gray"]{background:#f8fafc!important;border-color:#e2e8f0!important}
+html[data-theme="grey"] main .text-emerald-300,
+html[data-theme="grey"] main .text-emerald-400{color:#059669!important}
+html[data-theme="grey"] main .text-red-300,
+html[data-theme="grey"] main .text-red-400{color:#dc2626!important}
+html[data-theme="grey"] main .text-amber-300,
+html[data-theme="grey"] main .text-amber-400{color:#d97706!important}
+html[data-theme="grey"] main span[class*="bg-emerald-900"]{background:#d1fae5!important;color:#065f46!important;border-color:#6ee7b7!important}
+html[data-theme="grey"] main span[class*="bg-red-900"]{background:#fee2e2!important;color:#991b1b!important;border-color:#fca5a5!important}
+html[data-theme="grey"] main span[class*="bg-amber-900"]{background:#fef3c7!important;color:#92400e!important;border-color:#fcd34d!important}
+html[data-theme="grey"] main span.bg-gray-800{background:#f1f5f9!important;color:#475569!important;border-color:#cbd5e1!important}
+html[data-theme="grey"] main div[class*="bg-emerald-900"]{background:#d1fae5!important}
+html[data-theme="grey"] main div[class*="bg-red-900"]{background:#fee2e2!important}
+html[data-theme="grey"] main .bg-emerald-500{background:#059669!important}
+html[data-theme="grey"] main .bg-red-500{background:#dc2626!important}
+html[data-theme="grey"] main .bg-gray-800.rounded-full{background:#e2e8f0!important}
+html[data-theme="grey"] main td.text-emerald-400{color:#059669!important}
+html[data-theme="grey"] main td.text-red-400{color:#dc2626!important}
 html[data-theme="grey"] .log-row:nth-child(even){background:#f8fafc!important}
 html[data-theme="grey"] .search-input{background:#fff!important;border:1px solid #cbd5e1!important;color:#0f172a!important}
 html[data-theme="grey"] main .prose,html[data-theme="grey"] #executive-summary-content p,
@@ -772,15 +876,32 @@ ${d.scenarioBlocks.map((sc) => `    <div class="bg-gray-900 rounded-xl border bo
 
 <!-- TAB: VIDEO -->
 <section id="tab-video" class="tab-panel">
-<div class="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-8">
+  <div class="space-y-3">
   ${d.videos.length > 0
-    ? d.videos.map((v) => `
-  <div>
-    <p class="text-sm font-medium text-gray-300 mb-2"><i class="bi bi-film me-2 text-aura-400"></i>${esc(v.label)}</p>
-    <video controls class="w-full max-w-4xl mx-auto rounded-lg border border-gray-700 bg-black" preload="metadata" style="width:100%;height:auto;max-height:70vh;object-fit:contain;display:block"><source src="${esc(v.path)}" type="video/webm"></video>
-  </div>`).join('')
-    : `<div class="text-center py-16"><i class="bi bi-camera-video-off text-5xl text-gray-700 mb-4 block"></i><p class="text-gray-500" data-i18n="noVideo">No se grabó video para esta ejecución.</p><p class="text-xs text-gray-600 mt-2" data-i18n="noVideoHint">Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.</p></div>`}
-</div>
+    ? d.videos.map((v) => `    <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+      <button onclick="toggleAcc(this)" class="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-800/30 transition-colors border-b border-gray-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg ${v.status === 'passed' ? 'bg-emerald-900/30' : 'bg-red-900/30'} flex items-center justify-center">
+            <i class="bi bi-camera-video ${v.status === 'passed' ? 'text-emerald-400' : 'text-red-400'} text-lg"></i>
+          </div>
+          <div class="text-left">
+            <p class="text-sm text-white font-semibold">${esc(v.label)}</p>
+            <p class="text-xs text-gray-500">${esc(v.featureName)}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          ${badge(v.status)}
+          <i class="bi bi-chevron-right acc-chevron text-gray-500"></i>
+        </div>
+      </button>
+      <div class="acc-body">
+        <div class="p-4">
+          <video controls class="w-full max-w-4xl mx-auto rounded-lg border border-gray-700 bg-black" preload="metadata" style="width:100%;height:auto;max-height:70vh;object-fit:contain;display:block"><source src="${esc(v.path)}" type="video/webm"></video>
+        </div>
+      </div>
+    </div>`).join('\n')
+    : `<div class="bg-gray-900 rounded-xl border border-gray-800 p-6"><div class="text-center py-16"><i class="bi bi-camera-video-off text-5xl text-gray-700 mb-4 block"></i><p class="text-gray-500" data-i18n="noVideo">No se grabó video para esta ejecución.</p><p class="text-xs text-gray-600 mt-2" data-i18n="noVideoHint">Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.</p></div></div>`}
+  </div>
 </section>
 
 </main>
@@ -940,10 +1061,10 @@ switchLang(document.getElementById('lang-select')?.value||'es');
     const allSuccessLogs: AuraLogEntry[] = [];
     const allErrorLogs: AuraLogEntry[] = [];
     const failedStepDetails: Array<{ keyword: string; text: string; error?: string }> = [];
-    const videos: Array<{ path: string; label: string }> = [];
+    const videos: Array<{ path: string; label: string; status: string; featureName: string }> = [];
     for (const sd of scenarioDataList) {
       if (sd.videoRelPath) {
-        videos.push({ path: sd.videoRelPath, label: sd.scenarioName });
+        videos.push({ path: sd.videoRelPath, label: sd.scenarioName, status: sd.status, featureName: sd.featureName });
       }
     }
     let totalSteps = 0;
@@ -1195,7 +1316,7 @@ interface TemplateData {
   failedStepDetails: Array<{ keyword: string; text: string; error?: string }>;
   unstableFeatures: Array<{ name: string; failedScenarios: number }>;
   allTags: string[];
-  videos: Array<{ path: string; label: string }>;
+  videos: Array<{ path: string; label: string; status: string; featureName: string }>;
   browserName: string;
   headless: boolean;
   viewport: string;

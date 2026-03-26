@@ -182,15 +182,133 @@ function sanitizeExecutiveSummaryByLang(obj) {
   };
 }
 
+const SEMAPHORE_MAP = { GREEN: { es: 'VERDE', pt: 'VERDE' }, YELLOW: { es: 'AMARILLO', pt: 'AMARELO' }, RED: { es: 'ROJO', pt: 'VERMELHO' } };
+const TYPE_LABELS = { integration: { en: 'Integration', es: 'de integración', pt: 'de integração' }, unit: { en: 'Unit', es: 'unitarias', pt: 'unitários' } };
+
+function resolveSemaphore(passRateNum) {
+  if (passRateNum === 100) return 'GREEN';
+  if (passRateNum >= 80) return 'YELLOW';
+  return 'RED';
+}
+
+function resolveRisk(passRateNum) {
+  if (passRateNum === 100) {
+    return { en: 'Low risk — all tests passing.', es: 'Riesgo bajo — todas las pruebas pasaron.', pt: 'Risco baixo — todos os testes passaram.' };
+  }
+  if (passRateNum >= 80) {
+    return { en: 'Medium risk — some tests failing.', es: 'Riesgo medio — algunas pruebas fallaron.', pt: 'Risco médio — alguns testes falharam.' };
+  }
+  return { en: 'High risk — significant test failures detected.', es: 'Riesgo alto — se detectaron fallos significativos.', pt: 'Risco alto — falhas significativas detectadas.' };
+}
+
+function resolveWarning(failedCount) {
+  if (failedCount === 0) return { en: 'No warnings.', es: 'Sin advertencias.', pt: 'Sem avisos.' };
+  return { en: `${failedCount} test(s) require attention.`, es: `${failedCount} prueba(s) requieren atención.`, pt: `${failedCount} teste(s) requerem atenção.` };
+}
+
+function resolveRecommendation(failedCount) {
+  if (failedCount > 0) {
+    return { en: 'Fix failing tests before merging.', es: 'Corregir las pruebas fallidas antes de hacer merge.', pt: 'Corrigir os testes com falha antes do merge.' };
+  }
+  return { en: 'All tests pass — continue monitoring coverage.', es: 'Todas las pruebas pasan — continuar monitoreando la cobertura.', pt: 'Todos os testes passam — continuar monitorando a cobertura.' };
+}
+
+function groupTestsByClass(tests) {
+  const byClass = {};
+  for (const t of tests) {
+    const cls = t.className || 'Unknown';
+    if (!byClass[cls]) byClass[cls] = [];
+    byClass[cls].push(t);
+  }
+  return byClass;
+}
+
+function generateLocalFallbackSummary(testInfo, coverageInfo, reportKind = 'unit') {
+  const passRate = testInfo.total > 0 ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) : '0';
+  const passRateNum = Number.parseFloat(passRate);
+  const date = new Date().toISOString().split('T')[0];
+
+  const semaphore = resolveSemaphore(passRateNum);
+  const semaphoreEs = SEMAPHORE_MAP[semaphore].es;
+  const semaphorePt = SEMAPHORE_MAP[semaphore].pt;
+
+  const kindKey = reportKind === 'integration' ? 'integration' : 'unit';
+  const typeLabel = TYPE_LABELS[kindKey];
+
+  const risk = resolveRisk(passRateNum);
+  const warning = resolveWarning(testInfo.failed);
+  const rec = resolveRecommendation(testInfo.failed);
+
+  const testsByClass = groupTestsByClass(testInfo.tests);
+
+  const failedTests = testInfo.tests.filter(t => t.outcome === 'Failed');
+  const failedList = failedTests.length > 0
+    ? failedTests.map(t => `- [${t.className}] ${t.name}`).join('\n')
+    : '- No failures detected.';
+
+  const classLines = Object.entries(testsByClass).map(([cls, tests]) => {
+    const p = tests.filter(t => t.outcome === 'Passed').length;
+    const f = tests.filter(t => t.outcome === 'Failed').length;
+    return `- ${cls}: ${tests.length} tests, ${p} passed, ${f} failed`;
+  }).join('\n');
+
+  const covBlock = coverageInfo
+    ? `- Line coverage: ${coverageInfo.lineRate.toFixed(2)}%\n- Branch coverage: ${coverageInfo.branchRate.toFixed(2)}%`
+    : '- Coverage data not available.';
+
+  const buildContent = (sections) => sections.join('\n\n');
+
+  const en = buildContent([
+    `## Context Header\n\nProject: TuCreditoOnline — Backend (.NET 8, xUnit). ${typeLabel.en} tests. Report generated on ${date}. Total: ${testInfo.total} tests (${testInfo.passed} passed, ${testInfo.failed} failed, ${testInfo.skipped} skipped).`,
+    `## Overall Result (Traffic Light)\n\n**${semaphore}** — Pass rate: ${passRate}%.`,
+    `## Scope — What Was Tested?\n\n${classLines}`,
+    `## Detailed Findings\n\n### What Worked\n\n- ${testInfo.passed} of ${testInfo.total} tests passed successfully.\n\n### Failures Found\n\n${failedList}\n\n### Warnings\n\n- ${warning.en}`,
+    `## Performance Metrics\n\n- Total tests: ${testInfo.total}\n- Pass rate: ${passRate}%`,
+    `## Risk Assessment\n\n- ${risk.en}`,
+    `## Test Coverage\n\n${covBlock}`,
+    `## Actionable Recommendations\n\n- ${rec.en}`,
+    `## Historical Trend\n\n- Single run — no historical data available for comparison.`,
+    `## Glossary of Terms\n\n- **Unit test**: a test that validates a single component or function in isolation.\n- **xUnit**: the testing framework used for .NET projects.\n- **Line coverage**: percentage of source code lines executed during tests.\n- **Branch coverage**: percentage of code branches (if/else) exercised during tests.`,
+  ]);
+
+  const es = buildContent([
+    `## Encabezado de Contexto\n\nProyecto: TuCreditoOnline — Backend (.NET 8, xUnit). Pruebas ${typeLabel.es}. Reporte generado el ${date}. Total: ${testInfo.total} tests (${testInfo.passed} exitosos, ${testInfo.failed} fallidos, ${testInfo.skipped} omitidos).`,
+    `## Resultado General (Semáforo)\n\n**${semaphoreEs}** — Tasa de éxito: ${passRate}%.`,
+    `## Alcance — ¿Qué se probó?\n\n${classLines}`,
+    `## Hallazgos Detallados\n\n### Lo que funcionó\n\n- ${testInfo.passed} de ${testInfo.total} pruebas pasaron exitosamente.\n\n### Fallos encontrados\n\n${failedList}\n\n### Advertencias\n\n- ${warning.es}`,
+    `## Métricas de Rendimiento\n\n- Total de pruebas: ${testInfo.total}\n- Tasa de éxito: ${passRate}%`,
+    `## Evaluación de Riesgos\n\n- ${risk.es}`,
+    `## Cobertura de Pruebas\n\n${covBlock}`,
+    `## Recomendaciones Accionables\n\n- ${rec.es}`,
+    `## Tendencia Histórica\n\n- Ejecución única — no hay datos históricos disponibles para comparación.`,
+    `## Glosario de Términos\n\n- **Prueba unitaria**: prueba que valida un componente o función de forma aislada.\n- **xUnit**: framework de pruebas utilizado en proyectos .NET.\n- **Cobertura de líneas**: porcentaje de líneas de código fuente ejecutadas durante las pruebas.\n- **Cobertura de ramas**: porcentaje de ramas de código (if/else) ejercitadas durante las pruebas.`,
+  ]);
+
+  const pt = buildContent([
+    `## Cabeçalho de Contexto\n\nProjeto: TuCreditoOnline — Backend (.NET 8, xUnit). Testes ${typeLabel.pt}. Relatório gerado em ${date}. Total: ${testInfo.total} testes (${testInfo.passed} aprovados, ${testInfo.failed} falhos, ${testInfo.skipped} ignorados).`,
+    `## Resultado Geral (Semáforo)\n\n**${semaphorePt}** — Taxa de sucesso: ${passRate}%.`,
+    `## Escopo — O que foi testado?\n\n${classLines}`,
+    `## Achados Detalhados\n\n### O que funcionou\n\n- ${testInfo.passed} de ${testInfo.total} testes passaram com sucesso.\n\n### Falhas encontradas\n\n${failedList}\n\n### Avisos\n\n- ${warningPt}`,
+    `## Métricas de Desempenho\n\n- Total de testes: ${testInfo.total}\n- Taxa de sucesso: ${passRate}%`,
+    `## Avaliação de Riscos\n\n- ${riskPt}`,
+    `## Cobertura de Testes\n\n${covBlock}`,
+    `## Recomendações Acionáveis\n\n- ${recPt}`,
+    `## Tendência Histórica\n\n- Execução única — sem dados históricos disponíveis para comparação.`,
+    `## Glossário de Termos\n\n- **Teste unitário**: teste que valida um componente ou função de forma isolada.\n- **xUnit**: framework de testes utilizado em projetos .NET.\n- **Cobertura de linhas**: percentual de linhas de código-fonte executadas durante os testes.\n- **Cobertura de branches**: percentual de ramificações de código (if/else) exercitadas durante os testes.`,
+  ]);
+
+  return { en, es, pt };
+}
+
 async function generateExecutiveSummary(testInfo, coverageInfo, reportKind = 'unit') {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey || apiKey.startsWith('your_')) {
     if (reportKind === 'integration') {
-      console.error('  PERPLEXITY_API_KEY requerida para el informe de integración (resumen ejecutivo obligatorio).');
-      return { en: '', es: '', pt: '' };
+      console.warn('  PERPLEXITY_API_KEY not set — generating local fallback executive summary for integration report.');
+    } else {
+      console.log('  PERPLEXITY_API_KEY not set — generating local fallback executive summary.');
     }
-    console.log('  PERPLEXITY_API_KEY not set — skipping AI executive summary.');
-    return { en: '', es: '', pt: '' };
+    return generateLocalFallbackSummary(testInfo, coverageInfo, reportKind);
   }
 
   const model = process.env.PERPLEXITY_MODEL || 'sonar';
@@ -345,6 +463,8 @@ Return ONLY valid JSON (no markdown fences):
     ? `\nCode Coverage:\n  Line Coverage: ${coverageInfo.lineRate.toFixed(2)}%\n  Branch Coverage: ${coverageInfo.branchRate.toFixed(2)}%`
     : '';
 
+  const failedTestsSection = failedTests ? `Failed Tests:\n${failedTests}` : 'No test failures detected.';
+
   const userPrompt =
     reportKind === 'integration'
       ? `Analyze these Backend INTEGRATION test results (namespace IntegrationTests, HTTP/API, WebApplicationFactory) and generate an executive summary:
@@ -362,7 +482,7 @@ ${coverageSummary}
 Test classes / areas:
 ${classSummary}
 
-${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}
+${failedTestsSection}
 
 Relate coverage (lines/branches) to how much of the application code was exercised by these integration scenarios when metrics are present.`
       : `Analyze these Backend unit test results and generate an executive summary:
@@ -379,7 +499,7 @@ ${coverageSummary}
 Test Classes:
 ${classSummary}
 
-${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`;
+${failedTestsSection}`;
 
   try {
     console.log(`  Calling Perplexity API (model: ${model}) [${reportKind}]...`);
@@ -405,7 +525,8 @@ ${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`
     if (!response.ok) {
       const errText = await response.text().catch(() => '');
       console.warn(`  Perplexity API error: ${response.status} ${response.statusText} — ${errText}`);
-      return { en: '', es: '', pt: '' };
+      console.log('  Generating local fallback executive summary.');
+      return generateLocalFallbackSummary(testInfo, coverageInfo, reportKind);
     }
 
     const data = await response.json();
@@ -422,7 +543,8 @@ ${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`
     return sanitizeExecutiveSummaryByLang({ en: unescaped, es: unescaped, pt: unescaped });
   } catch (err) {
     console.warn(`  Perplexity API call failed: ${err?.message ?? String(err)}`);
-    return { en: '', es: '', pt: '' };
+    console.log('  Generating local fallback executive summary.');
+    return generateLocalFallbackSummary(testInfo, coverageInfo, reportKind);
   }
 }
 
@@ -849,6 +971,51 @@ function renderCoverageMissingPanel() {
   </div>`;
 }
 
+function renderPackageClassRows(pkg) {
+  return pkg.classes.map(cls => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
+          <td class="px-4 py-3"><code class="text-xs text-aura-600 dark:text-aura-400">${esc(cls.name)}</code></td>
+          <td class="px-4 py-3 text-xs"><span class="text-emerald-600 dark:text-emerald-400 font-semibold">${cls.coveredLines}</span><span class="text-slate-400 dark:text-gray-500"> / ${cls.totalLines}</span></td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(cls.lineRate)}" style="width:${Math.min(cls.lineRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(cls.lineRate)} min-w-[50px] text-right">${cls.lineRate.toFixed(2)}%</span>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(cls.branchRate)}" style="width:${Math.min(cls.branchRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(cls.branchRate)} min-w-[50px] text-right">${cls.branchRate.toFixed(2)}%</span>
+            </div>
+          </td>
+        </tr>`).join('');
+}
+
+function renderPackageClassBlock(pkg) {
+  if (pkg.classes.length === 0) return '';
+  return `
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-4">
+    <div class="p-4 border-b border-slate-200 dark:border-zinc-800">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 flex items-center gap-2"><i class="bi bi-file-earmark-code"></i> ${esc(pkg.name)}</h3>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colFile">Archivo</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colLines">Líneas</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="lineCoverage">Cobertura de Líneas</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="branchCoverage">Cobertura de Ramas</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
+${renderPackageClassRows(pkg)}
+      </tbody>
+    </table>
+  </div>`;
+}
+
 /** Bloques KPI + tablas de cobertura (mismo contenido que antes para unit/integration con XML). */
 function renderCoverageDetailBlocks(coverageInfo) {
   return `
@@ -912,43 +1079,7 @@ ${coverageInfo.packages.map(pkg => `
     </table>
   </div>
 
-${coverageInfo.packages.map(pkg => pkg.classes.length > 0 ? `
-  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-4">
-    <div class="p-4 border-b border-slate-200 dark:border-zinc-800">
-      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 flex items-center gap-2"><i class="bi bi-file-earmark-code"></i> ${esc(pkg.name)}</h3>
-    </div>
-    <table class="w-full text-sm">
-      <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colFile">Archivo</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colLines">Líneas</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="lineCoverage">Cobertura de Líneas</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="branchCoverage">Cobertura de Ramas</th>
-      </tr></thead>
-      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
-${pkg.classes.map(cls => `
-        <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
-          <td class="px-4 py-3"><code class="text-xs text-aura-600 dark:text-aura-400">${esc(cls.name)}</code></td>
-          <td class="px-4 py-3 text-xs"><span class="text-emerald-600 dark:text-emerald-400 font-semibold">${cls.coveredLines}</span><span class="text-slate-400 dark:text-gray-500"> / ${cls.totalLines}</span></td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                <div class="h-full rounded-full ${getCoverageClass(cls.lineRate)}" style="width:${Math.min(cls.lineRate, 100)}%"></div>
-              </div>
-              <span class="text-xs font-semibold ${getCoverageBadge(cls.lineRate)} min-w-[50px] text-right">${cls.lineRate.toFixed(2)}%</span>
-            </div>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                <div class="h-full rounded-full ${getCoverageClass(cls.branchRate)}" style="width:${Math.min(cls.branchRate, 100)}%"></div>
-              </div>
-              <span class="text-xs font-semibold ${getCoverageBadge(cls.branchRate)} min-w-[50px] text-right">${cls.branchRate.toFixed(2)}%</span>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>` : '').join('')}`;
+${coverageInfo.packages.map(pkg => renderPackageClassBlock(pkg)).join('')}`;
 }
 
 function renderCoverageTabBody(testInfo, coverageInfo, int) {
@@ -1004,7 +1135,7 @@ function generateHtmlReport(testInfo, coverageInfo, summaryByLang, reportKind = 
   const headerSub = int
     ? `.NET 8 · xUnit · Integración · API · WebApplicationFactory · ${new Date().toLocaleDateString('es-ES')}`
     : `.NET 8 · xUnit · Moq · FluentAssertions · ${new Date().toLocaleDateString('es-ES')}`;
-  const i18nJson = JSON.stringify(buildI18nPayload(reportKind)).replaceAll('</', '<\\/');
+  const i18nJson = JSON.stringify(buildI18nPayload(reportKind)).replaceAll('</', String.raw`<\/`);
 
   const summaryHtmlByLang = {
     en: mdToHtml(summaryByLang.en),

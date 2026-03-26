@@ -6,7 +6,7 @@
 export type AuraReportTheme = 'dark' | 'grey';
 
 export function resolveAuraReportTheme(): AuraReportTheme {
-  const raw = (process.env['AURA_REPORT_THEME'] ?? 'dark').toLowerCase().trim();
+  const raw = (process.env['AURA_REPORT_THEME'] ?? 'grey').toLowerCase().trim();
   if (raw === 'grey' || raw === 'gray' || raw === 'light') {
     return 'grey';
   }
@@ -14,7 +14,7 @@ export function resolveAuraReportTheme(): AuraReportTheme {
 }
 
 export function parseReportThemeEnv(raw: string | undefined): AuraReportTheme {
-  const v = (raw ?? 'dark').toLowerCase().trim();
+  const v = (raw ?? 'grey').toLowerCase().trim();
   if (v === 'grey' || v === 'gray' || v === 'light') return 'grey';
   return 'dark';
 }

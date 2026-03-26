@@ -131,7 +131,7 @@ jobs:
               '</details>',
               '',
               '<details open>',
-              '<summary><b>\u2705 Functional Tests</b></summary>',
+              '<summary><b>\u{1F916} Functional Tests</b></summary>',
               '<br>',
               '',
               '<!-- section:functional -->',
@@ -1164,29 +1164,13 @@ jobs:
             const integrationIcon = integrationOk ? '\u2705' : '\u274C';
             const integrationStatus = integrationOk ? 'Tests completed successfully' : 'Tests completed with errors';
 
-            let integrationContent;
-            if (integrationReportUrl) {
-              integrationContent = [
-                `> ${integrationIcon} **Integration** - ${integrationStatus}`,
-                '>',
-                `> \u{1F4C4} [View detailed report](${integrationReportUrl})`,
-                '>',
-                '> \u{1F4E6} _Also in artifact `integration-test-report`_',
-              ].join('\n');
-            } else {
-              integrationContent = `> ${integrationIcon} ${integrationStatus} - \u{1F4E6} _Results in artifact \`integration-test-report\`_`;
-            }
+            const integrationContent = integrationReportUrl
+              ? `> ${integrationIcon} **Integration** - ${integrationStatus} - \u{1F4C4} [View detailed report](${integrationReportUrl})`
+              : `> ${integrationIcon} **Integration** - ${integrationStatus} - \u{1F4E6} _Report available in artifacts_`;
 
-            let securityContent;
-            if (secReportUrl) {
-              securityContent = [
-                '> \u2705 Security tests completed',
-                '>',
-                `> \u{1F6E1}\uFE0F [View Security Dashboard](${secReportUrl})`,
-              ].join('\n');
-            } else {
-              securityContent = '> \u2705 Security tests completed - \u{1F4E6} _Results in artifact \`security-test-report\`_';
-            }
+            const securityContent = secReportUrl
+              ? `> \u2705 **Security** - Tests completed - \u{1F6E1}\uFE0F [View Security Dashboard](${secReportUrl})`
+              : '> \u2705 **Security** - Tests completed - \u{1F4E6} _Report available in artifacts_';
 
             await updateDashboard({ github, context, sections: {
               'integration': integrationContent,
@@ -1261,19 +1245,19 @@ jobs:
       - name: Wait for preview to be reachable
         run: |
           URL="${{ env.PREVIEW_URL }}"
-          MAX_WAIT=60
+          MAX_WAIT=120
           ELAPSED=0
-          echo "Waiting for $URL to respond..."
+          echo "Waiting for $URL to serve application content..."
           while [ $ELAPSED -lt $MAX_WAIT ]; do
-            STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 10 "$URL" || echo "000")
-            if [ "$STATUS" = "200" ] || [ "$STATUS" = "301" ] || [ "$STATUS" = "302" ]; then
-              echo "Preview is up (HTTP $STATUS) after ${ELAPSED}s"
+            BODY=$(curl -sL --max-time 10 "$URL" 2>/dev/null || echo "")
+            if echo "$BODY" | grep -qi "TuCreditoOnline\|Online Credits"; then
+              echo "Preview is serving content after ${ELAPSED}s"
               exit 0
             fi
             sleep 5
             ELAPSED=$((ELAPSED + 5))
           done
-          echo "Preview did not respond within ${MAX_WAIT}s — link will be posted anyway"
+          echo "Preview did not serve expected content within ${MAX_WAIT}s — link will be posted anyway"
 
       - name: Update dashboard — Preview
         if: always()
@@ -1407,9 +1391,9 @@ jobs:
                 '> \u{1F4D6} **Documentation preview**',
                 '>',
                 ...(primarySurge
-                  ? [`> \u{1F517} **[PR documentation (Surge — docs/index.html)](${primarySurge})**`]
+                  ? [`> \u{1F517} **[PR documentation](${primarySurge})**`]
                   : (fallbackEmbed
-                    ? [`> \u{1F517} **[PR documentation (app preview — docs/index.html)](${fallbackEmbed})**`]
+                    ? [`> \u{1F517} **[PR documentation](${fallbackEmbed})**`]
                     : ['> \u23F3 _Documentation URLs will appear once the preview is ready_']
                   )),
                 ...(!primarySurge && fallbackEmbed && surgeIndexUrl
@@ -1484,16 +1468,39 @@ jobs:
           printf "AURA_REPORT_TITLE=SAI Test Report\n" >> .env
           printf "AURA_REPORT_FILENAME=aura-report.html\n" >> .env
           printf "AURA_REPORT_VERSION=1.0.0\n" >> .env
-          printf "AURA_REPORT_THEME=dark\n" >> .env
+          printf "AURA_REPORT_THEME=light\n" >> .env
           printf "AURA_RECORD_VIDEO=true\n" >> .env
           printf "AURA_DOCS_DIR=docs\n" >> .env
           TARGET="${{ needs.deploy-preview.outputs.preview_url }}"
           if [ -z "$TARGET" ]; then TARGET="${{ env.PREVIEW_URL }}"; fi
           printf "AURA_TARGET_URL=%s\n" "$TARGET" >> .env
 
+      - name: Wait for preview site to serve content
+        run: |
+          URL="${{ needs.deploy-preview.outputs.preview_url }}"
+          if [ -z "$URL" ]; then URL="${{ env.PREVIEW_URL }}"; fi
+          MAX_WAIT=180
+          ELAPSED=0
+          echo "Polling $URL until it serves actual application content (max ${MAX_WAIT}s)..."
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            BODY=$(curl -sL --max-time 10 "$URL" 2>/dev/null || echo "")
+            if echo "$BODY" | grep -qi "TuCreditoOnline\|Online Credits"; then
+              echo "Preview site is live after ${ELAPSED}s"
+              break
+            fi
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+          done
+          if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "::warning::Preview site did not serve expected content within ${MAX_WAIT}s — functional tests may fail"
+          fi
+
       - name: Run functional tests
+        id: run-tests
         working-directory: automation/frameworks/applied-ai-aura
-        run: npx cucumber-js --tags "@preview or @smoke"
+        run: |
+          mkdir -p reports
+          npx cucumber-js --tags "@preview or @smoke"
         continue-on-error: true
 
       # cucumber-js alone only writes aura-scenarios.jsonl per scenario; aura-report.html
@@ -1555,20 +1562,17 @@ jobs:
         uses: actions/github-script@v8
         env:
           REPORT_URL: ${{ steps.functional-report-url.outputs.functional_report_url }}
+          TESTS_OUTCOME: ${{ steps.run-tests.outcome }}
         with:
           script: |
             const updateDashboard = require('./.github/scripts/update-dashboard');
             const url = process.env.REPORT_URL;
-            let content;
-            if (url) {
-              content = [
-                '> \u2705 Functional tests completed',
-                '>',
-                `> \u{1F4C4} [View functional test report](${url})`,
-              ].join('\n');
-            } else {
-              content = '> \u2705 Functional tests completed - \u{1F4E6} _Report available in artifacts_';
-            }
+            const ok = process.env.TESTS_OUTCOME === 'success';
+            const icon = ok ? '\u2705' : '\u274C';
+            const status = ok ? 'Tests completed' : 'Tests completed with errors';
+            const content = url
+              ? `> ${icon} **Functional** - ${status} - \u{1F4C4} [View detailed report](${url})`
+              : `> ${icon} **Functional** - ${status} - \u{1F4E6} _Report available in artifacts_`;
 
             await updateDashboard({ github, context, sections: { 'functional': content } });
 

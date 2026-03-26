@@ -117,4 +117,31 @@ public class BackupControllerTests
 
         result.Should().BeOfType<ObjectResult>().Which.StatusCode.Should().Be(500);
     }
+
+    [Fact]
+    public async Task GenerateBackup_WhenServiceSucceeds_ShouldReturnFileContent()
+    {
+        // Create a real temp zip file so the File.Exists check passes
+        var tempDir = Path.GetTempPath();
+        var zipPath = Path.Combine(tempDir, $"backup_{Guid.NewGuid():N}.zip");
+        File.WriteAllBytes(zipPath, new byte[] { 0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00 });
+
+        try
+        {
+            _mockService.Setup(x => x.GenerateBackupAsync())
+                        .ReturnsAsync(Result.Success<string>(zipPath));
+            _mockService.Setup(x => x.CleanupOldBackups(It.IsAny<int>()));
+
+            var result = await _controller.GenerateBackup();
+
+            result.Should().BeOfType<FileContentResult>();
+            var fileResult = (FileContentResult)result;
+            fileResult.ContentType.Should().Be("application/zip");
+            fileResult.FileContents.Should().NotBeEmpty();
+        }
+        finally
+        {
+            if (File.Exists(zipPath)) File.Delete(zipPath);
+        }
+    }
 }

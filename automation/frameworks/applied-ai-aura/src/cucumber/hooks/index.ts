@@ -71,7 +71,7 @@ After(async function (this: AuraWorld, { result }) {
 
   if (result?.status === Status.FAILED) {
     try {
-      const buf = await this.page.screenshot({ fullPage: true });
+      const buf = await this.page?.screenshot({ fullPage: true });
       this.attach(buf, 'image/png');
     } catch { /* non-critical */ }
   }
@@ -79,7 +79,7 @@ After(async function (this: AuraWorld, { result }) {
   await this.teardown();
 
   try {
-    const htmlPath = await this.report.generateReport(videoPath);
+    const htmlPath = await this.report?.generateReport(videoPath);
     if (htmlPath) {
       console.info(`[AURA/Report] ✓ Report → ${htmlPath}`);
     }

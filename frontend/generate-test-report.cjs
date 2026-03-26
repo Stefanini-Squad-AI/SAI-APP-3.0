@@ -277,6 +277,116 @@ async function callExecutiveLLM(systemPrompt, userPrompt) {
   return '';
 }
 
+function generateLocalFallbackSummary(stats, testSuites, coverageInfo) {
+  const passRate = stats.total > 0 ? ((stats.passed / stats.total) * 100).toFixed(2) : '0';
+  const passRateNum = Number.parseFloat(passRate);
+  const date = new Date().toISOString().split('T')[0];
+
+  let semaphore;
+  if (passRateNum === 100) semaphore = 'GREEN';
+  else if (passRateNum >= 80) semaphore = 'YELLOW';
+  else semaphore = 'RED';
+
+  const semaphoreEs = { GREEN: 'VERDE', YELLOW: 'AMARILLO', RED: 'ROJO' }[semaphore];
+  const semaphorePt = { GREEN: 'VERDE', YELLOW: 'AMARELO', RED: 'VERMELHO' }[semaphore];
+
+  let riskEn;
+  let riskEs;
+  let riskPt;
+  if (passRateNum === 100) {
+    riskEn = 'Low risk — all tests passing.';
+    riskEs = 'Riesgo bajo — todas las pruebas pasaron.';
+    riskPt = 'Risco baixo — todos os testes passaram.';
+  } else if (passRateNum >= 80) {
+    riskEn = 'Medium risk — some tests failing.';
+    riskEs = 'Riesgo medio — algunas pruebas fallaron.';
+    riskPt = 'Risco médio — alguns testes falharam.';
+  } else {
+    riskEn = 'High risk — significant test failures detected.';
+    riskEs = 'Riesgo alto — se detectaron fallos significativos.';
+    riskPt = 'Risco alto — falhas significativas detectadas.';
+  }
+
+  const warningEn = stats.failures === 0 ? 'No warnings.' : `${stats.failures} test(s) require attention.`;
+  const warningEs = stats.failures === 0 ? 'Sin advertencias.' : `${stats.failures} prueba(s) requieren atención.`;
+  const warningPt = stats.failures === 0 ? 'Sem avisos.' : `${stats.failures} teste(s) requerem atenção.`;
+
+  const recEn = stats.failures > 0 ? 'Fix failing tests before merging.' : 'All tests pass — continue monitoring coverage.';
+  const recEs = stats.failures > 0 ? 'Corregir las pruebas fallidas antes de hacer merge.' : 'Todas las pruebas pasan — continuar monitoreando la cobertura.';
+  const recPt = stats.failures > 0 ? 'Corrigir os testes com falha antes do merge.' : 'Todos os testes passam — continuar monitorando a cobertura.';
+
+  const covRecEn = coverageInfo && coverageInfo.filesWithNoLineCoverage > 0
+    ? `Add tests for the ${coverageInfo.filesWithNoLineCoverage} source files with 0% coverage.`
+    : 'Maintain current coverage levels.';
+  const covRecEs = coverageInfo && coverageInfo.filesWithNoLineCoverage > 0
+    ? `Agregar pruebas para los ${coverageInfo.filesWithNoLineCoverage} archivos con 0% de cobertura.`
+    : 'Mantener los niveles actuales de cobertura.';
+  const covRecPt = coverageInfo && coverageInfo.filesWithNoLineCoverage > 0
+    ? `Adicionar testes para os ${coverageInfo.filesWithNoLineCoverage} arquivos com 0% de cobertura.`
+    : 'Manter os níveis atuais de cobertura.';
+
+  const avgTimeEn = stats.total > 0 ? (stats.time / stats.total).toFixed(3) : '0';
+
+  const failedTests = testSuites
+    .flatMap((s) => s.testcases.filter((t) => t.status === 'failed').map((t) => ({ suite: s.name, name: t.name, failure: t.failure })))
+  ;
+  const failedList = failedTests.length > 0
+    ? failedTests.map((t) => `- [${t.suite}] ${t.name}`).join('\n')
+    : '- No failures detected.';
+
+  const covBlock = coverageInfo
+    ? `- Line coverage: ${coverageInfo.lineRate.toFixed(2)}%\n- Branch coverage: ${coverageInfo.branchRate.toFixed(2)}%\n- Lines: ${coverageInfo.linesCovered} covered / ${coverageInfo.linesValid} total\n- Source files: ${coverageInfo.totalSourceFiles}\n- Files with 0% coverage: ${coverageInfo.filesWithNoLineCoverage}`
+    : '- Coverage data not available (run npm run test:coverage before generating the report).';
+
+  const suiteLines = testSuites.map((s) => {
+    const sp = s.tests - s.failures;
+    return `- ${s.name}: ${s.tests} tests, ${sp} passed, ${s.failures} failed (${s.time.toFixed(2)}s)`;
+  }).join('\n');
+
+  const buildContent = (sections) => sections.join('\n\n');
+
+  const en = buildContent([
+    `## Context Header\n\nProject: TuCreditoOnline — Frontend (React + Jest). Report generated on ${date}. Total: ${stats.total} tests across ${testSuites.length} suites in ${stats.time.toFixed(2)}s.`,
+    `## Overall Result (Traffic Light)\n\n**${semaphore}** — Pass rate: ${passRate}% (${stats.passed} passed, ${stats.failures} failed).`,
+    `## Scope — What Was Tested?\n\n${suiteLines}`,
+    `## Detailed Findings\n\n### What Worked\n\n- ${stats.passed} of ${stats.total} tests passed successfully.\n\n### Failures Found\n\n${failedList}\n\n### Warnings\n\n- ${warningEn}`,
+    `## Performance Metrics\n\n- Total duration: ${stats.time.toFixed(2)}s\n- Average per test: ${avgTimeEn}s`,
+    `## Risk Assessment\n\n- ${riskEn}`,
+    `## Test Coverage\n\n${covBlock}`,
+    `## Actionable Recommendations\n\n- ${recEn}\n- ${covRecEn}`,
+    `## Historical Trend\n\n- Single run — no historical data available for comparison.`,
+    `## Glossary of Terms\n\n- **Unit test**: a test that validates a single component or function in isolation.\n- **Suite**: a group of related tests.\n- **Line coverage**: percentage of source code lines executed during tests.\n- **Branch coverage**: percentage of code branches (if/else) exercised during tests.`,
+  ]);
+
+  const es = buildContent([
+    `## Encabezado de Contexto\n\nProyecto: TuCreditoOnline — Frontend (React + Jest). Reporte generado el ${date}. Total: ${stats.total} tests en ${testSuites.length} suites en ${stats.time.toFixed(2)}s.`,
+    `## Resultado General (Semáforo)\n\n**${semaphoreEs}** — Tasa de éxito: ${passRate}% (${stats.passed} exitosos, ${stats.failures} fallidos).`,
+    `## Alcance — ¿Qué se probó?\n\n${suiteLines}`,
+    `## Hallazgos Detallados\n\n### Lo que funcionó\n\n- ${stats.passed} de ${stats.total} pruebas pasaron exitosamente.\n\n### Fallos encontrados\n\n${failedList}\n\n### Advertencias\n\n- ${warningEs}`,
+    `## Métricas de Rendimiento\n\n- Duración total: ${stats.time.toFixed(2)}s\n- Promedio por test: ${avgTimeEn}s`,
+    `## Evaluación de Riesgos\n\n- ${riskEs}`,
+    `## Cobertura de Pruebas\n\n${covBlock}`,
+    `## Recomendaciones Accionables\n\n- ${recEs}\n- ${covRecEs}`,
+    `## Tendencia Histórica\n\n- Ejecución única — no hay datos históricos disponibles para comparación.`,
+    `## Glosario de Términos\n\n- **Prueba unitaria**: prueba que valida un componente o función de forma aislada.\n- **Suite**: grupo de pruebas relacionadas.\n- **Cobertura de líneas**: porcentaje de líneas de código fuente ejecutadas durante las pruebas.\n- **Cobertura de ramas**: porcentaje de ramas de código (if/else) ejercitadas durante las pruebas.`,
+  ]);
+
+  const pt = buildContent([
+    `## Cabeçalho de Contexto\n\nProjeto: TuCreditoOnline — Frontend (React + Jest). Relatório gerado em ${date}. Total: ${stats.total} testes em ${testSuites.length} suites em ${stats.time.toFixed(2)}s.`,
+    `## Resultado Geral (Semáforo)\n\n**${semaphorePt}** — Taxa de sucesso: ${passRate}% (${stats.passed} aprovados, ${stats.failures} falhos).`,
+    `## Escopo — O que foi testado?\n\n${suiteLines}`,
+    `## Achados Detalhados\n\n### O que funcionou\n\n- ${stats.passed} de ${stats.total} testes passaram com sucesso.\n\n### Falhas encontradas\n\n${failedList}\n\n### Avisos\n\n- ${warningPt}`,
+    `## Métricas de Desempenho\n\n- Duração total: ${stats.time.toFixed(2)}s\n- Média por teste: ${avgTimeEn}s`,
+    `## Avaliação de Riscos\n\n- ${riskPt}`,
+    `## Cobertura de Testes\n\n${covBlock}`,
+    `## Recomendações Acionáveis\n\n- ${recPt}\n- ${covRecPt}`,
+    `## Tendência Histórica\n\n- Execução única — sem dados históricos disponíveis para comparação.`,
+    `## Glossário de Termos\n\n- **Teste unitário**: teste que valida um componente ou função de forma isolada.\n- **Suite**: grupo de testes relacionados.\n- **Cobertura de linhas**: percentual de linhas de código-fonte executadas durante os testes.\n- **Cobertura de branches**: percentual de ramificações de código (if/else) exercitadas durante os testes.`,
+  ]);
+
+  return { en, es, pt };
+}
+
 async function generateExecutiveSummary(stats, testSuites, coverageInfo) {
   const passRate = stats.total > 0 ? ((stats.passed / stats.total) * 100).toFixed(2) : '0';
 
@@ -380,7 +490,10 @@ ${failedTests ? `Failed tests:\n${failedTests}` : 'No failed tests.'}
 Mention explicitly the gap between "tests ejecutados" and "código fuente sin cubrir" using the coverage file counts when available.`;
 
   const content = await callExecutiveLLM(systemPrompt, userPrompt);
-  if (!content) return { en: '', es: '', pt: '' };
+  if (!content) {
+    console.log('  Generating local fallback executive summary (no AI).');
+    return generateLocalFallbackSummary(stats, testSuites, coverageInfo);
+  }
   console.log(`  AI response first 200 chars: ${content.slice(0, 200).replace(/\n/g, '\\n')}`);
   const parsed = parseSummaryJson(content);
   if (parsed) return sanitizeExecutiveSummaryByLang(parsed);
@@ -678,7 +791,7 @@ html.dark #lang-select option{color:#fafafa;background-color:#3f3f46}
     <p class="text-xs text-slate-500 dark:text-gray-400 mt-1" data-i18n="executiveSubtitle">Resumen de pruebas unitarias con AI</p>
   </div>
   <div id="executive-summary-content" class="prose max-w-none text-slate-600 dark:text-slate-300 leading-relaxed">
-    ${summaryHtmlByLang.es || '<p class="text-slate-400 dark:text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY u OPENAI_API_KEY según MODEL_PROVIDER.</p>'}
+    ${summaryHtmlByLang.es || '<p class="text-slate-400 dark:text-gray-500 italic" data-i18n="noSummary">Resumen ejecutivo no disponible. Configure PERPLEXITY_API_KEY.</p>'}
   </div>
 </div>
 </section>
@@ -1125,9 +1238,9 @@ if (linesCovEl) {
 
 // ── i18n ──
 const i18n = {
-es:{reportTitle:'Reporte de Pruebas Unitarias — Frontend',tabExecutive:'Resumen Ejecutivo',tabOverview:'Resultados Generales',tabDetails:'Detalle de Tests',tabCoverage:'Cobertura',tabErrors:'Logs de Error',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Resumen de pruebas unitarias con AI',noSummary:'Resumen no disponible. Configure PERPLEXITY_API_KEY u OPENAI_API_KEY según MODEL_PROVIDER.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiDuration:'Duración',chartDistribution:'Distribución de Tests',chartSuites:'Resultados por Suite',chartLinesCov:'Líneas cubiertas vs no cubiertas',overallProgress:'Progreso General',lblPassed:'exitosos',lblFailed:'fallidos',testSuites:'Test Suites',searchTests:'Buscar tests...',colTest:'Test',colStatus:'Estado',colDuration:'Duración',noErrors:'No se registraron errores. ¡Excelente!',errorCount:'Tests Fallidos',footerMadeBy:'Hecho por Applied AI Team — Stefanini',generatedAt:'Generado',totalDuration:'Duración total',codeCoverageTitle:'Cobertura de código (Jest)',codeCoverageHint:'Porcentaje sobre líneas/ramas instrumentadas. Ejecute npm run test:coverage antes del informe.',covLinePct:'Cobertura líneas',covBranchPct:'Cobertura ramas',covFilesTracked:'Archivos en alcance',covFilesNoLines:'Sin cubrir líneas (~0%)',covLinesLabel:'líneas',lineCoverage:'Cobertura de líneas',branchCoverage:'Cobertura de ramas',covByPackage:'Cobertura por paquete',colPackage:'Paquete',colFile:'Archivo',colLinesHit:'Líneas cubiertas'},
-en:{reportTitle:'Unit Test Report — Frontend',tabExecutive:'Executive Summary',tabOverview:'Overall Results',tabDetails:'Test Details',tabCoverage:'Coverage',tabErrors:'Error Logs',executiveTitle:'Executive Summary',executiveSubtitle:'Unit test summary with AI',noSummary:'Summary unavailable. Set PERPLEXITY_API_KEY or OPENAI_API_KEY per MODEL_PROVIDER.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Pass Rate',kpiDuration:'Duration',chartDistribution:'Test Distribution',chartSuites:'Results by Suite',chartLinesCov:'Covered vs uncovered lines',overallProgress:'Overall Progress',lblPassed:'passed',lblFailed:'failed',testSuites:'Test Suites',searchTests:'Search tests...',colTest:'Test',colStatus:'Status',colDuration:'Duration',noErrors:'No errors recorded. Excellent!',errorCount:'Failed Tests',footerMadeBy:'Made by Applied AI Team — Stefanini',generatedAt:'Generated',totalDuration:'Total duration',codeCoverageTitle:'Code coverage (Jest)',codeCoverageHint:'Percentage over instrumented lines/branches. Run npm run test:coverage before the report.',covLinePct:'Line coverage',covBranchPct:'Branch coverage',covFilesTracked:'Files in scope',covFilesNoLines:'No line coverage (~0%)',covLinesLabel:'lines',lineCoverage:'Line coverage',branchCoverage:'Branch coverage',covByPackage:'Coverage by package',colPackage:'Package',colFile:'File',colLinesHit:'Lines hit'},
-pt:{reportTitle:'Relatório de Testes Unitários — Frontend',tabExecutive:'Resumo Executivo',tabOverview:'Resultados Gerais',tabDetails:'Detalhes dos Testes',tabCoverage:'Cobertura',tabErrors:'Logs de Erro',executiveTitle:'Resumo Executivo',executiveSubtitle:'Resumo de testes unitários com IA',noSummary:'Resumo indisponível. Configure PERPLEXITY_API_KEY ou OPENAI_API_KEY conforme MODEL_PROVIDER.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiDuration:'Duração',chartDistribution:'Distribuição de Testes',chartSuites:'Resultados por Suite',chartLinesCov:'Linhas cobertas vs não cobertas',overallProgress:'Progresso Geral',lblPassed:'aprovados',lblFailed:'falhos',testSuites:'Test Suites',searchTests:'Buscar testes...',colTest:'Teste',colStatus:'Status',colDuration:'Duração',noErrors:'Nenhum erro registrado. Excelente!',errorCount:'Testes com Falha',footerMadeBy:'Feito por Applied AI Team — Stefanini',generatedAt:'Gerado',totalDuration:'Duração total',codeCoverageTitle:'Cobertura de código (Jest)',codeCoverageHint:'Percentual sobre linhas/ramos instrumentados. Execute npm run test:coverage antes do relatório.',covLinePct:'Cobertura de linhas',covBranchPct:'Cobertura de ramos',covFilesTracked:'Arquivos no escopo',covFilesNoLines:'Sem cobertura de linha (~0%)',covLinesLabel:'linhas',lineCoverage:'Cobertura de linhas',branchCoverage:'Cobertura de ramos',covByPackage:'Cobertura por pacote',colPackage:'Pacote',colFile:'Arquivo',colLinesHit:'Linhas cobertas'}
+es:{reportTitle:'Reporte de Pruebas Unitarias — Frontend',tabExecutive:'Resumen Ejecutivo',tabOverview:'Resultados Generales',tabDetails:'Detalle de Tests',tabCoverage:'Cobertura',tabErrors:'Logs de Error',executiveTitle:'Resumen Ejecutivo',executiveSubtitle:'Resumen de pruebas unitarias con AI',noSummary:'Resumen no disponible. Configure PERPLEXITY_API_KEY.',kpiTotal:'Total',kpiPassed:'Exitosos',kpiFailed:'Fallidos',kpiRate:'Tasa de Éxito',kpiDuration:'Duración',chartDistribution:'Distribución de Tests',chartSuites:'Resultados por Suite',chartLinesCov:'Líneas cubiertas vs no cubiertas',overallProgress:'Progreso General',lblPassed:'exitosos',lblFailed:'fallidos',testSuites:'Test Suites',searchTests:'Buscar tests...',colTest:'Test',colStatus:'Estado',colDuration:'Duración',noErrors:'No se registraron errores. ¡Excelente!',errorCount:'Tests Fallidos',footerMadeBy:'Hecho por Applied AI Team — Stefanini',generatedAt:'Generado',totalDuration:'Duración total',codeCoverageTitle:'Cobertura de código (Jest)',codeCoverageHint:'Porcentaje sobre líneas/ramas instrumentadas. Ejecute npm run test:coverage antes del informe.',covLinePct:'Cobertura líneas',covBranchPct:'Cobertura ramas',covFilesTracked:'Archivos en alcance',covFilesNoLines:'Sin cubrir líneas (~0%)',covLinesLabel:'líneas',lineCoverage:'Cobertura de líneas',branchCoverage:'Cobertura de ramas',covByPackage:'Cobertura por paquete',colPackage:'Paquete',colFile:'Archivo',colLinesHit:'Líneas cubiertas'},
+en:{reportTitle:'Unit Test Report — Frontend',tabExecutive:'Executive Summary',tabOverview:'Overall Results',tabDetails:'Test Details',tabCoverage:'Coverage',tabErrors:'Error Logs',executiveTitle:'Executive Summary',executiveSubtitle:'Unit test summary with AI',noSummary:'Summary unavailable. Set PERPLEXITY_API_KEY.',kpiTotal:'Total',kpiPassed:'Passed',kpiFailed:'Failed',kpiRate:'Pass Rate',kpiDuration:'Duration',chartDistribution:'Test Distribution',chartSuites:'Results by Suite',chartLinesCov:'Covered vs uncovered lines',overallProgress:'Overall Progress',lblPassed:'passed',lblFailed:'failed',testSuites:'Test Suites',searchTests:'Search tests...',colTest:'Test',colStatus:'Status',colDuration:'Duration',noErrors:'No errors recorded. Excellent!',errorCount:'Failed Tests',footerMadeBy:'Made by Applied AI Team — Stefanini',generatedAt:'Generated',totalDuration:'Total duration',codeCoverageTitle:'Code coverage (Jest)',codeCoverageHint:'Percentage over instrumented lines/branches. Run npm run test:coverage before the report.',covLinePct:'Line coverage',covBranchPct:'Branch coverage',covFilesTracked:'Files in scope',covFilesNoLines:'No line coverage (~0%)',covLinesLabel:'lines',lineCoverage:'Line coverage',branchCoverage:'Branch coverage',covByPackage:'Coverage by package',colPackage:'Package',colFile:'File',colLinesHit:'Lines hit'},
+pt:{reportTitle:'Relatório de Testes Unitários — Frontend',tabExecutive:'Resumo Executivo',tabOverview:'Resultados Gerais',tabDetails:'Detalhes dos Testes',tabCoverage:'Cobertura',tabErrors:'Logs de Erro',executiveTitle:'Resumo Executivo',executiveSubtitle:'Resumo de testes unitários com IA',noSummary:'Resumo indisponível. Configure PERPLEXITY_API_KEY.',kpiTotal:'Total',kpiPassed:'Aprovados',kpiFailed:'Falhos',kpiRate:'Taxa de Sucesso',kpiDuration:'Duração',chartDistribution:'Distribuição de Testes',chartSuites:'Resultados por Suite',chartLinesCov:'Linhas cobertas vs não cobertas',overallProgress:'Progresso Geral',lblPassed:'aprovados',lblFailed:'falhos',testSuites:'Test Suites',searchTests:'Buscar testes...',colTest:'Teste',colStatus:'Status',colDuration:'Duração',noErrors:'Nenhum erro registrado. Excelente!',errorCount:'Testes com Falha',footerMadeBy:'Feito por Applied AI Team — Stefanini',generatedAt:'Gerado',totalDuration:'Duração total',codeCoverageTitle:'Cobertura de código (Jest)',codeCoverageHint:'Percentual sobre linhas/ramos instrumentados. Execute npm run test:coverage antes do relatório.',covLinePct:'Cobertura de linhas',covBranchPct:'Cobertura de ramos',covFilesTracked:'Arquivos no escopo',covFilesNoLines:'Sem cobertura de linha (~0%)',covLinesLabel:'linhas',lineCoverage:'Cobertura de linhas',branchCoverage:'Cobertura de ramos',covByPackage:'Cobertura por pacote',colPackage:'Pacote',colFile:'Arquivo',colLinesHit:'Linhas cobertas'}
 };
 
 function renderExecutiveSummary(lang) {
