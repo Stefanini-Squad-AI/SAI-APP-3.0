@@ -1245,19 +1245,19 @@ jobs:
       - name: Wait for preview to be reachable
         run: |
           URL="${{ env.PREVIEW_URL }}"
-          MAX_WAIT=60
+          MAX_WAIT=120
           ELAPSED=0
-          echo "Waiting for $URL to respond..."
+          echo "Waiting for $URL to serve application content..."
           while [ $ELAPSED -lt $MAX_WAIT ]; do
-            STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 10 "$URL" || echo "000")
-            if [ "$STATUS" = "200" ] || [ "$STATUS" = "301" ] || [ "$STATUS" = "302" ]; then
-              echo "Preview is up (HTTP $STATUS) after ${ELAPSED}s"
+            BODY=$(curl -sL --max-time 10 "$URL" 2>/dev/null || echo "")
+            if echo "$BODY" | grep -qi "TuCreditoOnline\|Online Credits"; then
+              echo "Preview is serving content after ${ELAPSED}s"
               exit 0
             fi
             sleep 5
             ELAPSED=$((ELAPSED + 5))
           done
-          echo "Preview did not respond within ${MAX_WAIT}s — link will be posted anyway"
+          echo "Preview did not serve expected content within ${MAX_WAIT}s — link will be posted anyway"
 
       - name: Update dashboard — Preview
         if: always()
@@ -1474,6 +1474,26 @@ jobs:
           TARGET="${{ needs.deploy-preview.outputs.preview_url }}"
           if [ -z "$TARGET" ]; then TARGET="${{ env.PREVIEW_URL }}"; fi
           printf "AURA_TARGET_URL=%s\n" "$TARGET" >> .env
+
+      - name: Wait for preview site to serve content
+        run: |
+          URL="${{ needs.deploy-preview.outputs.preview_url }}"
+          if [ -z "$URL" ]; then URL="${{ env.PREVIEW_URL }}"; fi
+          MAX_WAIT=180
+          ELAPSED=0
+          echo "Polling $URL until it serves actual application content (max ${MAX_WAIT}s)..."
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            BODY=$(curl -sL --max-time 10 "$URL" 2>/dev/null || echo "")
+            if echo "$BODY" | grep -qi "TuCreditoOnline\|Online Credits"; then
+              echo "Preview site is live after ${ELAPSED}s"
+              break
+            fi
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+          done
+          if [ $ELAPSED -ge $MAX_WAIT ]; then
+            echo "::warning::Preview site did not serve expected content within ${MAX_WAIT}s — functional tests may fail"
+          fi
 
       - name: Run functional tests
         id: run-tests
