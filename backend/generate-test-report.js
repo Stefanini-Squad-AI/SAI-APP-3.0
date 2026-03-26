@@ -182,15 +182,90 @@ function sanitizeExecutiveSummaryByLang(obj) {
   };
 }
 
+function generateLocalFallbackSummary(testInfo, coverageInfo, reportKind = 'unit') {
+  const passRate = testInfo.total > 0 ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) : '0';
+  const passRateNum = parseFloat(passRate);
+  const semaphore = passRateNum === 100 ? 'GREEN' : passRateNum >= 80 ? 'YELLOW' : 'RED';
+  const date = new Date().toISOString().split('T')[0];
+  const typeLabel = reportKind === 'integration' ? 'Integration' : 'Unit';
+
+  const testsByClass = {};
+  testInfo.tests.forEach(t => {
+    const cls = t.className || 'Unknown';
+    if (!testsByClass[cls]) testsByClass[cls] = [];
+    testsByClass[cls].push(t);
+  });
+
+  const failedTests = testInfo.tests.filter(t => t.outcome === 'Failed');
+  const failedList = failedTests.length > 0
+    ? failedTests.map(t => `- [${t.className}] ${t.name}`).join('\n')
+    : '- No failures detected.';
+
+  const classLines = Object.entries(testsByClass).map(([cls, tests]) => {
+    const p = tests.filter(t => t.outcome === 'Passed').length;
+    const f = tests.filter(t => t.outcome === 'Failed').length;
+    return `- ${cls}: ${tests.length} tests, ${p} passed, ${f} failed`;
+  }).join('\n');
+
+  const covBlock = coverageInfo
+    ? `- Line coverage: ${coverageInfo.lineRate.toFixed(2)}%\n- Branch coverage: ${coverageInfo.branchRate.toFixed(2)}%`
+    : '- Coverage data not available.';
+
+  const makeContent = (lang) => {
+    const L = {
+      en: {
+        ctx: `## Context Header\n\nProject: TuCreditoOnline — Backend (.NET 8, xUnit). ${typeLabel} tests. Report generated on ${date}. Total: ${testInfo.total} tests (${testInfo.passed} passed, ${testInfo.failed} failed, ${testInfo.skipped} skipped).`,
+        sem: `## Overall Result (Traffic Light)\n\n**${semaphore}** — Pass rate: ${passRate}%.`,
+        scope: `## Scope — What Was Tested?\n\n${classLines}`,
+        findings: `## Detailed Findings\n\n### What Worked\n\n- ${testInfo.passed} of ${testInfo.total} tests passed successfully.\n\n### Failures Found\n\n${failedList}\n\n### Warnings\n\n- ${testInfo.failed === 0 ? 'No warnings.' : `${testInfo.failed} test(s) require attention.`}`,
+        perf: `## Performance Metrics\n\n- Total tests: ${testInfo.total}\n- Pass rate: ${passRate}%`,
+        risk: `## Risk Assessment\n\n- ${passRateNum === 100 ? 'Low risk — all tests passing.' : passRateNum >= 80 ? 'Medium risk — some tests failing.' : 'High risk — significant test failures detected.'}`,
+        cov: `## Test Coverage\n\n${covBlock}`,
+        rec: `## Actionable Recommendations\n\n- ${testInfo.failed > 0 ? 'Fix failing tests before merging.' : 'All tests pass — continue monitoring coverage.'}`,
+        trend: `## Historical Trend\n\n- Single run — no historical data available for comparison.`,
+        gloss: `## Glossary of Terms\n\n- **Unit test**: a test that validates a single component or function in isolation.\n- **xUnit**: the testing framework used for .NET projects.\n- **Line coverage**: percentage of source code lines executed during tests.\n- **Branch coverage**: percentage of code branches (if/else) exercised during tests.`,
+      },
+      es: {
+        ctx: `## Encabezado de Contexto\n\nProyecto: TuCreditoOnline — Backend (.NET 8, xUnit). Pruebas ${reportKind === 'integration' ? 'de integración' : 'unitarias'}. Reporte generado el ${date}. Total: ${testInfo.total} tests (${testInfo.passed} exitosos, ${testInfo.failed} fallidos, ${testInfo.skipped} omitidos).`,
+        sem: `## Resultado General (Semáforo)\n\n**${semaphore === 'GREEN' ? 'VERDE' : semaphore === 'YELLOW' ? 'AMARILLO' : 'ROJO'}** — Tasa de éxito: ${passRate}%.`,
+        scope: `## Alcance — ¿Qué se probó?\n\n${classLines}`,
+        findings: `## Hallazgos Detallados\n\n### Lo que funcionó\n\n- ${testInfo.passed} de ${testInfo.total} pruebas pasaron exitosamente.\n\n### Fallos encontrados\n\n${failedList}\n\n### Advertencias\n\n- ${testInfo.failed === 0 ? 'Sin advertencias.' : `${testInfo.failed} prueba(s) requieren atención.`}`,
+        perf: `## Métricas de Rendimiento\n\n- Total de pruebas: ${testInfo.total}\n- Tasa de éxito: ${passRate}%`,
+        risk: `## Evaluación de Riesgos\n\n- ${passRateNum === 100 ? 'Riesgo bajo — todas las pruebas pasaron.' : passRateNum >= 80 ? 'Riesgo medio — algunas pruebas fallaron.' : 'Riesgo alto — se detectaron fallos significativos.'}`,
+        cov: `## Cobertura de Pruebas\n\n${covBlock}`,
+        rec: `## Recomendaciones Accionables\n\n- ${testInfo.failed > 0 ? 'Corregir las pruebas fallidas antes de hacer merge.' : 'Todas las pruebas pasan — continuar monitoreando la cobertura.'}`,
+        trend: `## Tendencia Histórica\n\n- Ejecución única — no hay datos históricos disponibles para comparación.`,
+        gloss: `## Glosario de Términos\n\n- **Prueba unitaria**: prueba que valida un componente o función de forma aislada.\n- **xUnit**: framework de pruebas utilizado en proyectos .NET.\n- **Cobertura de líneas**: porcentaje de líneas de código fuente ejecutadas durante las pruebas.\n- **Cobertura de ramas**: porcentaje de ramas de código (if/else) ejercitadas durante las pruebas.`,
+      },
+      pt: {
+        ctx: `## Cabeçalho de Contexto\n\nProjeto: TuCreditoOnline — Backend (.NET 8, xUnit). Testes ${reportKind === 'integration' ? 'de integração' : 'unitários'}. Relatório gerado em ${date}. Total: ${testInfo.total} testes (${testInfo.passed} aprovados, ${testInfo.failed} falhos, ${testInfo.skipped} ignorados).`,
+        sem: `## Resultado Geral (Semáforo)\n\n**${semaphore === 'GREEN' ? 'VERDE' : semaphore === 'YELLOW' ? 'AMARELO' : 'VERMELHO'}** — Taxa de sucesso: ${passRate}%.`,
+        scope: `## Escopo — O que foi testado?\n\n${classLines}`,
+        findings: `## Achados Detalhados\n\n### O que funcionou\n\n- ${testInfo.passed} de ${testInfo.total} testes passaram com sucesso.\n\n### Falhas encontradas\n\n${failedList}\n\n### Avisos\n\n- ${testInfo.failed === 0 ? 'Sem avisos.' : `${testInfo.failed} teste(s) requerem atenção.`}`,
+        perf: `## Métricas de Desempenho\n\n- Total de testes: ${testInfo.total}\n- Taxa de sucesso: ${passRate}%`,
+        risk: `## Avaliação de Riscos\n\n- ${passRateNum === 100 ? 'Risco baixo — todos os testes passaram.' : passRateNum >= 80 ? 'Risco médio — alguns testes falharam.' : 'Risco alto — falhas significativas detectadas.'}`,
+        cov: `## Cobertura de Testes\n\n${covBlock}`,
+        rec: `## Recomendações Acionáveis\n\n- ${testInfo.failed > 0 ? 'Corrigir os testes com falha antes do merge.' : 'Todos os testes passam — continuar monitorando a cobertura.'}`,
+        trend: `## Tendência Histórica\n\n- Execução única — sem dados históricos disponíveis para comparação.`,
+        gloss: `## Glossário de Termos\n\n- **Teste unitário**: teste que valida um componente ou função de forma isolada.\n- **xUnit**: framework de testes utilizado em projetos .NET.\n- **Cobertura de linhas**: percentual de linhas de código-fonte executadas durante os testes.\n- **Cobertura de branches**: percentual de ramificações de código (if/else) exercitadas durante os testes.`,
+      },
+    };
+    const l = L[lang] || L.en;
+    return [l.ctx, l.sem, l.scope, l.findings, l.perf, l.risk, l.cov, l.rec, l.trend, l.gloss].join('\n\n');
+  };
+
+  return { en: makeContent('en'), es: makeContent('es'), pt: makeContent('pt') };
+}
+
 async function generateExecutiveSummary(testInfo, coverageInfo, reportKind = 'unit') {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey || apiKey.startsWith('your_')) {
     if (reportKind === 'integration') {
-      console.error('  PERPLEXITY_API_KEY requerida para el informe de integración (resumen ejecutivo obligatorio).');
-      return { en: '', es: '', pt: '' };
+      console.warn('  PERPLEXITY_API_KEY not set — generating local fallback executive summary for integration report.');
+    } else {
+      console.log('  PERPLEXITY_API_KEY not set — generating local fallback executive summary.');
     }
-    console.log('  PERPLEXITY_API_KEY not set — skipping AI executive summary.');
-    return { en: '', es: '', pt: '' };
+    return generateLocalFallbackSummary(testInfo, coverageInfo, reportKind);
   }
 
   const model = process.env.PERPLEXITY_MODEL || 'sonar';
@@ -407,7 +482,8 @@ ${failedTestsSection}`;
     if (!response.ok) {
       const errText = await response.text().catch(() => '');
       console.warn(`  Perplexity API error: ${response.status} ${response.statusText} — ${errText}`);
-      return { en: '', es: '', pt: '' };
+      console.log('  Generating local fallback executive summary.');
+      return generateLocalFallbackSummary(testInfo, coverageInfo, reportKind);
     }
 
     const data = await response.json();
@@ -424,7 +500,8 @@ ${failedTestsSection}`;
     return sanitizeExecutiveSummaryByLang({ en: unescaped, es: unescaped, pt: unescaped });
   } catch (err) {
     console.warn(`  Perplexity API call failed: ${err?.message ?? String(err)}`);
-    return { en: '', es: '', pt: '' };
+    console.log('  Generating local fallback executive summary.');
+    return generateLocalFallbackSummary(testInfo, coverageInfo, reportKind);
   }
 }
 
