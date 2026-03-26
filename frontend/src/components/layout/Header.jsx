@@ -39,6 +39,9 @@ const Header = () => {
             <Link to="/contact" className="text-gray-700 hover:text-primary-600 transition font-medium">
               {t('header.contact')}
             </Link>
+            <Link to="/legal" className="text-gray-700 hover:text-primary-600 transition font-medium">
+              {t('header.legal')}
+            </Link>
           </div>
 
           {/* Language Selector & Admin Login */}
@@ -95,6 +98,9 @@ const Header = () => {
               <Link to="/contact" className="text-gray-700 hover:text-primary-600 transition font-medium" onClick={() => setMobileMenuOpen(false)}>
                 {t('header.contact')}
               </Link>
+               <Link to="/legal" className="text-gray-700 hover:text-primary-600 transition font-medium" onClick={() => setMobileMenuOpen(false)}>
+                 {t('header.legal')}
+               </Link>
               <Link
                 to="/admin/login"
                 className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-semibold text-center"
