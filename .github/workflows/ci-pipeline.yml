@@ -1407,9 +1407,9 @@ jobs:
                 '> \u{1F4D6} **Documentation preview**',
                 '>',
                 ...(primarySurge
-                  ? [`> \u{1F517} **[PR documentation (Surge — docs/index.html)](${primarySurge})**`]
+                  ? [`> \u{1F517} **[PR documentation](${primarySurge})**`]
                   : (fallbackEmbed
-                    ? [`> \u{1F517} **[PR documentation (app preview — docs/index.html)](${fallbackEmbed})**`]
+                    ? [`> \u{1F517} **[PR documentation](${fallbackEmbed})**`]
                     : ['> \u23F3 _Documentation URLs will appear once the preview is ready_']
                   )),
                 ...(!primarySurge && fallbackEmbed && surgeIndexUrl
