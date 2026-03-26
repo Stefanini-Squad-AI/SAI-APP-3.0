@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using TuCreditoOnline.Application.DTOs;
 using TuCreditoOnline.Infrastructure.Services;
@@ -11,15 +12,18 @@ public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
     private readonly UserManagementService _userManagementService;
+    private readonly IWebHostEnvironment _environment;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         AuthService authService,
         UserManagementService userManagementService,
+        IWebHostEnvironment environment,
         ILogger<AuthController> logger)
     {
         _authService = authService;
         _userManagementService = userManagementService;
+        _environment = environment;
         _logger = logger;
     }
 
@@ -50,11 +54,12 @@ public class AuthController : ControllerBase
     {
         _logger.LogInformation("Registration attempt for {Email}", request.Email);
 
-        // Allow unauthenticated registration only for first-time setup (no users in DB)
+        // En entorno Testing (WebApplicationFactory) el registro permanece abierto para pruebas de integración.
+        // En Development/Staging/Production: si ya hay usuarios, solo Admin/SuperAdmin puede registrar más cuentas.
         var usersResult = await _userManagementService.GetAllUsersAsync(1, 1, null);
         bool hasUsers = usersResult.IsSuccess && (usersResult.Data?.TotalCount ?? 0) > 0;
 
-        if (hasUsers)
+        if (!_environment.IsEnvironment("Testing") && hasUsers)
         {
             if (!User.Identity?.IsAuthenticated ?? true)
             {

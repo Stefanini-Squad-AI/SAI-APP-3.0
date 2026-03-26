@@ -37,6 +37,8 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    // Map "role" del JWT a ClaimTypes.Role para que [Authorize(Roles = "...")] reconozca el rol.
+    options.MapInboundClaims = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -46,7 +48,9 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        // Debe coincidir con el tipo de claim emitido en AuthService.GenerateJwtToken ("role").
+        RoleClaimType = "role",
     };
 });
 
@@ -56,13 +60,16 @@ builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
-try
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    await AdminUserSeeder.SeedAsync(app);
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"Warning: default admin seed failed but startup will continue. Error: {ex.Message}");
+    try
+    {
+        await AdminUserSeeder.SeedAsync(app);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: default admin seed failed but startup will continue. Error: {ex.Message}");
+    }
 }
 
 if (app.Environment.IsDevelopment())

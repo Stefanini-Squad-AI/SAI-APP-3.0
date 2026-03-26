@@ -21,6 +21,7 @@ env:
   MAIN_APP_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
   DOCS_PREVIEW_DOMAIN: docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   DOCS_PREVIEW_URL: https://docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/
+  DOCS_PREVIEW_INDEX_URL: https://docs-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/index.html
   DOCS_GH_PREVIEW_PATH: pr-docs/pr-${{ github.event.number }}
   DOCS_GH_PREVIEW_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-docs/pr-${{ github.event.number }}/
   MAIN_DOCS_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/docs/
@@ -32,6 +33,8 @@ env:
   FRONTEND_REPORT_URL: https://frontend-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/test-report.html
   SECURITY_REPORT_DOMAIN: security-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
   SECURITY_REPORT_URL: https://security-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/security-dashboard.html
+  INTEGRATION_REPORT_DOMAIN: integration-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh
+  INTEGRATION_REPORT_URL: https://integration-tests-pr-${{ github.event.number }}-sai-app-3-0.surge.sh/test-report.html
 
 jobs:
   init-dashboard:
@@ -969,9 +972,12 @@ jobs:
               --configuration Release \
               --filter "FullyQualifiedName~.IntegrationTests." \
               --logger "trx;LogFileName=integration-results.trx" \
-              --results-directory ../test-results/integration \
-              --verbosity minimal 2>&1 | tee ../test-results/logs/integration.log
-            echo $? > ../test-results/integration/exit-code.txt
+              --results-directory ./TestResults/integration \
+              --verbosity minimal \
+              --collect:"XPlat Code Coverage" \
+              -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura \
+              2>&1 | tee ../test-results/logs/integration.log
+            echo $? > ./TestResults/integration/exit-code.txt
           ) &
           INTEGRATION_PID=$!
 
@@ -1043,17 +1049,29 @@ jobs:
       - name: Generate Tailwind security dashboard v2 (ZAP JSON → AURA-style HTML)
         if: always()
         env:
-          PERPLEXITY_API_KEY: ${{ secrets.CI_PERPLEXITY_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           PERPLEXITY_MODEL: sonar
           MODEL_PROVIDER: perplexity
         run: |
           node scripts/generate-security-tailwind-report.cjs || echo "Security dashboard v2: skipped or failed (non-blocking)"
 
+      - name: Generate backend integration report (TRX + Cobertura → HTML, resumen IA)
+        if: always()
+        working-directory: ./backend
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          BACKEND_REPORT_MODE: integration
+        run: |
+          npm ci
+          node generate-test-report.js --integration || echo "Integration report generation skipped or failed"
+
       - name: Evaluate integration exit code
         if: always()
         run: |
           EXIT_CODE="1"
-          if [ -f "test-results/integration/exit-code.txt" ]; then
+          if [ -f "backend/TestResults/integration/exit-code.txt" ]; then
+            EXIT_CODE="$(cat backend/TestResults/integration/exit-code.txt | tr -d '\r\n')"
+          elif [ -f "test-results/integration/exit-code.txt" ]; then
             EXIT_CODE="$(cat test-results/integration/exit-code.txt | tr -d '\r\n')"
           fi
           echo "INTEGRATION_EXIT_CODE=$EXIT_CODE" >> $GITHUB_ENV
@@ -1070,7 +1088,7 @@ jobs:
         with:
           name: integration-test-report
           path: |
-            test-results/integration/**
+            backend/TestResults/integration/**
             test-results/logs/integration.log
             test-results/logs/docker-compose.log
             test-results/logs/backend.log
@@ -1108,21 +1126,56 @@ jobs:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
+      - name: Record integration test report Surge URL
+        if: always()
+        id: integration-report-url
+        run: |
+          if [ -f "backend/TestResults/integration/test-report.html" ]; then
+            echo "integration_report_url=${{ env.INTEGRATION_REPORT_URL }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish integration test report to Surge
+        if: always()
+        id: publish-integration-report
+        continue-on-error: true
+        working-directory: ./backend
+        run: |
+          if [ -f "TestResults/integration/test-report.html" ]; then
+            npx surge --project TestResults/integration --domain ${{ env.INTEGRATION_REPORT_DOMAIN }}
+          fi
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
       - name: Update dashboard — Integration & Security
         if: always()
         uses: actions/github-script@v8
         env:
           INTEGRATION_OK: ${{ env.INTEGRATION_OK }}
           SEC_REPORT_URL: ${{ steps.security-report-urls.outputs.security_report_url }}
+          INTEGRATION_REPORT_URL: ${{ steps.integration-report-url.outputs.integration_report_url }}
         with:
           script: |
             const updateDashboard = require('./.github/scripts/update-dashboard');
             const integrationOk = process.env.INTEGRATION_OK === 'true';
             const secReportUrl = process.env.SEC_REPORT_URL;
+            const integrationReportUrl = process.env.INTEGRATION_REPORT_URL?.trim();
 
             const integrationIcon = integrationOk ? '\u2705' : '\u274C';
             const integrationStatus = integrationOk ? 'Tests completed successfully' : 'Tests completed with errors';
-            const integrationContent = `> ${integrationIcon} ${integrationStatus} - \u{1F4E6} _Results in artifact \`integration-test-report\`_`;
+
+            let integrationContent;
+            if (integrationReportUrl) {
+              integrationContent = [
+                `> ${integrationIcon} **Integration** - ${integrationStatus}`,
+                '>',
+                `> \u{1F4C4} [View detailed report](${integrationReportUrl})`,
+                '>',
+                '> \u{1F4E6} _Also in artifact `integration-test-report`_',
+              ].join('\n');
+            } else {
+              integrationContent = `> ${integrationIcon} ${integrationStatus} - \u{1F4E6} _Results in artifact \`integration-test-report\`_`;
+            }
 
             let securityContent;
             if (secReportUrl) {
@@ -1229,17 +1282,26 @@ jobs:
           PREVIEW_URL: ${{ steps.preview-url.outputs.preview_url }}
           EXPECTED_URL: ${{ env.PREVIEW_URL }}
           MAIN_APP_URL: ${{ env.MAIN_APP_URL }}
+          PREVIEW_DEPLOY_OUTCOME: ${{ steps.preview.outcome }}
         with:
           script: |
             const updateDashboard = require('./.github/scripts/update-dashboard');
+            const deployOk = process.env.PREVIEW_DEPLOY_OUTCOME === 'success';
             const url = process.env.PREVIEW_URL?.trim() || process.env.EXPECTED_URL?.trim();
             const mainAppUrl = process.env.MAIN_APP_URL;
             let content;
-            if (url) {
+            if (deployOk && url) {
               content = [
                 '> \u{1F7E2} **Site deployed successfully**',
                 '>',
                 `> \u{1F517} **[Open preview site](${url})**`,
+                ...(mainAppUrl ? [`> \u{1F517} [Current site](${mainAppUrl})`] : []),
+              ].join('\n');
+            } else if (url && !deployOk) {
+              content = [
+                '> \u274C **Preview deploy did not complete successfully** (see _Deploy Preview_ job).',
+                '>',
+                `> \u{1F517} [Open preview URL](${url}) _may show a previous deployment or CDN-cached content._`,
                 ...(mainAppUrl ? [`> \u{1F517} [Current site](${mainAppUrl})`] : []),
               ].join('\n');
             } else {
@@ -1304,6 +1366,19 @@ jobs:
             echo "has_docs=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Prepare docs for Surge (SPA fallback)
+        if: steps.detect-docs.outputs.has_docs == 'true'
+        run: cp docs/index.html docs/200.html
+
+      - name: Publish PR documentation to Surge
+        if: steps.detect-docs.outputs.has_docs == 'true'
+        id: publish-docs-surge
+        continue-on-error: true
+        run: npx surge --project docs --domain ${{ env.DOCS_PREVIEW_DOMAIN }}
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
       - name: Update dashboard — Docs preview
         if: always()
         uses: actions/github-script@v8
@@ -1311,22 +1386,35 @@ jobs:
           HAS_DOCS: ${{ steps.detect-docs.outputs.has_docs }}
           PR_PREVIEW_URL: ${{ env.PREVIEW_URL }}
           MAIN_DOCS_URL: ${{ env.MAIN_DOCS_URL }}
+          DOCS_INDEX_SURGE_URL: ${{ env.DOCS_PREVIEW_INDEX_URL }}
+          DOCS_SURGE_OUTCOME: ${{ steps.publish-docs-surge.outcome }}
         with:
           script: |
             const updateDashboard = require('./.github/scripts/update-dashboard');
             const hasDocs = process.env.HAS_DOCS === 'true';
             const prPreviewUrl = process.env.PR_PREVIEW_URL;
             const mainDocsUrl = process.env.MAIN_DOCS_URL;
-            const prDocsUrl = prPreviewUrl ? `${prPreviewUrl.replace(/\/$/, '')}/docs/` : null;
+            const surgeIndexUrl = process.env.DOCS_INDEX_SURGE_URL?.trim();
+            const surgeOk = process.env.DOCS_SURGE_OUTCOME === 'success';
+            const embeddedDocsIndex = prPreviewUrl
+              ? `${prPreviewUrl.replace(/\/$/, '')}/docs/index.html`
+              : null;
             let content;
             if (hasDocs) {
+              const primarySurge = surgeOk && surgeIndexUrl ? surgeIndexUrl : null;
+              const fallbackEmbed = embeddedDocsIndex;
               content = [
-                '> \u{1F4D6} **Documentation preview published**',
+                '> \u{1F4D6} **Documentation preview**',
                 '>',
-                ...(prDocsUrl
-                  ? [`> \u{1F517} **[PR documentation preview](${prDocsUrl})**`]
-                  : ['> \u23F3 _PR documentation: available once preview site is deployed_']
-                ),
+                ...(primarySurge
+                  ? [`> \u{1F517} **[PR documentation (Surge — docs/index.html)](${primarySurge})**`]
+                  : (fallbackEmbed
+                    ? [`> \u{1F517} **[PR documentation (app preview — docs/index.html)](${fallbackEmbed})**`]
+                    : ['> \u23F3 _Documentation URLs will appear once the preview is ready_']
+                  )),
+                ...(!primarySurge && fallbackEmbed && surgeIndexUrl
+                  ? [`> \u{1F4E1} _Surge deploy failed or skipped; [try dedicated docs URL](${surgeIndexUrl}) may be stale._`]
+                  : []),
                 ...(mainDocsUrl ? [`> \u{1F517} [Current documentation](${mainDocsUrl})`] : []),
               ].join('\n');
             } else {
@@ -1565,6 +1653,12 @@ jobs:
 
       - name: Tear down security report
         run: npx surge teardown ${{ env.SECURITY_REPORT_DOMAIN }} || true
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+
+      - name: Tear down integration test report
+        run: npx surge teardown ${{ env.INTEGRATION_REPORT_DOMAIN }} || true
         env:
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}

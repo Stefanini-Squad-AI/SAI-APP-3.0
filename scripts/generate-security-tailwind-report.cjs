@@ -196,10 +196,25 @@ function aggregate(model) {
 
 // ─── LLM Executive Summary ───────────────────────────────────────────────────
 
+function extractSummaryJsonPayload(raw) {
+  let t = String(raw ?? '').trim();
+  const fullFence = /^```(?:json)?\s*([\s\S]*?)```$/im.exec(t);
+  if (fullFence) t = fullFence[1].trim();
+  t = t.replace(/^[`"'´]{3}\s*json\s*/i, '');
+  t = t.replace(/^[`"'´]{3}\s*/i, '');
+  t = t.replace(/\s*[`"'´]{3}\s*$/i, '');
+  t = t.trim();
+  const i = t.indexOf('{');
+  if (i > 0) t = t.slice(i);
+  const j = t.lastIndexOf('}');
+  if (j !== -1 && j >= 0) t = t.slice(0, j + 1);
+  return t.trim();
+}
+
 function parseSummaryJson(raw) {
   const tryParse = (str) => {
     try {
-      const p = JSON.parse(str.trim());
+      const p = JSON.parse(extractSummaryJsonPayload(str));
       const en = typeof p.en === 'string' ? p.en.trim() : '';
       const es = typeof p.es === 'string' ? p.es.trim() : '';
       const pt = typeof p.pt === 'string' ? p.pt.trim() : '';
@@ -280,7 +295,10 @@ Use markdown (**bold**, bullets) inside each string. No code fences.`;
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content ?? '';
     console.log(`  AI response (${data.usage?.total_tokens ?? '?'} tokens).`);
-    return parseSummaryJson(content) || { en: content.trim(), es: content.trim(), pt: content.trim() };
+    const parsed = parseSummaryJson(content);
+    if (parsed) return parsed;
+    console.warn('  Could not parse AI response as JSON summary; executive section will use fallback text.');
+    return { en: '', es: '', pt: '' };
   } catch (err) {
     console.warn(`  LLM failed: ${err?.message ?? String(err)}`);
     return { en: '', es: '', pt: '' };
@@ -459,7 +477,7 @@ html.dark #lang-select option{color:#fafafa;background-color:#3f3f46}
 
 <nav class="bg-slate-200/60 dark:bg-zinc-900/50 border-b border-slate-300 dark:border-zinc-800 overflow-x-auto">
   <div class="max-w-[1600px] mx-auto px-2 flex gap-1">
-    <button type="button" data-tab="executive" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-aura-500 text-aura-700 dark:text-aura-300 whitespace-nowrap active"><i class="bi bi-stars"></i><span data-i18n="tabExec">Resumen ejecutivo</span></button>
+    <button type="button" data-tab="executive" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-aura-500 text-aura-700 dark:text-aura-300 whitespace-nowrap active"><i class="bi bi-stars"></i><span data-i18n="tabExec">Resumen Ejecutivo</span></button>
     <button type="button" data-tab="overview" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 whitespace-nowrap"><i class="bi bi-speedometer2"></i><span data-i18n="tabOverview">Vista general</span></button>
     <button type="button" data-tab="charts" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 whitespace-nowrap"><i class="bi bi-bar-chart-steps"></i><span data-i18n="tabCharts">Gráficos</span></button>
     <button type="button" data-tab="scans" class="tab-btn flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-500 dark:text-gray-400 whitespace-nowrap"><i class="bi bi-shield-check"></i><span data-i18n="tabScans">Escaneos</span></button>
@@ -476,12 +494,12 @@ html.dark #lang-select option{color:#fafafa;background-color:#3f3f46}
     <div class="flex items-center gap-3 mb-4">
       <div class="w-10 h-10 rounded-lg bg-aura-100 dark:bg-aura-600/20 flex items-center justify-center"><i class="bi bi-stars text-aura-600 dark:text-aura-400 text-xl"></i></div>
       <div>
-        <h2 class="text-xl font-bold text-slate-800 dark:text-white" data-i18n="execTitle">Resumen ejecutivo</h2>
-        <p class="text-xs text-slate-500 dark:text-gray-400" data-i18n="execSub">Generado con IA a partir de los JSON de ZAP (Perplexity / .env)</p>
+        <h2 class="text-xl font-bold text-slate-800 dark:text-white" data-i18n="execTitle">Resumen Ejecutivo</h2>
+        <p class="text-xs text-slate-500 dark:text-gray-400" data-i18n="execSub">Resumen de pruebas de integración con AI</p>
       </div>
     </div>
     <div id="executive-summary-content" class="prose max-w-none text-slate-600 dark:text-slate-300">
-      ${summaryHtml.es || '<p class="text-slate-400 italic" data-i18n="noSummary">Configure PERPLEXITY_API_KEY para el resumen IA.</p>'}
+      ${summaryHtml.es || '<p class="text-slate-400 italic" data-i18n="noSummary">Resumen IA no generado (variable PERPLEXITY_API_KEY o respuesta del modelo).</p>'}
     </div>
   </div>
 </section>
@@ -719,9 +737,9 @@ function filterFindings(q) {
 }
 
 const i18n = {
-  es:{reportTitle:'OWASP ZAP — Panel de Seguridad v2',tabExec:'Resumen ejecutivo',tabOverview:'Vista general',tabCharts:'Gráficos',tabScans:'Escaneos',tabFindings:'Hallazgos',tabInsights:'Insights ZAP',tabRefs:'Referencias',execTitle:'Resumen ejecutivo',execSub:'IA (Perplexity) · datos JSON ZAP',noSummary:'Configure PERPLEXITY_API_KEY en .env del proyecto.',kpiFindingTypes:'Tipos',kpiInstances:'Instancias',kpiHigh:'Alto',kpiMedium:'Medio',kpiLow:'Bajo',kpiInfo:'Info',widgetFe:'Frontend',widgetApi:'API',widgetUi:'Interfaz',widgetAlerts:'alertas',widgetTop:'Top',lblInst:'inst.',lblUrls:'URLs',lblDesc:'Descripción',lblSolution:'Solución',lblMoreInstances:'Más instancias en JSON',colMethod:'Método',colUri:'URI',colParam:'Parámetro',riskBarTitle:'Severidad (tipos)',riskHigh:'Alto',riskMedium:'Medio',riskLow:'Bajo',riskInfo:'Info',chartFindingsRisk:'Hallazgos por severidad',chartInstancesRisk:'Instancias por severidad',chartCompareScans:'Frontend vs API (tipos)',chartTopFindings:'Top por instancias',chartInstancesScan:'Instancias por escaneo',chartCwe:'CWE',scanFeTitle:'Frontend',scanApiTitle:'API',lblTool:'Herramienta',lblGenerated:'Generado',lblJson:'JSON',scanFeHint:'Baseline contra la aplicación web.',scanApiHint:'Escaneo OpenAPI.',findingTypesTotal:'tipos',instancesTotal:'instancias',insightsZapTitle:'Insights',colScan:'Scan',colMetric:'Métrica',colLevel:'Nivel',colValue:'Valor',refsTitle:'Referencias',cweFullTitle:'CWE',colCwe:'CWE',colInstances:'Instancias',footerTeam:'Applied AI Team — Stefanini',footerNote:'Fuente: JSON ZAP en test-results/security/',phSearch:'Buscar hallazgos…',optAllScans:'Todos',optAllRisk:'Todas severidades',lblFeShort:'Front',lblApiShort:'API'},
-  en:{reportTitle:'OWASP ZAP — Security Dashboard v2',tabExec:'Executive summary',tabOverview:'Overview',tabCharts:'Charts',tabScans:'Scans',tabFindings:'Findings',tabInsights:'ZAP insights',tabRefs:'References',execTitle:'Executive summary',execSub:'AI (Perplexity) · ZAP JSON data',noSummary:'Set PERPLEXITY_API_KEY in project .env.',kpiFindingTypes:'Finding types',kpiInstances:'Instances',kpiHigh:'High',kpiMedium:'Medium',kpiLow:'Low',kpiInfo:'Info',widgetFe:'Frontend',widgetApi:'API',widgetUi:'UI',widgetAlerts:'alerts',widgetTop:'Top',lblInst:'inst.',lblUrls:'URLs',lblDesc:'Description',lblSolution:'Solution',lblMoreInstances:'More instances in JSON',colMethod:'Method',colUri:'URI',colParam:'Param',riskBarTitle:'Severity (finding types)',riskHigh:'High',riskMedium:'Medium',riskLow:'Low',riskInfo:'Info',chartFindingsRisk:'Findings by severity',chartInstancesRisk:'Instances by severity',chartCompareScans:'Frontend vs API (types)',chartTopFindings:'Top by instances',chartInstancesScan:'Instances by scan',chartCwe:'CWE',scanFeTitle:'Frontend scan',scanApiTitle:'API scan',lblTool:'Tool',lblGenerated:'Generated',lblJson:'JSON',scanFeHint:'Baseline against the web app.',scanApiHint:'OpenAPI-driven scan.',findingTypesTotal:'types',instancesTotal:'instances',insightsZapTitle:'ZAP statistics',colScan:'Scan',colMetric:'Metric',colLevel:'Level',colValue:'Value',refsTitle:'Extracted references',cweFullTitle:'CWE counts',colCwe:'CWE',colInstances:'Instances',footerTeam:'Applied AI Team — Stefanini',footerNote:'Source: ZAP JSON in test-results/security/',phSearch:'Search findings…',optAllScans:'All scans',optAllRisk:'All severities',lblFeShort:'Front',lblApiShort:'API'},
-  pt:{reportTitle:'OWASP ZAP — Painel de Segurança v2',tabExec:'Resumo executivo',tabOverview:'Visão geral',tabCharts:'Gráficos',tabScans:'Escaneamentos',tabFindings:'Achados',tabInsights:'Insights ZAP',tabRefs:'Referências',execTitle:'Resumo executivo',execSub:'IA (Perplexity) · dados JSON ZAP',noSummary:'Configure PERPLEXITY_API_KEY no .env.',kpiFindingTypes:'Tipos',kpiInstances:'Instâncias',kpiHigh:'Alto',kpiMedium:'Médio',kpiLow:'Baixo',kpiInfo:'Info',widgetFe:'Frontend',widgetApi:'API',widgetUi:'UI',widgetAlerts:'alertas',widgetTop:'Top',lblInst:'inst.',lblUrls:'URLs',lblDesc:'Descrição',lblSolution:'Solução',lblMoreInstances:'Mais instâncias no JSON',colMethod:'Método',colUri:'URI',colParam:'Parâm.',riskBarTitle:'Severidade (tipos)',riskHigh:'Alto',riskMedium:'Médio',riskLow:'Baixo',riskInfo:'Info',chartFindingsRisk:'Achados por severidade',chartInstancesRisk:'Instâncias por severidade',chartCompareScans:'Front vs API (tipos)',chartTopFindings:'Top por instâncias',chartInstancesScan:'Instâncias por scan',chartCwe:'CWE',scanFeTitle:'Frontend',scanApiTitle:'API',lblTool:'Ferramenta',lblGenerated:'Gerado',lblJson:'JSON',scanFeHint:'Baseline na aplicação web.',scanApiHint:'Scan OpenAPI.',findingTypesTotal:'tipos',instancesTotal:'instâncias',insightsZapTitle:'Insights',colScan:'Scan',colMetric:'Métrica',colLevel:'Nível',colValue:'Valor',refsTitle:'Referências',cweFullTitle:'CWE',colCwe:'CWE',colInstances:'Instâncias',footerTeam:'Applied AI Team — Stefanini',footerNote:'Fonte: JSON ZAP em test-results/security/',phSearch:'Buscar…',optAllScans:'Todos',optAllRisk:'Todas',lblFeShort:'Front',lblApiShort:'API'}
+  es:{reportTitle:'OWASP ZAP — Panel de Seguridad v2',tabExec:'Resumen Ejecutivo',tabOverview:'Vista general',tabCharts:'Gráficos',tabScans:'Escaneos',tabFindings:'Hallazgos',tabInsights:'Insights ZAP',tabRefs:'Referencias',execTitle:'Resumen Ejecutivo',execSub:'Resumen de pruebas de integración con AI',noSummary:'Resumen IA no generado (variable PERPLEXITY_API_KEY o respuesta del modelo).',kpiFindingTypes:'Tipos',kpiInstances:'Instancias',kpiHigh:'Alto',kpiMedium:'Medio',kpiLow:'Bajo',kpiInfo:'Info',widgetFe:'Frontend',widgetApi:'API',widgetUi:'Interfaz',widgetAlerts:'alertas',widgetTop:'Top',lblInst:'inst.',lblUrls:'URLs',lblDesc:'Descripción',lblSolution:'Solución',lblMoreInstances:'Más instancias en JSON',colMethod:'Método',colUri:'URI',colParam:'Parámetro',riskBarTitle:'Severidad (tipos)',riskHigh:'Alto',riskMedium:'Medio',riskLow:'Bajo',riskInfo:'Info',chartFindingsRisk:'Hallazgos por severidad',chartInstancesRisk:'Instancias por severidad',chartCompareScans:'Frontend vs API (tipos)',chartTopFindings:'Top por instancias',chartInstancesScan:'Instancias por escaneo',chartCwe:'CWE',scanFeTitle:'Frontend',scanApiTitle:'API',lblTool:'Herramienta',lblGenerated:'Generado',lblJson:'JSON',scanFeHint:'Baseline contra la aplicación web.',scanApiHint:'Escaneo OpenAPI.',findingTypesTotal:'tipos',instancesTotal:'instancias',insightsZapTitle:'Insights',colScan:'Scan',colMetric:'Métrica',colLevel:'Nivel',colValue:'Valor',refsTitle:'Referencias',cweFullTitle:'CWE',colCwe:'CWE',colInstances:'Instancias',footerTeam:'Applied AI Team — Stefanini',footerNote:'Fuente: JSON ZAP en test-results/security/',phSearch:'Buscar hallazgos…',optAllScans:'Todos',optAllRisk:'Todas severidades',lblFeShort:'Front',lblApiShort:'API'},
+  en:{reportTitle:'OWASP ZAP — Security Dashboard v2',tabExec:'Executive Summary',tabOverview:'Overview',tabCharts:'Charts',tabScans:'Scans',tabFindings:'Findings',tabInsights:'ZAP insights',tabRefs:'References',execTitle:'Executive Summary',execSub:'Security assessment summary with AI',noSummary:'AI summary not generated (check PERPLEXITY_API_KEY or model output).',kpiFindingTypes:'Finding types',kpiInstances:'Instances',kpiHigh:'High',kpiMedium:'Medium',kpiLow:'Low',kpiInfo:'Info',widgetFe:'Frontend',widgetApi:'API',widgetUi:'UI',widgetAlerts:'alerts',widgetTop:'Top',lblInst:'inst.',lblUrls:'URLs',lblDesc:'Description',lblSolution:'Solution',lblMoreInstances:'More instances in JSON',colMethod:'Method',colUri:'URI',colParam:'Param',riskBarTitle:'Severity (finding types)',riskHigh:'High',riskMedium:'Medium',riskLow:'Low',riskInfo:'Info',chartFindingsRisk:'Findings by severity',chartInstancesRisk:'Instances by severity',chartCompareScans:'Frontend vs API (types)',chartTopFindings:'Top by instances',chartInstancesScan:'Instances by scan',chartCwe:'CWE',scanFeTitle:'Frontend scan',scanApiTitle:'API scan',lblTool:'Tool',lblGenerated:'Generated',lblJson:'JSON',scanFeHint:'Baseline against the web app.',scanApiHint:'OpenAPI-driven scan.',findingTypesTotal:'types',instancesTotal:'instances',insightsZapTitle:'ZAP statistics',colScan:'Scan',colMetric:'Metric',colLevel:'Level',colValue:'Value',refsTitle:'Extracted references',cweFullTitle:'CWE counts',colCwe:'CWE',colInstances:'Instances',footerTeam:'Applied AI Team — Stefanini',footerNote:'Source: ZAP JSON in test-results/security/',phSearch:'Search findings…',optAllScans:'All scans',optAllRisk:'All severities',lblFeShort:'Front',lblApiShort:'API'},
+  pt:{reportTitle:'OWASP ZAP — Painel de Segurança v2',tabExec:'Resumo Executivo',tabOverview:'Visão geral',tabCharts:'Gráficos',tabScans:'Escaneamentos',tabFindings:'Achados',tabInsights:'Insights ZAP',tabRefs:'Referências',execTitle:'Resumo Executivo',execSub:'Resumo de avaliação de segurança com IA',noSummary:'Resumo de IA não gerado (PERPLEXITY_API_KEY ou resposta do modelo).',kpiFindingTypes:'Tipos',kpiInstances:'Instâncias',kpiHigh:'Alto',kpiMedium:'Médio',kpiLow:'Baixo',kpiInfo:'Info',widgetFe:'Frontend',widgetApi:'API',widgetUi:'UI',widgetAlerts:'alertas',widgetTop:'Top',lblInst:'inst.',lblUrls:'URLs',lblDesc:'Descrição',lblSolution:'Solução',lblMoreInstances:'Mais instâncias no JSON',colMethod:'Método',colUri:'URI',colParam:'Parâm.',riskBarTitle:'Severidade (tipos)',riskHigh:'Alto',riskMedium:'Médio',riskLow:'Baixo',riskInfo:'Info',chartFindingsRisk:'Achados por severidade',chartInstancesRisk:'Instâncias por severidade',chartCompareScans:'Front vs API (tipos)',chartTopFindings:'Top por instâncias',chartInstancesScan:'Instâncias por scan',chartCwe:'CWE',scanFeTitle:'Frontend',scanApiTitle:'API',lblTool:'Ferramenta',lblGenerated:'Gerado',lblJson:'JSON',scanFeHint:'Baseline na aplicação web.',scanApiHint:'Scan OpenAPI.',findingTypesTotal:'tipos',instancesTotal:'instâncias',insightsZapTitle:'Insights',colScan:'Scan',colMetric:'Métrica',colLevel:'Nível',colValue:'Valor',refsTitle:'Referências',cweFullTitle:'CWE',colCwe:'CWE',colInstances:'Instâncias',footerTeam:'Applied AI Team — Stefanini',footerNote:'Fonte: JSON ZAP em test-results/security/',phSearch:'Buscar…',optAllScans:'Todos',optAllRisk:'Todas',lblFeShort:'Front',lblApiShort:'API'}
 };
 
 function renderExecutive(lang) {

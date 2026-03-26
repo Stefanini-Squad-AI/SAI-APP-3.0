@@ -4,7 +4,8 @@
   "type": "module",
   "description": "Test reporting for TuCreditoOnline Backend",
   "scripts": {
-    "test:report": "node generate-test-report.js"
+    "test:report": "node generate-test-report.js",
+    "test:report:integration": "node generate-test-report.js --integration"
   },
   "dependencies": {
     "xml2js": "^0.6.2",

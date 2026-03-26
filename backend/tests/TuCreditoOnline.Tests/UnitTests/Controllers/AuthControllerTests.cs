@@ -8,6 +8,7 @@ using TuCreditoOnline.Application.DTOs;
 using TuCreditoOnline.Infrastructure.Repositories;
 using TuCreditoOnline.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Hosting;
 
 namespace TuCreditoOnline.Tests.UnitTests.Controllers;
 
@@ -22,7 +23,9 @@ public class AuthControllerTests
         _mockAuthService = new Mock<AuthService>((UserRepository)null!, (IConfiguration)null!);
         _mockUserService = new Mock<UserManagementService>((UserRepository)null!);
         var mockLogger = new Mock<ILogger<AuthController>>();
-        _controller = new AuthController(_mockAuthService.Object, _mockUserService.Object, mockLogger.Object);
+        var mockWebEnv = new Mock<IWebHostEnvironment>();
+        mockWebEnv.Setup(e => e.EnvironmentName).Returns("Development");
+        _controller = new AuthController(_mockAuthService.Object, _mockUserService.Object, mockWebEnv.Object, mockLogger.Object);
     }
 
     private void SetAnonymousUser()
