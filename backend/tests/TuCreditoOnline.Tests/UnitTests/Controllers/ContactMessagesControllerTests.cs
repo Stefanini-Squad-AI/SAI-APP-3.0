@@ -206,6 +206,22 @@ public class ContactMessagesControllerTests
         result.Should().BeOfType<BadRequestObjectResult>();
     }
 
+    [Fact]
+    public async Task UpdateStatus_WhenNoEmailClaim_ShouldFallbackToUnknown()
+    {
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        var dto = new UpdateContactMessageStatusDto { Status = 1 };
+        _mockService.Setup(x => x.UpdateStatusAsync("m1", dto, "unknown"))
+                    .ReturnsAsync(Result.Success(MakeDto()));
+
+        var result = await _controller.UpdateStatus("m1", dto);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
     // ── Delete ────────────────────────────────────────────────────────────────
 
     [Fact]
@@ -227,5 +243,30 @@ public class ContactMessagesControllerTests
         var result = await _controller.Delete("bad");
 
         result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task Delete_WhenNoEmailClaim_ShouldStillProceed()
+    {
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        _mockService.Setup(x => x.DeleteAsync("m1")).ReturnsAsync(Result.Success(true));
+
+        var result = await _controller.Delete("m1");
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetAll_WithStatusFilter_ShouldPassToService()
+    {
+        _mockService.Setup(x => x.GetAllAsync(1))
+                    .ReturnsAsync(Result.Success(new List<ContactMessageDto> { MakeDto() }));
+
+        var result = await _controller.GetAll(status: 1);
+
+        result.Should().BeOfType<OkObjectResult>();
     }
 }

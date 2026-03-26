@@ -16,6 +16,7 @@ public class AuthControllerTests
 {
     private readonly Mock<AuthService> _mockAuthService;
     private readonly Mock<UserManagementService> _mockUserService;
+    private readonly Mock<IWebHostEnvironment> _mockWebEnv;
     private readonly AuthController _controller;
 
     public AuthControllerTests()
@@ -23,9 +24,20 @@ public class AuthControllerTests
         _mockAuthService = new Mock<AuthService>((UserRepository)null!, (IConfiguration)null!);
         _mockUserService = new Mock<UserManagementService>((UserRepository)null!);
         var mockLogger = new Mock<ILogger<AuthController>>();
-        var mockWebEnv = new Mock<IWebHostEnvironment>();
-        mockWebEnv.Setup(e => e.EnvironmentName).Returns("Development");
-        _controller = new AuthController(_mockAuthService.Object, _mockUserService.Object, mockWebEnv.Object, mockLogger.Object);
+        _mockWebEnv = new Mock<IWebHostEnvironment>();
+        _mockWebEnv.Setup(e => e.EnvironmentName).Returns("Development");
+        _controller = new AuthController(_mockAuthService.Object, _mockUserService.Object, _mockWebEnv.Object, mockLogger.Object);
+    }
+
+    private AuthController CreateControllerForEnv(string envName)
+    {
+        var env = new Mock<IWebHostEnvironment>();
+        env.Setup(e => e.EnvironmentName).Returns(envName);
+        return new AuthController(
+            _mockAuthService.Object,
+            _mockUserService.Object,
+            env.Object,
+            new Mock<ILogger<AuthController>>().Object);
     }
 
     private void SetAnonymousUser()
@@ -153,5 +165,81 @@ public class AuthControllerTests
         var result = await _controller.Register(request);
 
         result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task Register_WhenUsersExistAndAuthenticatedAsSuperAdmin_ShouldReturnOk()
+    {
+        SetAuthenticatedUser(role: "SuperAdmin");
+        var request = new RegisterRequestDto { Email = "new@a.com", Password = "Pass1!", FullName = "New" };
+        _mockUserService.Setup(x => x.GetAllUsersAsync(1, 1, null))
+                        .ReturnsAsync(Result.Success(NonEmptyUserList()));
+        _mockAuthService.Setup(x => x.RegisterAsync(request))
+                        .ReturnsAsync(Result.Success(new AuthResponseDto { Token = "token" }));
+
+        var result = await _controller.Register(request);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task Register_InTestingEnv_ShouldBypassAuthCheck()
+    {
+        var controller = CreateControllerForEnv("Testing");
+        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
+        var request = new RegisterRequestDto { Email = "new@a.com", Password = "Pass1!", FullName = "New" };
+        _mockUserService.Setup(x => x.GetAllUsersAsync(1, 1, null))
+                        .ReturnsAsync(Result.Success(NonEmptyUserList()));
+        _mockAuthService.Setup(x => x.RegisterAsync(request))
+                        .ReturnsAsync(Result.Success(new AuthResponseDto { Token = "token" }));
+
+        var result = await controller.Register(request);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task Register_WhenGetAllUsersFails_ShouldTreatAsNoUsers()
+    {
+        SetAnonymousUser();
+        var request = new RegisterRequestDto { Email = "first@a.com", Password = "Pass1!", FullName = "First" };
+        _mockUserService.Setup(x => x.GetAllUsersAsync(1, 1, null))
+                        .ReturnsAsync(Result.Failure<UserListDto>("DB error"));
+        _mockAuthService.Setup(x => x.RegisterAsync(request))
+                        .ReturnsAsync(Result.Success(new AuthResponseDto { Token = "token" }));
+
+        var result = await _controller.Register(request);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task Register_WhenGetAllUsersReturnsNullData_ShouldTreatAsNoUsers()
+    {
+        SetAnonymousUser();
+        var request = new RegisterRequestDto { Email = "first@a.com", Password = "Pass1!", FullName = "First" };
+        _mockUserService.Setup(x => x.GetAllUsersAsync(1, 1, null))
+                        .ReturnsAsync(Result.Success<UserListDto>(null!));
+        _mockAuthService.Setup(x => x.RegisterAsync(request))
+                        .ReturnsAsync(Result.Success(new AuthResponseDto { Token = "token" }));
+
+        var result = await _controller.Register(request);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task Register_WhenRegisterFails_WithExistingUsersAndAdmin_ShouldReturnBadRequest()
+    {
+        SetAuthenticatedUser(role: "Admin");
+        var request = new RegisterRequestDto { Email = "dup@a.com", Password = "Pass1!", FullName = "Dup" };
+        _mockUserService.Setup(x => x.GetAllUsersAsync(1, 1, null))
+                        .ReturnsAsync(Result.Success(NonEmptyUserList()));
+        _mockAuthService.Setup(x => x.RegisterAsync(request))
+                        .ReturnsAsync(Result.Failure<AuthResponseDto>("Email already registered"));
+
+        var result = await _controller.Register(request);
+
+        result.Should().BeOfType<BadRequestObjectResult>();
     }
 }

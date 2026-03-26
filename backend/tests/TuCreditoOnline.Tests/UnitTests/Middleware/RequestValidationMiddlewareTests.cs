@@ -147,4 +147,92 @@ public class RequestValidationMiddlewareTests
         context.Response.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
         nextCalled.Should().BeFalse();
     }
+
+    [Fact]
+    public async Task InvokeAsync_WithNullContentLength_ShouldCallNext()
+    {
+        var nextCalled = false;
+        RequestDelegate next = ctx => { nextCalled = true; return Task.CompletedTask; };
+        var middleware = BuildMiddleware(next);
+        var context = CreateContext();
+        context.Request.ContentLength = null;
+
+        await middleware.InvokeAsync(context);
+
+        nextCalled.Should().BeTrue();
+        context.Response.StatusCode.Should().Be(200);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WithSmallContentLength_ShouldCallNext()
+    {
+        var nextCalled = false;
+        RequestDelegate next = ctx => { nextCalled = true; return Task.CompletedTask; };
+        var middleware = BuildMiddleware(next);
+        var context = CreateContext();
+        context.Request.ContentLength = 256;
+
+        await middleware.InvokeAsync(context);
+
+        nextCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WithCleanHeaders_ShouldCallNext()
+    {
+        var nextCalled = false;
+        RequestDelegate next = ctx => { nextCalled = true; return Task.CompletedTask; };
+        var middleware = BuildMiddleware(next);
+        var context = CreateContext();
+        context.Request.Headers["Authorization"] = "Bearer some-jwt-token";
+        context.Request.Headers["Accept"] = "application/json";
+
+        await middleware.InvokeAsync(context);
+
+        nextCalled.Should().BeTrue();
+        context.Response.StatusCode.Should().Be(200);
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WithEmptyQueryString_ShouldCallNext()
+    {
+        var nextCalled = false;
+        RequestDelegate next = ctx => { nextCalled = true; return Task.CompletedTask; };
+        var middleware = BuildMiddleware(next);
+        var context = CreateContext();
+        context.Request.QueryString = QueryString.Empty;
+
+        await middleware.InvokeAsync(context);
+
+        nextCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WithMultipleCleanQueryParams_ShouldCallNext()
+    {
+        var nextCalled = false;
+        RequestDelegate next = ctx => { nextCalled = true; return Task.CompletedTask; };
+        var middleware = BuildMiddleware(next);
+        var context = CreateContext();
+        context.Request.QueryString = new QueryString("?page=1&pageSize=10&search=credit&status=active");
+
+        await middleware.InvokeAsync(context);
+
+        nextCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task InvokeAsync_WithSuspiciousSecondQueryParam_ShouldReturn400()
+    {
+        var nextCalled = false;
+        RequestDelegate next = ctx => { nextCalled = true; return Task.CompletedTask; };
+        var middleware = BuildMiddleware(next);
+        var context = CreateContext();
+        context.Request.QueryString = new QueryString("?page=1&search=<script>alert(1)</script>");
+
+        await middleware.InvokeAsync(context);
+
+        context.Response.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        nextCalled.Should().BeFalse();
+    }
 }
