@@ -220,6 +220,7 @@ export class HTMLDashboard {
 [data-theme="grey"] {
   --bg: #e2e8f0; --surface: #f8fafc; --surface2: #f1f5f9; --border: #cbd5e1;
   --text: #1e293b; --muted: #64748b; --accent: #4f46e5;
+  --passed: #059669; --failed: #dc2626; --skipped: #475569; --pending: #d97706;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.6; }

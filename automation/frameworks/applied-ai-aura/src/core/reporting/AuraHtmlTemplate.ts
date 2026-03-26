@@ -63,6 +63,23 @@ ${grey ? `/* GREY MODE — slate + tarjetas con borde (sin light mode plano) */
 .aura-theme-grey .tab-btn:not(.active):hover{color:#0f172a!important}
 .aura-theme-grey main .prose,.aura-theme-grey main .prose p,.aura-theme-grey main .prose li{color:#334155!important}
 .aura-theme-grey main .prose strong{color:#0f172a!important}
+.aura-theme-grey main .text-emerald-300,
+.aura-theme-grey main .text-emerald-400{color:#059669!important}
+.aura-theme-grey main .text-red-300,
+.aura-theme-grey main .text-red-400{color:#dc2626!important}
+.aura-theme-grey main .text-amber-300,
+.aura-theme-grey main .text-amber-400{color:#d97706!important}
+.aura-theme-grey main span[class*="bg-emerald-900"]{background:#d1fae5!important;color:#065f46!important;border-color:#6ee7b7!important}
+.aura-theme-grey main span[class*="bg-red-900"]{background:#fee2e2!important;color:#991b1b!important;border-color:#fca5a5!important}
+.aura-theme-grey main span[class*="bg-amber-900"]{background:#fef3c7!important;color:#92400e!important;border-color:#fcd34d!important}
+.aura-theme-grey main span.bg-gray-800{background:#f1f5f9!important;color:#475569!important;border-color:#cbd5e1!important}
+.aura-theme-grey main div[class*="bg-emerald-900"]{background:#d1fae5!important}
+.aura-theme-grey main div[class*="bg-red-900"]{background:#fee2e2!important}
+.aura-theme-grey main div.rounded-xl.border[class*="bg-emerald"] .text-white{color:#065f46!important}
+.aura-theme-grey main div.rounded-xl.border[class*="bg-red"] .text-white{color:#991b1b!important}
+.aura-theme-grey main .bg-emerald-500{background:#059669!important}
+.aura-theme-grey main .bg-red-500{background:#dc2626!important}
+.aura-theme-grey main .bg-gray-800.rounded-full{background:#e2e8f0!important}
 ` : ''}
 </style>
 </head>

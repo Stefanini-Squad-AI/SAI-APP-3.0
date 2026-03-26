@@ -1559,16 +1559,9 @@ jobs:
           script: |
             const updateDashboard = require('./.github/scripts/update-dashboard');
             const url = process.env.REPORT_URL;
-            let content;
-            if (url) {
-              content = [
-                '> \u2705 Functional tests completed',
-                '>',
-                `> \u{1F4C4} [View functional test report](${url})`,
-              ].join('\n');
-            } else {
-              content = '> \u2705 Functional tests completed - \u{1F4E6} _Report available in artifacts_';
-            }
+            const content = url
+              ? `> \u2705 **Functional** - Tests completed - \u{1F4C4} [View detailed report](${url})`
+              : '> \u2705 **Functional** - Tests completed - \u{1F4E6} _Report available in artifacts_';
 
             await updateDashboard({ github, context, sections: { 'functional': content } });
 
