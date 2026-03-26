@@ -345,6 +345,8 @@ Return ONLY valid JSON (no markdown fences):
     ? `\nCode Coverage:\n  Line Coverage: ${coverageInfo.lineRate.toFixed(2)}%\n  Branch Coverage: ${coverageInfo.branchRate.toFixed(2)}%`
     : '';
 
+  const failedTestsSection = failedTests ? `Failed Tests:\n${failedTests}` : 'No test failures detected.';
+
   const userPrompt =
     reportKind === 'integration'
       ? `Analyze these Backend INTEGRATION test results (namespace IntegrationTests, HTTP/API, WebApplicationFactory) and generate an executive summary:
@@ -362,7 +364,7 @@ ${coverageSummary}
 Test classes / areas:
 ${classSummary}
 
-${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}
+${failedTestsSection}
 
 Relate coverage (lines/branches) to how much of the application code was exercised by these integration scenarios when metrics are present.`
       : `Analyze these Backend unit test results and generate an executive summary:
@@ -379,7 +381,7 @@ ${coverageSummary}
 Test Classes:
 ${classSummary}
 
-${failedTests ? 'Failed Tests:\n' + failedTests : 'No test failures detected.'}`;
+${failedTestsSection}`;
 
   try {
     console.log(`  Calling Perplexity API (model: ${model}) [${reportKind}]...`);
@@ -849,6 +851,51 @@ function renderCoverageMissingPanel() {
   </div>`;
 }
 
+function renderPackageClassRows(pkg) {
+  return pkg.classes.map(cls => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
+          <td class="px-4 py-3"><code class="text-xs text-aura-600 dark:text-aura-400">${esc(cls.name)}</code></td>
+          <td class="px-4 py-3 text-xs"><span class="text-emerald-600 dark:text-emerald-400 font-semibold">${cls.coveredLines}</span><span class="text-slate-400 dark:text-gray-500"> / ${cls.totalLines}</span></td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(cls.lineRate)}" style="width:${Math.min(cls.lineRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(cls.lineRate)} min-w-[50px] text-right">${cls.lineRate.toFixed(2)}%</span>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                <div class="h-full rounded-full ${getCoverageClass(cls.branchRate)}" style="width:${Math.min(cls.branchRate, 100)}%"></div>
+              </div>
+              <span class="text-xs font-semibold ${getCoverageBadge(cls.branchRate)} min-w-[50px] text-right">${cls.branchRate.toFixed(2)}%</span>
+            </div>
+          </td>
+        </tr>`).join('');
+}
+
+function renderPackageClassBlock(pkg) {
+  if (pkg.classes.length === 0) return '';
+  return `
+  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-4">
+    <div class="p-4 border-b border-slate-200 dark:border-zinc-800">
+      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 flex items-center gap-2"><i class="bi bi-file-earmark-code"></i> ${esc(pkg.name)}</h3>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colFile">Archivo</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colLines">Líneas</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="lineCoverage">Cobertura de Líneas</th>
+        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="branchCoverage">Cobertura de Ramas</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
+${renderPackageClassRows(pkg)}
+      </tbody>
+    </table>
+  </div>`;
+}
+
 /** Bloques KPI + tablas de cobertura (mismo contenido que antes para unit/integration con XML). */
 function renderCoverageDetailBlocks(coverageInfo) {
   return `
@@ -912,43 +959,7 @@ ${coverageInfo.packages.map(pkg => `
     </table>
   </div>
 
-${coverageInfo.packages.map(pkg => pkg.classes.length > 0 ? `
-  <div class="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden shadow-sm mb-4">
-    <div class="p-4 border-b border-slate-200 dark:border-zinc-800">
-      <h3 class="text-sm font-semibold text-slate-500 dark:text-gray-400 flex items-center gap-2"><i class="bi bi-file-earmark-code"></i> ${esc(pkg.name)}</h3>
-    </div>
-    <table class="w-full text-sm">
-      <thead class="bg-slate-50 dark:bg-zinc-800/50"><tr>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colFile">Archivo</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="colLines">Líneas</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="lineCoverage">Cobertura de Líneas</th>
-        <th class="px-4 py-2 text-left text-xs font-semibold text-slate-500 dark:text-gray-400" data-i18n="branchCoverage">Cobertura de Ramas</th>
-      </tr></thead>
-      <tbody class="divide-y divide-slate-100 dark:divide-zinc-800/50">
-${pkg.classes.map(cls => `
-        <tr class="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors">
-          <td class="px-4 py-3"><code class="text-xs text-aura-600 dark:text-aura-400">${esc(cls.name)}</code></td>
-          <td class="px-4 py-3 text-xs"><span class="text-emerald-600 dark:text-emerald-400 font-semibold">${cls.coveredLines}</span><span class="text-slate-400 dark:text-gray-500"> / ${cls.totalLines}</span></td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                <div class="h-full rounded-full ${getCoverageClass(cls.lineRate)}" style="width:${Math.min(cls.lineRate, 100)}%"></div>
-              </div>
-              <span class="text-xs font-semibold ${getCoverageBadge(cls.lineRate)} min-w-[50px] text-right">${cls.lineRate.toFixed(2)}%</span>
-            </div>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              <div class="flex-1 bg-slate-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                <div class="h-full rounded-full ${getCoverageClass(cls.branchRate)}" style="width:${Math.min(cls.branchRate, 100)}%"></div>
-              </div>
-              <span class="text-xs font-semibold ${getCoverageBadge(cls.branchRate)} min-w-[50px] text-right">${cls.branchRate.toFixed(2)}%</span>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>` : '').join('')}`;
+${coverageInfo.packages.map(pkg => renderPackageClassBlock(pkg)).join('')}`;
 }
 
 function renderCoverageTabBody(testInfo, coverageInfo, int) {
@@ -1004,7 +1015,7 @@ function generateHtmlReport(testInfo, coverageInfo, summaryByLang, reportKind = 
   const headerSub = int
     ? `.NET 8 · xUnit · Integración · API · WebApplicationFactory · ${new Date().toLocaleDateString('es-ES')}`
     : `.NET 8 · xUnit · Moq · FluentAssertions · ${new Date().toLocaleDateString('es-ES')}`;
-  const i18nJson = JSON.stringify(buildI18nPayload(reportKind)).replaceAll('</', '<\\/');
+  const i18nJson = JSON.stringify(buildI18nPayload(reportKind)).replaceAll('</', String.raw`<\/`);
 
   const summaryHtmlByLang = {
     en: mdToHtml(summaryByLang.en),
