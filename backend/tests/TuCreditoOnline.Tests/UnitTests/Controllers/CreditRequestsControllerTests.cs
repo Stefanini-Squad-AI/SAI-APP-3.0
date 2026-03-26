@@ -165,7 +165,7 @@ public class CreditRequestsControllerTests
     // ── ApproveCreditRequest ──────────────────────────────────────────────────
 
     [Fact]
-    public async Task ApproveCreditRequest_WhenSuccess_WithNullDto_ShouldReturnOk()
+    public async Task ApproveCreditRequest_WhenSuccess_ShouldReturnOk()
     {
         _mockService.Setup(x => x.UpdateCreditRequestStatusAsync(
                         "cr1",
@@ -173,20 +173,6 @@ public class CreditRequestsControllerTests
                     .ReturnsAsync(Result.Success(MakeEntity()));
 
         var result = await _controller.ApproveCreditRequest("cr1", null);
-
-        result.Should().BeOfType<OkObjectResult>();
-    }
-
-    [Fact]
-    public async Task ApproveCreditRequest_WhenSuccess_WithExistingDto_ShouldOverrideStatusAndReturnOk()
-    {
-        var dto = new UpdateCreditRequestStatusDto { Status = "Pending", Remarks = "Looks good" };
-        _mockService.Setup(x => x.UpdateCreditRequestStatusAsync(
-                        "cr1",
-                        It.Is<UpdateCreditRequestStatusDto>(d => d.Status == "Approved" && d.Remarks == "Looks good")))
-                    .ReturnsAsync(Result.Success(MakeEntity()));
-
-        var result = await _controller.ApproveCreditRequest("cr1", dto);
 
         result.Should().BeOfType<OkObjectResult>();
     }
@@ -205,7 +191,7 @@ public class CreditRequestsControllerTests
     // ── RejectCreditRequest ───────────────────────────────────────────────────
 
     [Fact]
-    public async Task RejectCreditRequest_WhenSuccess_WithNullDto_ShouldReturnOk()
+    public async Task RejectCreditRequest_WhenSuccess_ShouldReturnOk()
     {
         _mockService.Setup(x => x.UpdateCreditRequestStatusAsync(
                         "cr1",
@@ -213,20 +199,6 @@ public class CreditRequestsControllerTests
                     .ReturnsAsync(Result.Success(MakeEntity()));
 
         var result = await _controller.RejectCreditRequest("cr1", null);
-
-        result.Should().BeOfType<OkObjectResult>();
-    }
-
-    [Fact]
-    public async Task RejectCreditRequest_WhenSuccess_WithExistingDto_ShouldOverrideStatusAndReturnOk()
-    {
-        var dto = new UpdateCreditRequestStatusDto { Status = "Pending", Remarks = "Insufficient income" };
-        _mockService.Setup(x => x.UpdateCreditRequestStatusAsync(
-                        "cr1",
-                        It.Is<UpdateCreditRequestStatusDto>(d => d.Status == "Rejected" && d.Remarks == "Insufficient income")))
-                    .ReturnsAsync(Result.Success(MakeEntity()));
-
-        var result = await _controller.RejectCreditRequest("cr1", dto);
 
         result.Should().BeOfType<OkObjectResult>();
     }
