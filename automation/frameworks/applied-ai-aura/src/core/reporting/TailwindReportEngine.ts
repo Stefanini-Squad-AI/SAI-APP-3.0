@@ -122,7 +122,12 @@ export class TailwindReportEngine {
 
   private loadCucumberJSON(): CucumberFeature[] {
     if (!fs.existsSync(this.inputPath)) return [];
-    return JSON.parse(fs.readFileSync(this.inputPath, 'utf-8')) as CucumberFeature[];
+    try {
+      return JSON.parse(fs.readFileSync(this.inputPath, 'utf-8')) as CucumberFeature[];
+    } catch (err) {
+      console.warn('[AURA/Report] Failed to parse cucumber JSON, file may be corrupt:', (err as Error).message);
+      return [];
+    }
   }
 
   private loadScenarioJSONL(): AuraReportData[] {
@@ -387,6 +392,66 @@ ${summary.failed > 0 ? 'There were failures: prioritize risk, root-cause themes,
     return t.trim();
   }
 
+  /**
+   * Attempts to repair malformed JSON from LLM output by escaping
+   * unescaped control characters inside string values.
+   */
+  private repairJsonString(s: string): string {
+    return s.replace(
+      /("(?:[^"\\]|\\.)*")/g,
+      (match) => {
+        const inner = match.slice(1, -1);
+        const fixed = inner
+          .replace(/(?<!\\)\t/g, '\\t')
+          .replace(/(?<!\\)\r/g, '\\r')
+          .replace(/(?<!\\)\n/g, '\\n');
+        return `"${fixed}"`;
+      },
+    );
+  }
+
+  /**
+   * Last-resort: split the raw response by language keys and extract
+   * markdown content without relying on JSON.parse at all.
+   */
+  private extractByLanguageMarkers(raw: string): { en: string; es: string; pt: string } | null {
+    const keys = ['en', 'es', 'pt'] as const;
+    const result: Record<string, string> = { en: '', es: '', pt: '' };
+    for (let k = 0; k < keys.length; k++) {
+      const key = keys[k];
+      const pattern = new RegExp(`"${key}"\\s*:\\s*"`, 'i');
+      const start = raw.search(pattern);
+      if (start === -1) continue;
+      const valueStart = raw.indexOf('"', raw.indexOf(':', start) + 1) + 1;
+      if (valueStart <= 0) continue;
+      let depth = 0;
+      let end = -1;
+      for (let i = valueStart; i < raw.length; i++) {
+        if (raw[i] === '\\') { i++; continue; }
+        if (raw[i] === '"' && depth === 0) { end = i; break; }
+      }
+      if (end === -1) {
+        const nextKey = k + 1 < keys.length ? keys[k + 1] : null;
+        if (nextKey) {
+          const nextPattern = new RegExp(`"${nextKey}"\\s*:`, 'i');
+          const nextStart = raw.slice(valueStart).search(nextPattern);
+          if (nextStart !== -1) end = valueStart + nextStart;
+        }
+        if (end === -1) end = raw.length;
+        result[key] = raw.slice(valueStart, end).replace(/[",}\s]+$/, '').trim();
+      } else {
+        result[key] = raw.slice(valueStart, end);
+      }
+      try { result[key] = JSON.parse(`"${result[key]}"`); } catch { /* keep as-is */ }
+    }
+    if (!result.en && !result.es && !result.pt) return null;
+    return {
+      en: result.en || result.es || result.pt,
+      es: result.es || result.en || result.pt,
+      pt: result.pt || result.en || result.es,
+    };
+  }
+
   private parseSummaryJson(raw: string): { en: string; es: string; pt: string } | null {
     const tryParse = (s: string): { en: string; es: string; pt: string } | null => {
       try {
@@ -401,10 +466,25 @@ ${summary.failed > 0 ? 'There were failures: prioritize risk, root-cause themes,
         return null;
       }
     };
+
     const direct = tryParse(raw);
     if (direct) return direct;
+
     const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    return fenced?.[1] ? tryParse(fenced[1]) : null;
+    const fromFence = fenced?.[1] ? tryParse(fenced[1]) : null;
+    if (fromFence) return fromFence;
+
+    const repaired = tryParse(this.repairJsonString(raw));
+    if (repaired) return repaired;
+
+    const byMarkers = this.extractByLanguageMarkers(raw);
+    if (byMarkers) {
+      console.info('[AURA/Report] Recovered AI summary via language-marker fallback.');
+      return byMarkers;
+    }
+
+    console.warn('[AURA/Report] Raw AI response (first 500 chars):', raw.slice(0, 500));
+    return null;
   }
 
   // ─── Screenshot Embedding ──────────────────────────────────────────────────
@@ -468,6 +548,7 @@ html[data-theme="grey"] header .text-white,
 html[data-theme="grey"] header .text-white\\/70{color:#fff!important}
 html[data-theme="grey"] header button[class*="bg-gray-800"]{background:rgba(255,255,255,.15)!important;border:1px solid rgba(255,255,255,.25)!important;color:#fff!important}
 html[data-theme="grey"] header select[class*="bg-gray-800"]{background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.22)!important;color:#fff!important}
+html[data-theme="grey"] header select option{color:#0f172a;background:#fff}
 html[data-theme="grey"] nav.bg-gray-900\\/50{background:rgba(226,232,240,.95)!important;border-color:#cbd5e1!important}
 html[data-theme="grey"] .tab-btn{border-color:transparent!important;color:#64748b!important}
 html[data-theme="grey"] .tab-btn.active{border-color:#6366f1!important;color:#4338ca!important;background:rgba(99,102,241,.1)!important}

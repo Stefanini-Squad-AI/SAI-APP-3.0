@@ -63,7 +63,12 @@ export class ReportEngine {
       throw new Error(`[AURA/Report] Input not found: ${this.inputPath}`);
     }
     const raw = fs.readFileSync(this.inputPath, 'utf-8');
-    return JSON.parse(raw) as CucumberFeature[];
+    try {
+      return JSON.parse(raw) as CucumberFeature[];
+    } catch (err) {
+      console.warn('[AURA/Report] Failed to parse cucumber JSON, file may be corrupt:', (err as Error).message);
+      return [];
+    }
   }
 
   private parseScenarios(features: CucumberFeature[]): ScenarioResult[] {

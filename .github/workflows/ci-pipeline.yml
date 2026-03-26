@@ -1476,8 +1476,11 @@ jobs:
           printf "AURA_TARGET_URL=%s\n" "$TARGET" >> .env
 
       - name: Run functional tests
+        id: run-tests
         working-directory: automation/frameworks/applied-ai-aura
-        run: npx cucumber-js --tags "@preview or @smoke"
+        run: |
+          mkdir -p reports
+          npx cucumber-js --tags "@preview or @smoke"
         continue-on-error: true
 
       # cucumber-js alone only writes aura-scenarios.jsonl per scenario; aura-report.html
@@ -1539,13 +1542,17 @@ jobs:
         uses: actions/github-script@v8
         env:
           REPORT_URL: ${{ steps.functional-report-url.outputs.functional_report_url }}
+          TESTS_OUTCOME: ${{ steps.run-tests.outcome }}
         with:
           script: |
             const updateDashboard = require('./.github/scripts/update-dashboard');
             const url = process.env.REPORT_URL;
+            const ok = process.env.TESTS_OUTCOME === 'success';
+            const icon = ok ? '\u2705' : '\u274C';
+            const status = ok ? 'Tests completed' : 'Tests completed with errors';
             const content = url
-              ? `> \u2705 **Functional** - Tests completed - \u{1F4C4} [View detailed report](${url})`
-              : '> \u2705 **Functional** - Tests completed - \u{1F4E6} _Report available in artifacts_';
+              ? `> ${icon} **Functional** - ${status} - \u{1F4C4} [View detailed report](${url})`
+              : `> ${icon} **Functional** - ${status} - \u{1F4E6} _Report available in artifacts_`;
 
             await updateDashboard({ github, context, sections: { 'functional': content } });
 

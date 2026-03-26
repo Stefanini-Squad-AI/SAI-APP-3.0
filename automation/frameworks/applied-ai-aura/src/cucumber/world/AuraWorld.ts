@@ -9,7 +9,7 @@
  *   this.factory     — BrowserFactory (browser lifecycle)
  */
 import { config as dotenvConfig } from 'dotenv';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
 import { setWorldConstructor, World, IWorldOptions } from '@cucumber/cucumber';
 import type { Page } from 'playwright';
 import { IntentBuilder } from '../../core/intent/IntentBuilder';
@@ -52,7 +52,7 @@ export class AuraWorld extends World implements AuraWorldInterface {
     this.report.startScenario(scenarioName, featureName, tags);
 
     this.factory    = BrowserFactory.fromEnv();
-    this.factory.setVideoDir(this.report.getReportDir() + '/videos');
+    this.factory.setVideoDir(join(this.report.getReportDir(), 'videos'));
     this.page       = await this.factory.createPage();
     this.I          = IntentBuilder.withRegistry(this.page, this.buildRegistry(), this.observable);
     this.webActions = new WebActions(this.page, this.I);
@@ -62,7 +62,7 @@ export class AuraWorld extends World implements AuraWorldInterface {
   }
 
   async teardown(): Promise<void> {
-    await this.factory.teardown();
+    await this.factory?.teardown();
   }
 
   collectIntentResults(): readonly IntentResult[] {

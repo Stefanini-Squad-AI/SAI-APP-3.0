@@ -67,9 +67,15 @@ export class BrowserFactory {
   }
 
   async teardown(): Promise<void> {
-    await this.context?.close();
-    await this.browser?.close();
-    this.context = null;
-    this.browser = null;
+    try {
+      await this.context?.close();
+    } finally {
+      this.context = null;
+      try {
+        await this.browser?.close();
+      } finally {
+        this.browser = null;
+      }
+    }
   }
 }

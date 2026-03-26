@@ -60,6 +60,7 @@ ${grey ? `/* GREY MODE — slate + tarjetas con borde (sin light mode plano) */
 .aura-theme-grey .search-input{background:#fff!important;border:1px solid #cbd5e1!important;color:#0f172a!important}
 .aura-theme-grey .tab-btn.active{border-color:#6366f1!important;color:#4338ca!important;background:rgba(99,102,241,.12)!important}
 .aura-theme-grey .tab-btn:not(.active){color:#64748b!important}
+.aura-theme-grey header select option{color:#0f172a;background:#fff}
 .aura-theme-grey .tab-btn:not(.active):hover{color:#0f172a!important}
 .aura-theme-grey main .prose,.aura-theme-grey main .prose p,.aura-theme-grey main .prose li{color:#334155!important}
 .aura-theme-grey main .prose strong{color:#0f172a!important}
