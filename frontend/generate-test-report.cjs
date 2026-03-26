@@ -279,9 +279,53 @@ async function callExecutiveLLM(systemPrompt, userPrompt) {
 
 function generateLocalFallbackSummary(stats, testSuites, coverageInfo) {
   const passRate = stats.total > 0 ? ((stats.passed / stats.total) * 100).toFixed(2) : '0';
-  const passRateNum = parseFloat(passRate);
-  const semaphore = passRateNum === 100 ? 'GREEN' : passRateNum >= 80 ? 'YELLOW' : 'RED';
+  const passRateNum = Number.parseFloat(passRate);
   const date = new Date().toISOString().split('T')[0];
+
+  let semaphore;
+  if (passRateNum === 100) semaphore = 'GREEN';
+  else if (passRateNum >= 80) semaphore = 'YELLOW';
+  else semaphore = 'RED';
+
+  const semaphoreEs = { GREEN: 'VERDE', YELLOW: 'AMARILLO', RED: 'ROJO' }[semaphore];
+  const semaphorePt = { GREEN: 'VERDE', YELLOW: 'AMARELO', RED: 'VERMELHO' }[semaphore];
+
+  let riskEn;
+  let riskEs;
+  let riskPt;
+  if (passRateNum === 100) {
+    riskEn = 'Low risk — all tests passing.';
+    riskEs = 'Riesgo bajo — todas las pruebas pasaron.';
+    riskPt = 'Risco baixo — todos os testes passaram.';
+  } else if (passRateNum >= 80) {
+    riskEn = 'Medium risk — some tests failing.';
+    riskEs = 'Riesgo medio — algunas pruebas fallaron.';
+    riskPt = 'Risco médio — alguns testes falharam.';
+  } else {
+    riskEn = 'High risk — significant test failures detected.';
+    riskEs = 'Riesgo alto — se detectaron fallos significativos.';
+    riskPt = 'Risco alto — falhas significativas detectadas.';
+  }
+
+  const warningEn = stats.failures === 0 ? 'No warnings.' : `${stats.failures} test(s) require attention.`;
+  const warningEs = stats.failures === 0 ? 'Sin advertencias.' : `${stats.failures} prueba(s) requieren atención.`;
+  const warningPt = stats.failures === 0 ? 'Sem avisos.' : `${stats.failures} teste(s) requerem atenção.`;
+
+  const recEn = stats.failures > 0 ? 'Fix failing tests before merging.' : 'All tests pass — continue monitoring coverage.';
+  const recEs = stats.failures > 0 ? 'Corregir las pruebas fallidas antes de hacer merge.' : 'Todas las pruebas pasan — continuar monitoreando la cobertura.';
+  const recPt = stats.failures > 0 ? 'Corrigir os testes com falha antes do merge.' : 'Todos os testes passam — continuar monitorando a cobertura.';
+
+  const covRecEn = coverageInfo && coverageInfo.filesWithNoLineCoverage > 0
+    ? `Add tests for the ${coverageInfo.filesWithNoLineCoverage} source files with 0% coverage.`
+    : 'Maintain current coverage levels.';
+  const covRecEs = coverageInfo && coverageInfo.filesWithNoLineCoverage > 0
+    ? `Agregar pruebas para los ${coverageInfo.filesWithNoLineCoverage} archivos con 0% de cobertura.`
+    : 'Mantener los niveles actuales de cobertura.';
+  const covRecPt = coverageInfo && coverageInfo.filesWithNoLineCoverage > 0
+    ? `Adicionar testes para os ${coverageInfo.filesWithNoLineCoverage} arquivos com 0% de cobertura.`
+    : 'Manter os níveis atuais de cobertura.';
+
+  const avgTimeEn = stats.total > 0 ? (stats.time / stats.total).toFixed(3) : '0';
 
   const failedTests = testSuites
     .flatMap((s) => s.testcases.filter((t) => t.status === 'failed').map((t) => ({ suite: s.name, name: t.name, failure: t.failure })))
@@ -299,50 +343,48 @@ function generateLocalFallbackSummary(stats, testSuites, coverageInfo) {
     return `- ${s.name}: ${s.tests} tests, ${sp} passed, ${s.failures} failed (${s.time.toFixed(2)}s)`;
   }).join('\n');
 
-  const makeContent = (lang) => {
-    const L = {
-      en: {
-        ctx: `## Context Header\n\nProject: TuCreditoOnline — Frontend (React + Jest). Report generated on ${date}. Total: ${stats.total} tests across ${testSuites.length} suites in ${stats.time.toFixed(2)}s.`,
-        sem: `## Overall Result (Traffic Light)\n\n**${semaphore}** — Pass rate: ${passRate}% (${stats.passed} passed, ${stats.failures} failed).`,
-        scope: `## Scope — What Was Tested?\n\n${suiteLines}`,
-        findings: `## Detailed Findings\n\n### What Worked\n\n- ${stats.passed} of ${stats.total} tests passed successfully.\n\n### Failures Found\n\n${failedList}\n\n### Warnings\n\n- ${stats.failures === 0 ? 'No warnings.' : `${stats.failures} test(s) require attention.`}`,
-        perf: `## Performance Metrics\n\n- Total duration: ${stats.time.toFixed(2)}s\n- Average per test: ${stats.total > 0 ? (stats.time / stats.total).toFixed(3) : '0'}s`,
-        risk: `## Risk Assessment\n\n- ${passRateNum === 100 ? 'Low risk — all tests passing.' : passRateNum >= 80 ? 'Medium risk — some tests failing.' : 'High risk — significant test failures detected.'}`,
-        cov: `## Test Coverage\n\n${covBlock}`,
-        rec: `## Actionable Recommendations\n\n- ${stats.failures > 0 ? 'Fix failing tests before merging.' : 'All tests pass — continue monitoring coverage.'}\n- ${coverageInfo && coverageInfo.filesWithNoLineCoverage > 0 ? `Add tests for the ${coverageInfo.filesWithNoLineCoverage} source files with 0% coverage.` : 'Maintain current coverage levels.'}`,
-        trend: `## Historical Trend\n\n- Single run — no historical data available for comparison.`,
-        gloss: `## Glossary of Terms\n\n- **Unit test**: a test that validates a single component or function in isolation.\n- **Suite**: a group of related tests.\n- **Line coverage**: percentage of source code lines executed during tests.\n- **Branch coverage**: percentage of code branches (if/else) exercised during tests.`,
-      },
-      es: {
-        ctx: `## Encabezado de Contexto\n\nProyecto: TuCreditoOnline — Frontend (React + Jest). Reporte generado el ${date}. Total: ${stats.total} tests en ${testSuites.length} suites en ${stats.time.toFixed(2)}s.`,
-        sem: `## Resultado General (Semáforo)\n\n**${semaphore === 'GREEN' ? 'VERDE' : semaphore === 'YELLOW' ? 'AMARILLO' : 'ROJO'}** — Tasa de éxito: ${passRate}% (${stats.passed} exitosos, ${stats.failures} fallidos).`,
-        scope: `## Alcance — ¿Qué se probó?\n\n${suiteLines}`,
-        findings: `## Hallazgos Detallados\n\n### Lo que funcionó\n\n- ${stats.passed} de ${stats.total} pruebas pasaron exitosamente.\n\n### Fallos encontrados\n\n${failedList}\n\n### Advertencias\n\n- ${stats.failures === 0 ? 'Sin advertencias.' : `${stats.failures} prueba(s) requieren atención.`}`,
-        perf: `## Métricas de Rendimiento\n\n- Duración total: ${stats.time.toFixed(2)}s\n- Promedio por test: ${stats.total > 0 ? (stats.time / stats.total).toFixed(3) : '0'}s`,
-        risk: `## Evaluación de Riesgos\n\n- ${passRateNum === 100 ? 'Riesgo bajo — todas las pruebas pasaron.' : passRateNum >= 80 ? 'Riesgo medio — algunas pruebas fallaron.' : 'Riesgo alto — se detectaron fallos significativos.'}`,
-        cov: `## Cobertura de Pruebas\n\n${covBlock}`,
-        rec: `## Recomendaciones Accionables\n\n- ${stats.failures > 0 ? 'Corregir las pruebas fallidas antes de hacer merge.' : 'Todas las pruebas pasan — continuar monitoreando la cobertura.'}\n- ${coverageInfo && coverageInfo.filesWithNoLineCoverage > 0 ? `Agregar pruebas para los ${coverageInfo.filesWithNoLineCoverage} archivos con 0% de cobertura.` : 'Mantener los niveles actuales de cobertura.'}`,
-        trend: `## Tendencia Histórica\n\n- Ejecución única — no hay datos históricos disponibles para comparación.`,
-        gloss: `## Glosario de Términos\n\n- **Prueba unitaria**: prueba que valida un componente o función de forma aislada.\n- **Suite**: grupo de pruebas relacionadas.\n- **Cobertura de líneas**: porcentaje de líneas de código fuente ejecutadas durante las pruebas.\n- **Cobertura de ramas**: porcentaje de ramas de código (if/else) ejercitadas durante las pruebas.`,
-      },
-      pt: {
-        ctx: `## Cabeçalho de Contexto\n\nProjeto: TuCreditoOnline — Frontend (React + Jest). Relatório gerado em ${date}. Total: ${stats.total} testes em ${testSuites.length} suites em ${stats.time.toFixed(2)}s.`,
-        sem: `## Resultado Geral (Semáforo)\n\n**${semaphore === 'GREEN' ? 'VERDE' : semaphore === 'YELLOW' ? 'AMARELO' : 'VERMELHO'}** — Taxa de sucesso: ${passRate}% (${stats.passed} aprovados, ${stats.failures} falhos).`,
-        scope: `## Escopo — O que foi testado?\n\n${suiteLines}`,
-        findings: `## Achados Detalhados\n\n### O que funcionou\n\n- ${stats.passed} de ${stats.total} testes passaram com sucesso.\n\n### Falhas encontradas\n\n${failedList}\n\n### Avisos\n\n- ${stats.failures === 0 ? 'Sem avisos.' : `${stats.failures} teste(s) requerem atenção.`}`,
-        perf: `## Métricas de Desempenho\n\n- Duração total: ${stats.time.toFixed(2)}s\n- Média por teste: ${stats.total > 0 ? (stats.time / stats.total).toFixed(3) : '0'}s`,
-        risk: `## Avaliação de Riscos\n\n- ${passRateNum === 100 ? 'Risco baixo — todos os testes passaram.' : passRateNum >= 80 ? 'Risco médio — alguns testes falharam.' : 'Risco alto — falhas significativas detectadas.'}`,
-        cov: `## Cobertura de Testes\n\n${covBlock}`,
-        rec: `## Recomendações Acionáveis\n\n- ${stats.failures > 0 ? 'Corrigir os testes com falha antes do merge.' : 'Todos os testes passam — continuar monitorando a cobertura.'}\n- ${coverageInfo && coverageInfo.filesWithNoLineCoverage > 0 ? `Adicionar testes para os ${coverageInfo.filesWithNoLineCoverage} arquivos com 0% de cobertura.` : 'Manter os níveis atuais de cobertura.'}`,
-        trend: `## Tendência Histórica\n\n- Execução única — sem dados históricos disponíveis para comparação.`,
-        gloss: `## Glossário de Termos\n\n- **Teste unitário**: teste que valida um componente ou função de forma isolada.\n- **Suite**: grupo de testes relacionados.\n- **Cobertura de linhas**: percentual de linhas de código-fonte executadas durante os testes.\n- **Cobertura de branches**: percentual de ramificações de código (if/else) exercitadas durante os testes.`,
-      },
-    };
-    const l = L[lang] || L.en;
-    return [l.ctx, l.sem, l.scope, l.findings, l.perf, l.risk, l.cov, l.rec, l.trend, l.gloss].join('\n\n');
-  };
+  const buildContent = (sections) => sections.join('\n\n');
 
-  return { en: makeContent('en'), es: makeContent('es'), pt: makeContent('pt') };
+  const en = buildContent([
+    `## Context Header\n\nProject: TuCreditoOnline — Frontend (React + Jest). Report generated on ${date}. Total: ${stats.total} tests across ${testSuites.length} suites in ${stats.time.toFixed(2)}s.`,
+    `## Overall Result (Traffic Light)\n\n**${semaphore}** — Pass rate: ${passRate}% (${stats.passed} passed, ${stats.failures} failed).`,
+    `## Scope — What Was Tested?\n\n${suiteLines}`,
+    `## Detailed Findings\n\n### What Worked\n\n- ${stats.passed} of ${stats.total} tests passed successfully.\n\n### Failures Found\n\n${failedList}\n\n### Warnings\n\n- ${warningEn}`,
+    `## Performance Metrics\n\n- Total duration: ${stats.time.toFixed(2)}s\n- Average per test: ${avgTimeEn}s`,
+    `## Risk Assessment\n\n- ${riskEn}`,
+    `## Test Coverage\n\n${covBlock}`,
+    `## Actionable Recommendations\n\n- ${recEn}\n- ${covRecEn}`,
+    `## Historical Trend\n\n- Single run — no historical data available for comparison.`,
+    `## Glossary of Terms\n\n- **Unit test**: a test that validates a single component or function in isolation.\n- **Suite**: a group of related tests.\n- **Line coverage**: percentage of source code lines executed during tests.\n- **Branch coverage**: percentage of code branches (if/else) exercised during tests.`,
+  ]);
+
+  const es = buildContent([
+    `## Encabezado de Contexto\n\nProyecto: TuCreditoOnline — Frontend (React + Jest). Reporte generado el ${date}. Total: ${stats.total} tests en ${testSuites.length} suites en ${stats.time.toFixed(2)}s.`,
+    `## Resultado General (Semáforo)\n\n**${semaphoreEs}** — Tasa de éxito: ${passRate}% (${stats.passed} exitosos, ${stats.failures} fallidos).`,
+    `## Alcance — ¿Qué se probó?\n\n${suiteLines}`,
+    `## Hallazgos Detallados\n\n### Lo que funcionó\n\n- ${stats.passed} de ${stats.total} pruebas pasaron exitosamente.\n\n### Fallos encontrados\n\n${failedList}\n\n### Advertencias\n\n- ${warningEs}`,
+    `## Métricas de Rendimiento\n\n- Duración total: ${stats.time.toFixed(2)}s\n- Promedio por test: ${avgTimeEn}s`,
+    `## Evaluación de Riesgos\n\n- ${riskEs}`,
+    `## Cobertura de Pruebas\n\n${covBlock}`,
+    `## Recomendaciones Accionables\n\n- ${recEs}\n- ${covRecEs}`,
+    `## Tendencia Histórica\n\n- Ejecución única — no hay datos históricos disponibles para comparación.`,
+    `## Glosario de Términos\n\n- **Prueba unitaria**: prueba que valida un componente o función de forma aislada.\n- **Suite**: grupo de pruebas relacionadas.\n- **Cobertura de líneas**: porcentaje de líneas de código fuente ejecutadas durante las pruebas.\n- **Cobertura de ramas**: porcentaje de ramas de código (if/else) ejercitadas durante las pruebas.`,
+  ]);
+
+  const pt = buildContent([
+    `## Cabeçalho de Contexto\n\nProjeto: TuCreditoOnline — Frontend (React + Jest). Relatório gerado em ${date}. Total: ${stats.total} testes em ${testSuites.length} suites em ${stats.time.toFixed(2)}s.`,
+    `## Resultado Geral (Semáforo)\n\n**${semaphorePt}** — Taxa de sucesso: ${passRate}% (${stats.passed} aprovados, ${stats.failures} falhos).`,
+    `## Escopo — O que foi testado?\n\n${suiteLines}`,
+    `## Achados Detalhados\n\n### O que funcionou\n\n- ${stats.passed} de ${stats.total} testes passaram com sucesso.\n\n### Falhas encontradas\n\n${failedList}\n\n### Avisos\n\n- ${warningPt}`,
+    `## Métricas de Desempenho\n\n- Duração total: ${stats.time.toFixed(2)}s\n- Média por teste: ${avgTimeEn}s`,
+    `## Avaliação de Riscos\n\n- ${riskPt}`,
+    `## Cobertura de Testes\n\n${covBlock}`,
+    `## Recomendações Acionáveis\n\n- ${recPt}\n- ${covRecPt}`,
+    `## Tendência Histórica\n\n- Execução única — sem dados históricos disponíveis para comparação.`,
+    `## Glossário de Termos\n\n- **Teste unitário**: teste que valida um componente ou função de forma isolada.\n- **Suite**: grupo de testes relacionados.\n- **Cobertura de linhas**: percentual de linhas de código-fonte executadas durante os testes.\n- **Cobertura de branches**: percentual de ramificações de código (if/else) exercitadas durante os testes.`,
+  ]);
+
+  return { en, es, pt };
 }
 
 async function generateExecutiveSummary(stats, testSuites, coverageInfo) {
