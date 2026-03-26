@@ -14,7 +14,7 @@
 import type { ReportSummary, ScenarioResult, StepResult, ChangeEntry } from '../../types/index';
 
 export class HTMLDashboard {
-  constructor(private readonly theme: 'dark' | 'grey' = 'dark') {}
+  constructor(private readonly theme: 'dark' | 'grey' = 'grey') {}
 
   render(summary: ReportSummary): string {
     const css = this.buildCSS();

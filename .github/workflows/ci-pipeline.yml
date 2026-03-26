@@ -1164,29 +1164,13 @@ jobs:
             const integrationIcon = integrationOk ? '\u2705' : '\u274C';
             const integrationStatus = integrationOk ? 'Tests completed successfully' : 'Tests completed with errors';
 
-            let integrationContent;
-            if (integrationReportUrl) {
-              integrationContent = [
-                `> ${integrationIcon} **Integration** - ${integrationStatus}`,
-                '>',
-                `> \u{1F4C4} [View detailed report](${integrationReportUrl})`,
-                '>',
-                '> \u{1F4E6} _Also in artifact `integration-test-report`_',
-              ].join('\n');
-            } else {
-              integrationContent = `> ${integrationIcon} ${integrationStatus} - \u{1F4E6} _Results in artifact \`integration-test-report\`_`;
-            }
+            const integrationContent = integrationReportUrl
+              ? `> ${integrationIcon} **Integration** - ${integrationStatus} - \u{1F4C4} [View detailed report](${integrationReportUrl})`
+              : `> ${integrationIcon} **Integration** - ${integrationStatus} - \u{1F4E6} _Report available in artifacts_`;
 
-            let securityContent;
-            if (secReportUrl) {
-              securityContent = [
-                '> \u2705 Security tests completed',
-                '>',
-                `> \u{1F6E1}\uFE0F [View Security Dashboard](${secReportUrl})`,
-              ].join('\n');
-            } else {
-              securityContent = '> \u2705 Security tests completed - \u{1F4E6} _Results in artifact \`security-test-report\`_';
-            }
+            const securityContent = secReportUrl
+              ? `> \u2705 **Security** - Tests completed - \u{1F6E1}\uFE0F [View Security Dashboard](${secReportUrl})`
+              : '> \u2705 **Security** - Tests completed - \u{1F4E6} _Report available in artifacts_';
 
             await updateDashboard({ github, context, sections: {
               'integration': integrationContent,

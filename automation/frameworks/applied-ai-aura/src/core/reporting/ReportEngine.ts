@@ -45,7 +45,7 @@ export class ReportEngine {
     private readonly inputPath: string,
     private readonly outputDir: string,
     private readonly reportTitle: string = 'SAI Test Report',
-    private readonly theme: 'dark' | 'grey' = 'dark',
+    private readonly theme: 'dark' | 'grey' = 'grey',
   ) {}
 
   async generate(): Promise<ReportSummary> {

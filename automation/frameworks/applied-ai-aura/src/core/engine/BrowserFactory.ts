@@ -48,12 +48,13 @@ export class BrowserFactory {
   async createContext(): Promise<BrowserContext> {
     if (!this.browser) await this.launchBrowser();
 
+    const viewport = this.config.viewport ?? { width: 1280, height: 800 };
     const recordVideo = process.env['AURA_RECORD_VIDEO'] === 'true' && this.videoDir
-      ? { dir: this.videoDir, size: { width: 1280, height: 720 } }
+      ? { dir: this.videoDir, size: viewport }
       : undefined;
 
     this.context = await this.browser!.newContext({
-      viewport: this.config.viewport ?? { width: 1280, height: 800 },
+      viewport,
       recordVideo,
     });
     this.context.setDefaultTimeout(this.config.timeout);
