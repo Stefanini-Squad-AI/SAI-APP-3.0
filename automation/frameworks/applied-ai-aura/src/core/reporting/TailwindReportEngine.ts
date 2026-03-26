@@ -876,15 +876,32 @@ ${d.scenarioBlocks.map((sc) => `    <div class="bg-gray-900 rounded-xl border bo
 
 <!-- TAB: VIDEO -->
 <section id="tab-video" class="tab-panel">
-<div class="bg-gray-900 rounded-xl border border-gray-800 p-6 space-y-8">
+  <div class="space-y-3">
   ${d.videos.length > 0
-    ? d.videos.map((v) => `
-  <div>
-    <p class="text-sm font-medium text-gray-300 mb-2"><i class="bi bi-film me-2 text-aura-400"></i>${esc(v.label)}</p>
-    <video controls class="w-full max-w-4xl mx-auto rounded-lg border border-gray-700 bg-black" preload="metadata" style="width:100%;height:auto;max-height:70vh;object-fit:contain;display:block"><source src="${esc(v.path)}" type="video/webm"></video>
-  </div>`).join('')
-    : `<div class="text-center py-16"><i class="bi bi-camera-video-off text-5xl text-gray-700 mb-4 block"></i><p class="text-gray-500" data-i18n="noVideo">No se grabó video para esta ejecución.</p><p class="text-xs text-gray-600 mt-2" data-i18n="noVideoHint">Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.</p></div>`}
-</div>
+    ? d.videos.map((v) => `    <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+      <button onclick="toggleAcc(this)" class="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-800/30 transition-colors border-b border-gray-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg ${v.status === 'passed' ? 'bg-emerald-900/30' : 'bg-red-900/30'} flex items-center justify-center">
+            <i class="bi bi-camera-video ${v.status === 'passed' ? 'text-emerald-400' : 'text-red-400'} text-lg"></i>
+          </div>
+          <div class="text-left">
+            <p class="text-sm text-white font-semibold">${esc(v.label)}</p>
+            <p class="text-xs text-gray-500">${esc(v.featureName)}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          ${badge(v.status)}
+          <i class="bi bi-chevron-right acc-chevron text-gray-500"></i>
+        </div>
+      </button>
+      <div class="acc-body">
+        <div class="p-4">
+          <video controls class="w-full max-w-4xl mx-auto rounded-lg border border-gray-700 bg-black" preload="metadata" style="width:100%;height:auto;max-height:70vh;object-fit:contain;display:block"><source src="${esc(v.path)}" type="video/webm"></video>
+        </div>
+      </div>
+    </div>`).join('\n')
+    : `<div class="bg-gray-900 rounded-xl border border-gray-800 p-6"><div class="text-center py-16"><i class="bi bi-camera-video-off text-5xl text-gray-700 mb-4 block"></i><p class="text-gray-500" data-i18n="noVideo">No se grabó video para esta ejecución.</p><p class="text-xs text-gray-600 mt-2" data-i18n="noVideoHint">Configura AURA_RECORD_VIDEO=true en .env para habilitar grabación.</p></div></div>`}
+  </div>
 </section>
 
 </main>
@@ -1044,10 +1061,10 @@ switchLang(document.getElementById('lang-select')?.value||'es');
     const allSuccessLogs: AuraLogEntry[] = [];
     const allErrorLogs: AuraLogEntry[] = [];
     const failedStepDetails: Array<{ keyword: string; text: string; error?: string }> = [];
-    const videos: Array<{ path: string; label: string }> = [];
+    const videos: Array<{ path: string; label: string; status: string; featureName: string }> = [];
     for (const sd of scenarioDataList) {
       if (sd.videoRelPath) {
-        videos.push({ path: sd.videoRelPath, label: sd.scenarioName });
+        videos.push({ path: sd.videoRelPath, label: sd.scenarioName, status: sd.status, featureName: sd.featureName });
       }
     }
     let totalSteps = 0;
@@ -1299,7 +1316,7 @@ interface TemplateData {
   failedStepDetails: Array<{ keyword: string; text: string; error?: string }>;
   unstableFeatures: Array<{ name: string; failedScenarios: number }>;
   allTags: string[];
-  videos: Array<{ path: string; label: string }>;
+  videos: Array<{ path: string; label: string; status: string; featureName: string }>;
   browserName: string;
   headless: boolean;
   viewport: string;
