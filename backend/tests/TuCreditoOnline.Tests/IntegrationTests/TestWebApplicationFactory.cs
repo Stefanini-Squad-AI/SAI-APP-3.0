@@ -18,7 +18,14 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         {
             var mongoConn =
                 Environment.GetEnvironmentVariable("TCO_INTEGRATION_MONGO")
-                ?? "mongodb://localhost:27017";
+                ?? "mongodb://localhost:27017/?serverSelectionTimeoutMS=2000&connectTimeoutMS=2000";
+            // Add short-timeout suffix only when using the default localhost URL so that
+            // integration tests fail fast instead of hanging 30 s per test when MongoDB
+            // is unavailable.
+            if (!mongoConn.Contains("serverSelectionTimeout", StringComparison.OrdinalIgnoreCase))
+                mongoConn += (mongoConn.Contains('?') ? "&" : "?")
+                             + "serverSelectionTimeoutMS=2000&connectTimeoutMS=2000";
+
             var testOverrides = new Dictionary<string, string?>
             {
                 ["MongoDbSettings:ConnectionString"] = mongoConn,
