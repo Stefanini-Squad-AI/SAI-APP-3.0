@@ -182,54 +182,64 @@ function sanitizeExecutiveSummaryByLang(obj) {
   };
 }
 
+const SEMAPHORE_MAP = { GREEN: { es: 'VERDE', pt: 'VERDE' }, YELLOW: { es: 'AMARILLO', pt: 'AMARELO' }, RED: { es: 'ROJO', pt: 'VERMELHO' } };
+const TYPE_LABELS = { integration: { en: 'Integration', es: 'de integración', pt: 'de integração' }, unit: { en: 'Unit', es: 'unitarias', pt: 'unitários' } };
+
+function resolveSemaphore(passRateNum) {
+  if (passRateNum === 100) return 'GREEN';
+  if (passRateNum >= 80) return 'YELLOW';
+  return 'RED';
+}
+
+function resolveRisk(passRateNum) {
+  if (passRateNum === 100) {
+    return { en: 'Low risk — all tests passing.', es: 'Riesgo bajo — todas las pruebas pasaron.', pt: 'Risco baixo — todos os testes passaram.' };
+  }
+  if (passRateNum >= 80) {
+    return { en: 'Medium risk — some tests failing.', es: 'Riesgo medio — algunas pruebas fallaron.', pt: 'Risco médio — alguns testes falharam.' };
+  }
+  return { en: 'High risk — significant test failures detected.', es: 'Riesgo alto — se detectaron fallos significativos.', pt: 'Risco alto — falhas significativas detectadas.' };
+}
+
+function resolveWarning(failedCount) {
+  if (failedCount === 0) return { en: 'No warnings.', es: 'Sin advertencias.', pt: 'Sem avisos.' };
+  return { en: `${failedCount} test(s) require attention.`, es: `${failedCount} prueba(s) requieren atención.`, pt: `${failedCount} teste(s) requerem atenção.` };
+}
+
+function resolveRecommendation(failedCount) {
+  if (failedCount > 0) {
+    return { en: 'Fix failing tests before merging.', es: 'Corregir las pruebas fallidas antes de hacer merge.', pt: 'Corrigir os testes com falha antes do merge.' };
+  }
+  return { en: 'All tests pass — continue monitoring coverage.', es: 'Todas las pruebas pasan — continuar monitoreando la cobertura.', pt: 'Todos os testes passam — continuar monitorando a cobertura.' };
+}
+
+function groupTestsByClass(tests) {
+  const byClass = {};
+  for (const t of tests) {
+    const cls = t.className || 'Unknown';
+    if (!byClass[cls]) byClass[cls] = [];
+    byClass[cls].push(t);
+  }
+  return byClass;
+}
+
 function generateLocalFallbackSummary(testInfo, coverageInfo, reportKind = 'unit') {
   const passRate = testInfo.total > 0 ? ((testInfo.passed / testInfo.total) * 100).toFixed(2) : '0';
   const passRateNum = Number.parseFloat(passRate);
   const date = new Date().toISOString().split('T')[0];
 
-  let semaphore;
-  if (passRateNum === 100) semaphore = 'GREEN';
-  else if (passRateNum >= 80) semaphore = 'YELLOW';
-  else semaphore = 'RED';
+  const semaphore = resolveSemaphore(passRateNum);
+  const semaphoreEs = SEMAPHORE_MAP[semaphore].es;
+  const semaphorePt = SEMAPHORE_MAP[semaphore].pt;
 
-  const semaphoreEs = { GREEN: 'VERDE', YELLOW: 'AMARILLO', RED: 'ROJO' }[semaphore];
-  const semaphorePt = { GREEN: 'VERDE', YELLOW: 'AMARELO', RED: 'VERMELHO' }[semaphore];
+  const kindKey = reportKind === 'integration' ? 'integration' : 'unit';
+  const typeLabel = TYPE_LABELS[kindKey];
 
-  const typeLabelEn = reportKind === 'integration' ? 'Integration' : 'Unit';
-  const typeLabelEs = reportKind === 'integration' ? 'de integración' : 'unitarias';
-  const typeLabelPt = reportKind === 'integration' ? 'de integração' : 'unitários';
+  const risk = resolveRisk(passRateNum);
+  const warning = resolveWarning(testInfo.failed);
+  const rec = resolveRecommendation(testInfo.failed);
 
-  let riskEn;
-  let riskEs;
-  let riskPt;
-  if (passRateNum === 100) {
-    riskEn = 'Low risk — all tests passing.';
-    riskEs = 'Riesgo bajo — todas las pruebas pasaron.';
-    riskPt = 'Risco baixo — todos os testes passaram.';
-  } else if (passRateNum >= 80) {
-    riskEn = 'Medium risk — some tests failing.';
-    riskEs = 'Riesgo medio — algunas pruebas fallaron.';
-    riskPt = 'Risco médio — alguns testes falharam.';
-  } else {
-    riskEn = 'High risk — significant test failures detected.';
-    riskEs = 'Riesgo alto — se detectaron fallos significativos.';
-    riskPt = 'Risco alto — falhas significativas detectadas.';
-  }
-
-  const warningEn = testInfo.failed === 0 ? 'No warnings.' : `${testInfo.failed} test(s) require attention.`;
-  const warningEs = testInfo.failed === 0 ? 'Sin advertencias.' : `${testInfo.failed} prueba(s) requieren atención.`;
-  const warningPt = testInfo.failed === 0 ? 'Sem avisos.' : `${testInfo.failed} teste(s) requerem atenção.`;
-
-  const recEn = testInfo.failed > 0 ? 'Fix failing tests before merging.' : 'All tests pass — continue monitoring coverage.';
-  const recEs = testInfo.failed > 0 ? 'Corregir las pruebas fallidas antes de hacer merge.' : 'Todas las pruebas pasan — continuar monitoreando la cobertura.';
-  const recPt = testInfo.failed > 0 ? 'Corrigir os testes com falha antes do merge.' : 'Todos os testes passam — continuar monitorando a cobertura.';
-
-  const testsByClass = {};
-  testInfo.tests.forEach(t => {
-    const cls = t.className || 'Unknown';
-    if (!testsByClass[cls]) testsByClass[cls] = [];
-    testsByClass[cls].push(t);
-  });
+  const testsByClass = groupTestsByClass(testInfo.tests);
 
   const failedTests = testInfo.tests.filter(t => t.outcome === 'Failed');
   const failedList = failedTests.length > 0
@@ -249,33 +259,33 @@ function generateLocalFallbackSummary(testInfo, coverageInfo, reportKind = 'unit
   const buildContent = (sections) => sections.join('\n\n');
 
   const en = buildContent([
-    `## Context Header\n\nProject: TuCreditoOnline — Backend (.NET 8, xUnit). ${typeLabelEn} tests. Report generated on ${date}. Total: ${testInfo.total} tests (${testInfo.passed} passed, ${testInfo.failed} failed, ${testInfo.skipped} skipped).`,
+    `## Context Header\n\nProject: TuCreditoOnline — Backend (.NET 8, xUnit). ${typeLabel.en} tests. Report generated on ${date}. Total: ${testInfo.total} tests (${testInfo.passed} passed, ${testInfo.failed} failed, ${testInfo.skipped} skipped).`,
     `## Overall Result (Traffic Light)\n\n**${semaphore}** — Pass rate: ${passRate}%.`,
     `## Scope — What Was Tested?\n\n${classLines}`,
-    `## Detailed Findings\n\n### What Worked\n\n- ${testInfo.passed} of ${testInfo.total} tests passed successfully.\n\n### Failures Found\n\n${failedList}\n\n### Warnings\n\n- ${warningEn}`,
+    `## Detailed Findings\n\n### What Worked\n\n- ${testInfo.passed} of ${testInfo.total} tests passed successfully.\n\n### Failures Found\n\n${failedList}\n\n### Warnings\n\n- ${warning.en}`,
     `## Performance Metrics\n\n- Total tests: ${testInfo.total}\n- Pass rate: ${passRate}%`,
-    `## Risk Assessment\n\n- ${riskEn}`,
+    `## Risk Assessment\n\n- ${risk.en}`,
     `## Test Coverage\n\n${covBlock}`,
-    `## Actionable Recommendations\n\n- ${recEn}`,
+    `## Actionable Recommendations\n\n- ${rec.en}`,
     `## Historical Trend\n\n- Single run — no historical data available for comparison.`,
     `## Glossary of Terms\n\n- **Unit test**: a test that validates a single component or function in isolation.\n- **xUnit**: the testing framework used for .NET projects.\n- **Line coverage**: percentage of source code lines executed during tests.\n- **Branch coverage**: percentage of code branches (if/else) exercised during tests.`,
   ]);
 
   const es = buildContent([
-    `## Encabezado de Contexto\n\nProyecto: TuCreditoOnline — Backend (.NET 8, xUnit). Pruebas ${typeLabelEs}. Reporte generado el ${date}. Total: ${testInfo.total} tests (${testInfo.passed} exitosos, ${testInfo.failed} fallidos, ${testInfo.skipped} omitidos).`,
+    `## Encabezado de Contexto\n\nProyecto: TuCreditoOnline — Backend (.NET 8, xUnit). Pruebas ${typeLabel.es}. Reporte generado el ${date}. Total: ${testInfo.total} tests (${testInfo.passed} exitosos, ${testInfo.failed} fallidos, ${testInfo.skipped} omitidos).`,
     `## Resultado General (Semáforo)\n\n**${semaphoreEs}** — Tasa de éxito: ${passRate}%.`,
     `## Alcance — ¿Qué se probó?\n\n${classLines}`,
-    `## Hallazgos Detallados\n\n### Lo que funcionó\n\n- ${testInfo.passed} de ${testInfo.total} pruebas pasaron exitosamente.\n\n### Fallos encontrados\n\n${failedList}\n\n### Advertencias\n\n- ${warningEs}`,
+    `## Hallazgos Detallados\n\n### Lo que funcionó\n\n- ${testInfo.passed} de ${testInfo.total} pruebas pasaron exitosamente.\n\n### Fallos encontrados\n\n${failedList}\n\n### Advertencias\n\n- ${warning.es}`,
     `## Métricas de Rendimiento\n\n- Total de pruebas: ${testInfo.total}\n- Tasa de éxito: ${passRate}%`,
-    `## Evaluación de Riesgos\n\n- ${riskEs}`,
+    `## Evaluación de Riesgos\n\n- ${risk.es}`,
     `## Cobertura de Pruebas\n\n${covBlock}`,
-    `## Recomendaciones Accionables\n\n- ${recEs}`,
+    `## Recomendaciones Accionables\n\n- ${rec.es}`,
     `## Tendencia Histórica\n\n- Ejecución única — no hay datos históricos disponibles para comparación.`,
     `## Glosario de Términos\n\n- **Prueba unitaria**: prueba que valida un componente o función de forma aislada.\n- **xUnit**: framework de pruebas utilizado en proyectos .NET.\n- **Cobertura de líneas**: porcentaje de líneas de código fuente ejecutadas durante las pruebas.\n- **Cobertura de ramas**: porcentaje de ramas de código (if/else) ejercitadas durante las pruebas.`,
   ]);
 
   const pt = buildContent([
-    `## Cabeçalho de Contexto\n\nProjeto: TuCreditoOnline — Backend (.NET 8, xUnit). Testes ${typeLabelPt}. Relatório gerado em ${date}. Total: ${testInfo.total} testes (${testInfo.passed} aprovados, ${testInfo.failed} falhos, ${testInfo.skipped} ignorados).`,
+    `## Cabeçalho de Contexto\n\nProjeto: TuCreditoOnline — Backend (.NET 8, xUnit). Testes ${typeLabel.pt}. Relatório gerado em ${date}. Total: ${testInfo.total} testes (${testInfo.passed} aprovados, ${testInfo.failed} falhos, ${testInfo.skipped} ignorados).`,
     `## Resultado Geral (Semáforo)\n\n**${semaphorePt}** — Taxa de sucesso: ${passRate}%.`,
     `## Escopo — O que foi testado?\n\n${classLines}`,
     `## Achados Detalhados\n\n### O que funcionou\n\n- ${testInfo.passed} de ${testInfo.total} testes passaram com sucesso.\n\n### Falhas encontradas\n\n${failedList}\n\n### Avisos\n\n- ${warningPt}`,
