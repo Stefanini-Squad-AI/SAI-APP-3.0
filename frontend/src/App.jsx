@@ -10,6 +10,7 @@ import FAQPage from './pages/FAQPage';
 import CalculatorPage from './pages/CalculatorPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+import LegalPage from './pages/LegalPage';
 import NotFoundPage from './pages/NotFoundPage';
 import LoginPage from './pages/admin/LoginPage';
 import DashboardPage from './pages/admin/DashboardPage';
@@ -36,6 +37,7 @@ function App() {
             <Route path="contact" element={<ContactPage />} />
             <Route path="calculator" element={<CalculatorPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="legal" element={<LegalPage />} />
             <Route path="terms" element={<TermsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
