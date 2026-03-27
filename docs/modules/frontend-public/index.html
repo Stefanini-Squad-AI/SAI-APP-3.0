@@ -73,6 +73,7 @@
           <tr><td><code>/faq</code></td><td data-i18n="vFaq">FAQ</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/FAQPage.jsx</code></td></tr>
           <tr><td><code>/contact</code></td><td data-i18n="vContact">Contact</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/ContactPage.jsx</code></td></tr>
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
+          <tr><td><code>/pos-simulator</code></td><td data-i18n="vPOSSimulator">POS Simulator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/POSSimulatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
@@ -113,6 +114,13 @@
             <td data-i18n="rCalcContains">Input controls (type, purpose, income, amount, term), computed result cards, breakdown panel, and request wizard trigger.</td>
             <td data-i18n="rCalcActions">Adjust simulation variables, compare payment outcomes, open request wizard to send application.</td>
             <td><code>GET /api/credittypes?isActive=true</code>, <code>POST /api/creditrequests</code></td>
+          </tr>
+          <tr>
+            <td><code>/pos-simulator</code></td>
+            <td data-i18n="rPOSPurpose">Simulate special banking products and compare online vs. POS terminal payment options with real-time calculations.</td>
+            <td data-i18n="rPOSContains">Product selector, amount/term sliders, customer type dropdown, real-time results card, two payment method cards, and modal flows for online card payment and POS terminal selection with QR code.</td>
+            <td data-i18n="rPOSActions">Adjust product/amount/term, view payment equivalents, open online payment modal with card form (3-step), open POS payment modal with terminal selection and QR code.</td>
+            <td><code>GET /api/credittypes?isActive=true</code></td>
           </tr>
           <tr>
             <td><code>/about</code></td>
@@ -188,6 +196,7 @@
         vFaq: "FAQ",
         vContact: "Contact",
         vCalculator: "Calculator",
+        vPOSSimulator: "POS Simulator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
         vNotFound: "Not found",
@@ -200,6 +209,9 @@
         rCalcPurpose: "Estimate installment and financing terms before submitting a formal request.",
         rCalcContains: "Input controls (type, purpose, income, amount, term), computed result cards, breakdown panel, and request wizard trigger.",
         rCalcActions: "Adjust simulation variables, compare payment outcomes, open request wizard to send application.",
+        rPOSPurpose: "Simulate special banking products and compare online vs. POS terminal payment options with real-time calculations.",
+        rPOSContains: "Product selector, amount/term sliders, customer type dropdown, real-time results card, two payment method cards, and modal flows for online card payment and POS terminal selection with QR code.",
+        rPOSActions: "Adjust product/amount/term, view payment equivalents, open online payment modal with card form (3-step), open POS payment modal with terminal selection and QR code.",
         rAboutPurpose: "Build trust through company background and differentiators.",
         rAboutContains: "Company story section, six value/benefit cards, and CTA to calculator.",
         rAboutActions: "Read institutional narrative, evaluate trust signals, continue to credit simulation.",
@@ -248,6 +260,7 @@
         vFaq: "FAQ",
         vContact: "Contacto",
         vCalculator: "Calculadora",
+        vPOSSimulator: "Simulador POS",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
         vNotFound: "No encontrado",
@@ -281,9 +294,40 @@
         vFaq: "FAQ",
         vContact: "Contato",
         vCalculator: "Calculadora",
+        vPOSSimulator: "Simulador POS",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
         vNotFound: "Não encontrado",
+        rHomePurpose: "Apresentar valor da marca e converter visitantes em fluxos de simulação e contato.",
+        rHomeContains: "Hero com botões CTA, cartões sobre/missão/visão/valores, cartões de visualização de serviços, faixa de estatísticas e blocos de localização/contato.",
+        rHomeActions: "Navegar para páginas de calculadora/serviços, explorar cartões de produtos destacados, alterar idioma do seletor global.",
+        rServicesPurpose: "Explicar produtos de crédito disponíveis e rotear usuário para próxima etapa de simulação/contato.",
+        rServicesContains: "Cartões de tipo de crédito com valor, prazo, taxa base, lista de recursos, requisitos e CTA para calculadora ou contato com consultor.",
+        rServicesActions: "Revisar produtos, comparar limites/taxas, abrir fluxo de calculadora, contato com consultor.",
+        rCalcPurpose: "Estimar parcelas e prazos de financiamento antes de enviar uma solicitação formal.",
+        rCalcContains: "Controles de entrada (tipo, propósito, renda, valor, prazo), cartões de resultado, painel de análise e acionador do assistente de solicitação.",
+        rCalcActions: "Ajustar variáveis de simulação, comparar resultados de pagamento, abrir assistente para enviar candidatura.",
+        rPOSPurpose: "Simular produtos bancários especiais e comparar opções de pagamento online vs terminal POS com cálculos em tempo real.",
+        rPOSContains: "Seletor de produto, controles deslizantes de valor/prazo, menu suspenso de tipo de cliente, cartão de resultados em tempo real, dois cartões de método de pagamento, e fluxos modais para pagamento online com formulário de cartão (3 etapas) e seleção de terminal POS com código QR.",
+        rPOSActions: "Ajustar produto/valor/prazo, visualizar equivalentes de pagamento, abrir modal de pagamento online com formulário de cartão, abrir modal de pagamento POS com seleção de terminal e código QR.",
+        rAboutPurpose: "Construir confiança através do histórico da empresa e diferenciais.",
+        rAboutContains: "Seção de história da empresa, seis cartões de valor/benefício e CTA para calculadora.",
+        rAboutActions: "Ler narrativa institucional, avaliar sinais de confiança, continuar para simulação de crédito.",
+        rFaqPurpose: "Resolver dúvidas comuns sem contatar suporte.",
+        rFaqContains: "Acordeão por categoria (geral, requisitos, valores, processo) e bloco CTA de suporte.",
+        rFaqActions: "Expandir/recolher respostas, ir para página de contato, ligar para telefone de suporte.",
+        rContactPurpose: "Capturar consultas de clientes e abrir canal de suporte.",
+        rContactContains: "Formulário de contato validado, cartões de informações de contato, links de suporte, mapa incorporado e detalhes do escritório.",
+        rContactActions: "Enviar consulta, acionar feedback de sucesso/erro, opções de chamada ou WhatsApp de suporte.",
+        rPrivacyPurpose: "Divulgar tratamento de dados e direitos de privacidade do usuário.",
+        rPrivacyContains: "Cinco seções de política com data de atualização, mais links de contato e retorno à página inicial.",
+        rPrivacyActions: "Ler cláusulas legais e navegar para páginas de contato/início.",
+        rTermsPurpose: "Descrever condições de contrato e uso dos serviços da plataforma.",
+        rTermsContains: "Cinco seções de termos com data de atualização, mais links de contato e retorno à página inicial.",
+        rTermsActions: "Revisar obrigações legais e depois navegar para páginas de contato/início.",
+        r404Purpose: "Lidar com URLs desconhecidas e recuperar navegação.",
+        r404Contains: "Código 404, texto explicativo e CTA de retorno ao início.",
+        r404Actions: "Retornar com segurança à rota raiz.",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
         authNo: "Não"

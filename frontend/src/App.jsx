@@ -8,6 +8,7 @@ import ContactPage from './pages/ContactPage';
 import ServicesPage from './pages/ServicesPage';
 import FAQPage from './pages/FAQPage';
 import CalculatorPage from './pages/CalculatorPage';
+import POSSimulatorPage from './pages/POSSimulatorPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -35,6 +36,7 @@ function App() {
             <Route path="faq" element={<FAQPage />} />
             <Route path="contact" element={<ContactPage />} />
             <Route path="calculator" element={<CalculatorPage />} />
+            <Route path="pos-simulator" element={<POSSimulatorPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
             <Route path="terms" element={<TermsPage />} />
             <Route path="*" element={<NotFoundPage />} />
