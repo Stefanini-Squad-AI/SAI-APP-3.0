@@ -75,6 +75,7 @@
           <tr><td><code>/calculator</code></td><td data-i18n="vCalculator">Calculator</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/CalculatorPage.jsx</code></td></tr>
           <tr><td><code>/privacy</code></td><td data-i18n="vPrivacy">Privacy Policy</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/PrivacyPage.jsx</code></td></tr>
           <tr><td><code>/terms</code></td><td data-i18n="vTerms">Terms and Conditions</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/TermsPage.jsx</code></td></tr>
+          <tr><td><code>/legal</code></td><td data-i18n="vLegal">Legal Information</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/LegalPage.jsx</code></td></tr>
           <tr><td><code>*</code></td><td data-i18n="vNotFound">Not found</td><td class="auth-cell" data-auth="no">No</td><td><code>pages/NotFoundPage.jsx</code></td></tr>
         </tbody>
       </table>
@@ -150,6 +151,13 @@
             <td data-i18n="noApi">No backend calls.</td>
           </tr>
           <tr>
+            <td><code>/legal</code></td>
+            <td data-i18n="rLegalPurpose">Centralize regulatory requirements, compliance certifications, and mandatory legal disclosures.</td>
+            <td data-i18n="rLegalContains">Five legal sections with update date, regulatory and compliance information, plus contact and back-home links.</td>
+            <td data-i18n="rLegalActions">Review legal information and navigate to contact/home pages.</td>
+            <td data-i18n="noApi">No backend calls.</td>
+          </tr>
+          <tr>
             <td><code>*</code></td>
             <td data-i18n="r404Purpose">Handle unknown URLs and recover navigation.</td>
             <td data-i18n="r404Contains">404 code, explanatory text, and CTA back to home.</td>
@@ -190,6 +198,7 @@
         vCalculator: "Calculator",
         vPrivacy: "Privacy Policy",
         vTerms: "Terms and Conditions",
+        vLegal: "Legal Information",
         vNotFound: "Not found",
         rHomePurpose: "Present brand value and convert visitors into simulation and contact flows.",
         rHomeContains: "Hero with CTA buttons, about/mision/vision/values cards, services preview cards, stats strip, and location/contact blocks.",
@@ -214,7 +223,16 @@
         rPrivacyActions: "Read legal clauses and navigate to contact/home pages.",
         rTermsPurpose: "Describe contract and usage conditions for platform services.",
         rTermsContains: "Five terms sections with update date, plus contact and back-home links.",
+        rLegalPurpose: "Centralize regulatory requirements, compliance certifications, and mandatory legal disclosures.",
+        rLegalContains: "Five legal sections with update date, regulatory and compliance information, plus contact and back-home links.",
+        rLegalActions: "Review legal information and navigate to contact/home pages.",
         rTermsActions: "Review legal obligations, then navigate to contact/home pages.",
+        rLegalPurpose: "Centralizar os requisitos regulatórios, certificações de conformidade e divulgações legais obrigatórias.",
+        rLegalContains: "Cinco seções legais com data de atualização, informações regulatórias e de conformidade, além de links de contato e volta ao início.",
+        rLegalActions: "Revisar informações jurídicas e navegar para páginas de contato/início.",
+        rLegalPurpose: "Centralizar los requisitos regulatorios, certificaciones de cumplimiento y divulgaciones legales obligatorias.",
+        rLegalContains: "Cinco secciones legales con fecha de actualización, información regulatoria y de cumplimiento, más enlaces de contacto y regreso a inicio.",
+        rLegalActions: "Revisar información legal y navegar a páginas de contacto/inicio.",
         r404Purpose: "Handle unknown URLs and recover navigation.",
         r404Contains: "404 code, explanatory text, and CTA back to home.",
         r404Actions: "Return safely to root route.",
@@ -250,6 +268,7 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidad",
         vTerms: "Términos y Condiciones",
+        vLegal: "Informaciones Legales",
         vNotFound: "No encontrado",
         noApi: "Sin llamadas al backend.",
         authYes: "Sí",
@@ -283,6 +302,7 @@
         vCalculator: "Calculadora",
         vPrivacy: "Política de Privacidade",
         vTerms: "Termos e Condições",
+        vLegal: "Informações Jurídicas",
         vNotFound: "Não encontrado",
         noApi: "Sem chamadas ao backend.",
         authYes: "Sim",
